@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}IMEI Device Tracker — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">IMEI & Mobile Device Tracker</h4>
+        <span class="text-muted small">Available in stock: <strong>{{ in_stock_count }}</strong> | Sold: <strong>{{ sold_count }}</strong></span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'inventory:imei_search' %}" class="btn btn-outline-primary"><i class="bi bi-search me-1"></i> Quick Search</a>
+        <a href="{% url 'inventory:imei_create' %}" class="btn btn-primary fw-bold"><i class="bi bi-plus-circle-fill me-1"></i> Register Device</a>
+    </div>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Search by 15-digit IMEI, Model, S/N, Customer..." value="{{ query }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                <option value="IN_STOCK" {% if status_filter == 'IN_STOCK' %}selected{% endif %}>In Stock</option>
+                <option value="SOLD" {% if status_filter == 'SOLD' %}selected{% endif %}>Sold</option>
+                <option value="DEFECTIVE" {% if status_filter == 'DEFECTIVE' %}selected{% endif %}>Defective / In Repair</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary flex-grow-1">Filter</button>
+            <a href="{% url 'inventory:imei_list' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Primary IMEI 1</th>
+                    <th>Model / Variant</th>
+                    <th>Status</th>
+                    <th>Selling Price</th>
+                    <th>Sold To Customer</th>
+                    <th>Sale Date</th>
+                    <th>Warranty Upto</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for dev in page_obj %}
+                    <tr>
+                        <td class="font-monospace fw-bold text-primary">
+                            {{ dev.imei_1 }}
+                            {% if dev.imei_2 %}<div class="text-muted small font-monospace">IMEI 2: {{ dev.imei_2 }}</div>{% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ dev.product.name }}</strong>
+                            {% if dev.model_name %}<div class="text-muted small">{{ dev.model_name }}</div>{% endif %}
+                        </td>
+                        <td>
+                            {% if dev.status == 'IN_STOCK' %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% elif dev.status == 'SOLD' %}
+                                <span class="badge bg-secondary">Sold</span>
+                            {% else %}
+                                <span class="badge bg-warning">{{ dev.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ dev.selling_price|inr }}</td>
+                        <td>
+                            {% if dev.customer %}
+                                <a href="{% url 'customers:detail' dev.customer.pk %}" class="text-decoration-none fw-bold">{{ dev.customer.name }}</a>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ dev.sale_date|date:"d-m-Y"|default:"-" }}</td>
+                        <td class="small">
+                            {% if dev.warranty_expiry_date %}
+                                <span class="badge bg-info-subtle text-info">{{ dev.warranty_expiry_date|date:"d-m-Y" }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No mobile devices found. Register phones to start tracking serial numbers.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

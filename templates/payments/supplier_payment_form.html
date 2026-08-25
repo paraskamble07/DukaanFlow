@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Pay Supplier — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card p-4 shadow-sm">
+            <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-truck text-primary me-2"></i>Record Supplier Payment Voucher</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Select Supplier *</label>
+                    {{ form.supplier }}
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Amount Paid (₹) *</label>
+                        {{ form.amount }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Payment Method</label>
+                        {{ form.payment_method }}
+                    </div>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Payment Date</label>
+                        {{ form.payment_date }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Bank Reference / Cheque No.</label>
+                        {{ form.reference_number }}
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Notes</label>
+                    {{ form.notes }}
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Record Supplier Payment</button>
+                    <a href="{% url 'suppliers:list' %}" class="btn btn-light border">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

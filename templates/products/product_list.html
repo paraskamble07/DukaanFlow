@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Products & Catalog — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Products & Accessory Catalog</h4>
+        <span class="text-muted small">Manage items, selling rates, and stock thresholds</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if can_add %}
+            <a href="{% url 'products:create' %}" class="btn btn-primary fw-bold"><i class="bi bi-plus-circle-fill me-1"></i> Add Product</a>
+        {% else %}
+            <a href="{% url 'businesses:plans' %}" class="btn btn-warning fw-bold"><i class="bi bi-stars me-1"></i> Upgrade for More Products ({{ current_count }}/{{ max_limit }})</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-5">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Search by name, brand, SKU or barcode..." value="{{ query }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="stock" class="form-select">
+                <option value="">All Stock</option>
+                <option value="in_stock" {% if stock_status == 'in_stock' %}selected{% endif %}>In Stock</option>
+                <option value="low" {% if stock_status == 'low' %}selected{% endif %}>Low Stock Only</option>
+                <option value="out" {% if stock_status == 'out' %}selected{% endif %}>Out of Stock</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary flex-grow-1">Filter</button>
+            <a href="{% url 'products:list' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<!-- Products Table -->
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Product Name & Brand</th>
+                    <th>Category</th>
+                    <th>Cost Price</th>
+                    <th>Selling MRP</th>
+                    <th>Current Stock</th>
+                    <th>Type</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in page_obj %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'products:detail' p.pk %}" class="fw-bold text-dark text-decoration-none">
+                                {{ p.name }}
+                            </a>
+                            {% if p.brand %}
+                                <div class="text-muted small">Brand: {{ p.brand }} {% if p.sku %}| SKU: {{ p.sku }}{% endif %}</div>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ p.category.name|default:"General" }}</span></td>
+                        <td class="text-muted">{{ p.purchase_price|inr }}</td>
+                        <td class="fw-bold text-primary">{{ p.selling_price|inr }}</td>
+                        <td>
+                            {% if p.is_out_of_stock %}
+                                <span class="badge bg-danger">0 (Out of Stock)</span>
+                            {% elif p.is_low_stock %}
+                                <span class="badge bg-warning text-dark">{{ p.stock_quantity }} (Low Stock)</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success fw-bold">{{ p.stock_quantity }} in stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if p.is_imei_tracked %}
+                                <span class="badge bg-info-subtle text-info"><i class="bi bi-upc-scan me-1"></i>IMEI Phone</span>
+                            {% else %}
+                                <span class="text-muted small">Accessory</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'products:detail' p.pk %}" class="btn btn-outline-secondary"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'products:update' p.pk %}" class="btn btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No products registered yet. Click <strong>Add Product</strong> to populate catalog.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <span class="text-muted small">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+            <ul class="pagination pagination-sm mb-0">
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ query }}&category={{ selected_category }}&stock={{ stock_status }}">Previous</a></li>
+                {% endif %}
+                <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ query }}&category={{ selected_category }}&stock={{ stock_status }}">Next</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

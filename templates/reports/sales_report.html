@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Sales Report — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'reports:index' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Reports</a>
+        <h4 class="fw-bold mb-0 mt-1">Sales Performance Report</h4>
+    </div>
+    <a href="{% url 'reports:sales' %}?period={{ period }}&start_date={{ start_date }}&end_date={{ end_date }}&export=csv" class="btn btn-outline-secondary">
+        <i class="bi bi-download me-1"></i> Export to CSV
+    </a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Period</label>
+            <select name="period" class="form-select">
+                <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                <option value="yesterday" {% if period == 'yesterday' %}selected{% endif %}>Yesterday</option>
+                <option value="this_week" {% if period == 'this_week' %}selected{% endif %}>This Week</option>
+                <option value="this_month" {% if period == 'this_month' %}selected{% endif %}>This Month</option>
+                <option value="last_month" {% if period == 'last_month' %}selected{% endif %}>Last Month</option>
+                <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Date Range</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Start Date</label>
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">End Date</label>
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">Apply</button>
+        </div>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Total Sales Revenue</div>
+            <div class="fs-4 fw-bold text-primary">{{ total_sales|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Collected Cash/UPI</div>
+            <div class="fs-4 fw-bold text-success">{{ total_paid|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Credit Generated</div>
+            <div class="fs-4 fw-bold text-danger">{{ total_due|inr }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Invoice No</th>
+                    <th>Date</th>
+                    <th>Customer</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Due</th>
+                    <th>Mode</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sales %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ s.invoice_number }}</td>
+                        <td>{{ s.sale_date|date:"d-m-Y" }}</td>
+                        <td>{{ s.customer.name }}</td>
+                        <td class="fw-bold">{{ s.total_amount|inr }}</td>
+                        <td class="text-success">{{ s.paid_amount|inr }}</td>
+                        <td>{{ s.due_amount|inr }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ s.get_payment_method_display }}</span></td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No sales orders found in this period.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+
+:root {
+    --df-primary: #1E40AF;
+    --df-primary-hover: #1D4ED8;
+    --df-secondary: #0D9488;
+    --df-dark: #0F172A;
+    --df-sidebar: #0F172A;
+    --df-card-bg: #FFFFFF;
+    --df-border: #E2E8F0;
+    --df-success: #10B981;
+    --df-danger: #EF4444;
+    --df-warning: #F59E0B;
+    --df-info: #0284C7;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #F8FAFC;
+    color: #1E293B;
+    min-height: 100vh;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    width: 260px;
+    background-color: var(--df-sidebar);
+    min-height: 100vh;
+    transition: all 0.3s ease;
+    z-index: 1040;
+}
+
+.sidebar .nav-link {
+    color: #94A3B8;
+    font-weight: 500;
+    font-size: 0.95rem;
+    padding: 0.65rem 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar .nav-link:hover {
+    color: #FFFFFF;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar .nav-link.active {
+    color: #FFFFFF;
+    background-color: var(--df-primary);
+}
+
+.sidebar .nav-link i {
+    font-size: 1.15rem;
+}
+
+.sidebar-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748B;
+    padding: 0.75rem 1rem 0.25rem;
+    font-weight: 700;
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    min-width: 0;
+    overflow-y: auto;
+}
+
+/* Card Styling */
+.card {
+    border: 1px solid var(--df-border);
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    background-color: #FFFFFF;
+}
+
+.card-header {
+    background-color: #FFFFFF;
+    border-bottom: 1px solid var(--df-border);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+}
+
+/* Stat Cards */
+.stat-card {
+    border-radius: 0.75rem;
+    border: 1px solid var(--df-border);
+    padding: 1.25rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Indian Rupee highlight badges */
+.inr-badge-due {
+    background-color: #FEE2E2;
+    color: #991B1B;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+}
+
+.inr-badge-success {
+    background-color: #D1FAE5;
+    color: #065F46;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+}
+
+/* WhatsApp Action Button */
+.btn-whatsapp {
+    background-color: #25D366;
+    color: #FFFFFF;
+    border: none;
+    font-weight: 500;
+}
+
+.btn-whatsapp:hover {
+    background-color: #1EBE5D;
+    color: #FFFFFF;
+}
+
+/* Table Responsive */
+.table th {
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #64748B;
+    font-weight: 600;
+    background-color: #F8FAFC;
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.92rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+    .sidebar {
+        display: none;
+    }
+}

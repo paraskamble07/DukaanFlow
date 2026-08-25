@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile — DukaanFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-person-circle text-primary me-2"></i>User Profile</h5>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Username / Login ID</label>
+                    <input type="text" class="form-control" value="{{ user.username }}" readonly disabled>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">First Name</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Last Name</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Contact Phone / WhatsApp</label>
+                    <input type="text" name="phone" class="form-control" value="{{ profile.phone|default:'' }}">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Associated Shop</label>
+                    <input type="text" class="form-control" value="{{ profile.business.name|default:'No business attached' }}" readonly disabled>
+                </div>
+                <button type="submit" class="btn btn-primary fw-bold px-4">Save Changes</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

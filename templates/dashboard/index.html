@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Dashboard — {{ current_business.name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Shop Performance Overview</h4>
+        <span class="text-muted small">Today: {{ today|date:"l, d F Y" }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'sales:pos' %}" class="btn btn-primary fw-bold shadow-sm d-flex align-items-center gap-1">
+            <i class="bi bi-cart-plus-fill"></i> New POS Sale
+        </a>
+    </div>
+</div>
+
+<!-- Top KPI Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Today's Sales</div>
+                    <div class="fs-4 fw-bold text-dark">{{ today_sales|inr }}</div>
+                    <span class="badge bg-primary-subtle text-primary mt-1">{{ today_sales_count }} bills generated</span>
+                </div>
+                <div class="stat-icon bg-primary-subtle text-primary">
+                    <i class="bi bi-receipt"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Today's Net Profit</div>
+                    <div class="fs-4 fw-bold text-success">{{ today_net_profit|inr }}</div>
+                    <span class="text-muted small">Gross: {{ today_gross_profit|inr }}</span>
+                </div>
+                <div class="stat-icon bg-success-subtle text-success">
+                    <i class="bi bi-cash-coin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Customer Khata (Due)</div>
+                    <div class="fs-4 fw-bold text-danger">{{ total_receivable|inr }}</div>
+                    <span class="text-muted small">Market Udhar to Collect</span>
+                </div>
+                <div class="stat-icon bg-danger-subtle text-danger">
+                    <i class="bi bi-person-exclamation"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small fw-bold text-uppercase">Supplier Payable</div>
+                    <div class="fs-4 fw-bold text-warning">{{ total_payable|inr }}</div>
+                    <span class="text-muted small">Vendor Outstanding</span>
+                </div>
+                <div class="stat-icon bg-warning-subtle text-warning">
+                    <i class="bi bi-truck"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Secondary Stats & Chart Row -->
+<div class="row g-3 mb-4">
+    <!-- 7-Day Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-graph-up text-primary me-2"></i>Last 7 Days Sales & Expense Trend</span>
+                <span class="badge bg-light text-dark border">Realtime DB Data</span>
+            </div>
+            <div class="card-body">
+                <canvas id="salesTrendChart" style="max-height: 280px;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Alerts & Stock Status -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-bell-fill text-warning me-2"></i>Stock & Inventory Alerts
+            </div>
+            <div class="card-body p-0">
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-bold">Total Catalog Products</div>
+                        <div class="text-muted small">Registered in catalog</div>
+                    </div>
+                    <span class="badge bg-secondary fs-6">{{ total_products_count }}</span>
+                </div>
+                <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-danger-subtle">
+                    <div>
+                        <div class="fw-bold text-danger">Low / Out of Stock Items</div>
+                        <div class="text-muted small">Requires reorder</div>
+                    </div>
+                    <span class="badge bg-danger fs-6">{{ low_stock_count }}</span>
+                </div>
+                
+                <div class="p-3">
+                    <div class="small fw-bold text-muted mb-2">URGENT LOW STOCK ITEMS:</div>
+                    {% if low_stock_products %}
+                        <ul class="list-unstyled mb-0">
+                            {% for p in low_stock_products %}
+                                <li class="d-flex justify-content-between align-items-center mb-2 pb-1 border-bottom">
+                                    <span class="small fw-bold">{{ p.name|truncatechars:22 }}</span>
+                                    <span class="badge bg-danger">{{ p.stock_quantity }} left</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="text-success small"><i class="bi bi-check-circle-fill me-1"></i> All products have healthy inventory!</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transactions & Pending Udhar Row -->
+<div class="row g-3">
+    <!-- Recent Sales -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-receipt me-2"></i>Recent Sales Transactions</span>
+                <a href="{% url 'sales:list' %}" class="small text-primary text-decoration-none">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in recent_sales %}
+                            <tr>
+                                <td class="fw-bold text-primary">#{{ sale.invoice_number }}</td>
+                                <td>{{ sale.customer.name }}</td>
+                                <td class="fw-bold">{{ sale.total_amount|inr }}</td>
+                                <td>
+                                    {% if sale.payment_status == 'PAID' %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% elif sale.payment_status == 'PARTIAL' %}
+                                        <span class="badge bg-warning text-dark">Partial</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Credit</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'invoices:detail' sale.pk %}" class="btn btn-light btn-sm border"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No sales recorded yet. Click <strong>New POS Sale</strong> to create your first bill!</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outstanding Customer Khata & WhatsApp Quick Reminders -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-whatsapp text-success me-2"></i>Pending Khata Collection</span>
+                <a href="{% url 'customers:list' %}?due=yes" class="small text-primary text-decoration-none">All Dues</a>
+            </div>
+            <div class="p-0">
+                {% if top_pending_customers %}
+                    <ul class="list-group list-group-flush">
+                        {% for item in top_pending_customers %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                                <div>
+                                    <div class="fw-bold">{{ item.customer.name }}</div>
+                                    <div class="small text-muted">{{ item.customer.phone }}</div>
+                                    <div class="text-danger fw-bold small">Due: {{ item.due|inr }}</div>
+                                </div>
+                                <a href="{{ item.wa_url }}" target="_blank" class="btn btn-whatsapp btn-sm shadow-sm d-flex align-items-center gap-1">
+                                    <i class="bi bi-whatsapp"></i> Remind
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-emoji-smile fs-3 text-success d-block mb-1"></i>
+                        Zero pending customer dues! All Khata accounts settled.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('salesTrendChart').getContext('2d');
+    const labels = {{ chart_labels|safe }};
+    const salesData = {{ chart_sales_data|safe }};
+    const expenseData = {{ chart_expense_data|safe }};
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Sales (₹)',
+                    data: salesData,
+                    backgroundColor: 'rgba(30, 64, 175, 0.85)',
+                    borderRadius: 6,
+                },
+                {
+                    label: 'Expenses (₹)',
+                    data: expenseData,
+                    backgroundColor: 'rgba(239, 68, 68, 0.75)',
+                    borderRadius: 6,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ₹' + context.parsed.y.toLocaleString('en-IN');
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) { return '₹' + value.toLocaleString('en-IN'); }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports & P&L Analytics — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h4 class="fw-bold mb-0">Business Intelligence & Financial Reports</h4>
+    <span class="text-muted small">Exportable profit & loss statements, sales audits, and inventory valuations</span>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6 col-lg-3">
+        <div class="card p-4 h-100 shadow-sm text-center">
+            <div class="stat-icon bg-primary-subtle text-primary mx-auto mb-3">
+                <i class="bi bi-graph-up-arrow"></i>
+            </div>
+            <h5 class="fw-bold">Sales Analysis</h5>
+            <p class="text-muted small">Detailed sales bills by date ranges with CSV export.</p>
+            <a href="{% url 'reports:sales' %}" class="btn btn-outline-primary btn-sm fw-bold mt-auto">View Sales Report</a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card p-4 h-100 shadow-sm text-center">
+            <div class="stat-icon bg-success-subtle text-success mx-auto mb-3">
+                <i class="bi bi-calculator"></i>
+            </div>
+            <h5 class="fw-bold">True Profit & Loss</h5>
+            <p class="text-muted small">Calculates Real Gross Margin (Revenue - COGS) & Net Profit after Expenses.</p>
+            <a href="{% url 'reports:profit_loss' %}" class="btn btn-outline-success btn-sm fw-bold mt-auto">View P&L Report</a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card p-4 h-100 shadow-sm text-center">
+            <div class="stat-icon bg-danger-subtle text-danger mx-auto mb-3">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <h5 class="fw-bold">Customer Khata Dues</h5>
+            <p class="text-muted small">Outstanding credit balances and WhatsApp collection links.</p>
+            <a href="{% url 'reports:khata' %}" class="btn btn-outline-danger btn-sm fw-bold mt-auto">View Khata Report</a>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card p-4 h-100 shadow-sm text-center">
+            <div class="stat-icon bg-warning-subtle text-warning mx-auto mb-3">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <h5 class="fw-bold">Stock Valuation</h5>
+            <p class="text-muted small">Inventory stock valuation at cost vs retail MRP with reorder flags.</p>
+            <a href="{% url 'reports:inventory' %}" class="btn btn-outline-warning btn-sm fw-bold mt-auto">View Stock Report</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

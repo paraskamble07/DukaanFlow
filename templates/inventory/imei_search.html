@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Quick IMEI Search — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4 shadow-sm mb-4">
+            <h4 class="fw-bold mb-3"><i class="bi bi-search text-primary me-2"></i>Global IMEI & Device Lookup</h4>
+            <p class="text-muted small">Enter any 15-digit IMEI number to instantly trace its complete history, purchase cost, sale invoice, customer, and warranty expiration.</p>
+            
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="imei" class="form-control form-control-lg font-monospace" placeholder="Enter IMEI 1, IMEI 2 or Serial Number..." value="{{ query }}" required autofocus>
+                <button type="submit" class="btn btn-primary btn-lg fw-bold px-4">Search</button>
+            </form>
+        </div>
+
+        {% if query %}
+            {% if device %}
+                <div class="card p-4 shadow-sm border-success">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                        <div>
+                            <span class="badge bg-success mb-1">RECORD FOUND</span>
+                            <h4 class="fw-bold mb-0">{{ device.product.name }}</h4>
+                            <span class="text-muted">{{ device.brand|default:"" }} {{ device.model_name|default:"" }}</span>
+                        </div>
+                        <div class="text-end">
+                            <div class="fs-5 fw-bold text-primary">{{ device.selling_price|inr }}</div>
+                            <span class="badge bg-light text-dark border">{{ device.get_status_display }}</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold text-uppercase">Primary IMEI 1</label>
+                            <div class="font-monospace fs-5 fw-bold">{{ device.imei_1 }}</div>
+                        </div>
+                        {% if device.imei_2 %}
+                        <div class="col-md-6">
+                            <label class="text-muted small fw-bold text-uppercase">Secondary IMEI 2</label>
+                            <div class="font-monospace fs-5">{{ device.imei_2 }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 p-3 bg-light rounded border mb-3">
+                        <div class="col-md-4">
+                            <div class="text-muted small fw-bold">OWNER / CUSTOMER</div>
+                            {% if device.customer %}
+                                <div class="fw-bold"><a href="{% url 'customers:detail' device.customer.pk %}" class="text-decoration-none">{{ device.customer.name }}</a></div>
+                                <div class="small text-muted">{{ device.customer.phone }}</div>
+                            {% else %}
+                                <div class="text-muted">Unsold in stock</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-muted small fw-bold">SALE DATE</div>
+                            <div class="fw-bold">{{ device.sale_date|date:"d-m-Y H:i"|default:"Not sold yet" }}</div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-muted small fw-bold">WARRANTY STATUS</div>
+                            {% if device.warranty_expiry_date %}
+                                <div class="fw-bold text-success">Valid until {{ device.warranty_expiry_date|date:"d-m-Y" }}</div>
+                            {% else %}
+                                <div class="text-muted">No warranty attached</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if device.sale_item and device.sale_item.sale %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Associated Bill: <strong>#{{ device.sale_item.sale.invoice_number }}</strong></span>
+                            <a href="{% url 'invoices:detail' device.sale_item.sale.pk %}" class="btn btn-outline-primary btn-sm"><i class="bi bi-receipt me-1"></i> View Invoice</a>
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center p-4">
+                    <i class="bi bi-exclamation-circle fs-3 d-block mb-2"></i>
+                    No device found matching IMEI: <strong>{{ query }}</strong>
+                </div>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

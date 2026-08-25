@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Login — DukaanFlow{% endblock %}
+
+{% block public_content %}
+<div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
+    <div class="card shadow-sm border p-4 p-md-5" style="max-width: 440px; width: 100%;">
+        <div class="text-center mb-4">
+            <a href="{% url 'landing:home' %}" class="text-decoration-none">
+                <h3 class="fw-bold text-dark"><i class="bi bi-phone-vibrate text-primary"></i> DUKAAN<span class="text-primary">FLOW</span></h3>
+            </a>
+            <p class="text-muted small">Sign in to manage your mobile shop</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'danger' }} py-2 small" role="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Email Address or Username</label>
+                {{ form.email }}
+            </div>
+            <div class="mb-4">
+                <label class="form-label small fw-bold">Password</label>
+                {{ form.password }}
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Sign In to Dashboard</button>
+        </form>
+
+        <div class="text-center mt-4 border-top pt-3">
+            <span class="text-muted small">Don't have an account?</span>
+            <a href="{% url 'accounts:register' %}" class="fw-bold small text-primary text-decoration-none ms-1">Register Shop Free</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

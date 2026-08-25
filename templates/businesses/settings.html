@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Shop Settings — DukaanFlow{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4 shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-shop text-primary me-2"></i>{% if is_onboarding %}Setup Your Shop Profile{% else %}Shop & Invoice Settings{% endif %}</h5>
+                {% if not is_onboarding %}
+                    <span class="badge bg-primary">{{ business.get_plan_tier_display }}</span>
+                {% endif %}
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Shop / Business Name *</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Owner Name *</label>
+                        {{ form.owner_name }}
+                    </div>
+                </div>
+                
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Mobile / WhatsApp Number *</label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Business Email *</label>
+                        {{ form.email }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Shop Address / Landmark</label>
+                    {{ form.address }}
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">City</label>
+                        {{ form.city }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">State</label>
+                        {{ form.state }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Pincode</label>
+                        {{ form.pincode }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">GSTIN Number (Optional)</label>
+                        {{ form.gstin }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Shop Logo (For Invoices)</label>
+                        {{ form.logo }}
+                    </div>
+                </div>
+
+                <hr class="my-4">
+                <h6 class="fw-bold mb-3 text-secondary">Invoice Customization</h6>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Invoice Prefix</label>
+                        {{ form.invoice_prefix }}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">Invoice Terms / Footer Note</label>
+                        {{ form.invoice_footer }}
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2">
+                        <i class="bi bi-check2-circle me-1"></i> Save Shop Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Invoice #{{ sale.invoice_number }} — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'sales:list' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Sales</a>
+        <h4 class="fw-bold mb-0 mt-1">Invoice #{{ sale.invoice_number }}</h4>
+        <span class="text-muted small">Date: {{ sale.sale_date|date:"d-m-Y H:i" }} | Customer: <strong>{{ sale.customer.name }}</strong></span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'invoices:pdf' sale.pk %}" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i> PDF</a>
+        <a href="{% url 'invoices:print' sale.pk %}" target="_blank" class="btn btn-secondary"><i class="bi bi-printer me-1"></i> Print</a>
+        <a href="{% url 'invoices:detail' sale.pk %}" class="btn btn-primary fw-bold"><i class="bi bi-receipt me-1"></i> View Full Bill</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card p-4 shadow-sm">
+            <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-box-seam text-primary me-2"></i>{{ title }}</h5>
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label small fw-bold">Product / Model Name *</label>
+                        {{ form.name }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Brand / Company</label>
+                        {{ form.brand }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Category</label>
+                        {{ form.category }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Or New Category Name</label>
+                        {{ form.category_name }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Cost Price / Purchase (₹) *</label>
+                        {{ form.purchase_price }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Selling Price / MRP (₹) *</label>
+                        {{ form.selling_price }}
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Current Stock Quantity *</label>
+                        {{ form.stock_quantity }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Low Stock Alert Level</label>
+                        {{ form.min_stock }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold">Warranty (Months)</label>
+                        {{ form.warranty_months }}
+                    </div>
+                </div>
+
+                <div class="p-3 bg-light rounded border mb-3">
+                    <div class="form-check form-switch">
+                        {{ form.is_imei_tracked }}
+                        <label class="form-check-label fw-bold" for="{{ form.is_imei_tracked.id_for_label }}">
+                            Enable IMEI / Serial Number Tracking (For Mobile Phones & Laptops)
+                        </label>
+                    </div>
+                    <div class="text-muted small mt-1">If enabled, you can attach specific 15-digit IMEI serial numbers for warranty & search.</div>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">SKU Code</label>
+                        {{ form.sku }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Barcode / EAN</label>
+                        {{ form.barcode }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Preferred Supplier</label>
+                    {{ form.supplier }}
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Description / Technical Specs</label>
+                    {{ form.description }}
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold px-4">Save Product</button>
+                    <a href="{% url 'products:list' %}" class="btn btn-light border">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

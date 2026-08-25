@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Daily Expenses — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Daily Shop Expenses</h4>
+        <span class="text-muted small">Total Filtered Expenses: <strong class="text-danger">{{ total_expenses|inr }}</strong></span>
+    </div>
+    <a href="{% url 'expenses:create' %}" class="btn btn-primary fw-bold"><i class="bi bi-plus-circle-fill me-1"></i> Record Expense</a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="q" class="form-control" placeholder="Search expense title..." value="{{ query }}">
+        </div>
+        <div class="col-md-3">
+            <select name="category" class="form-select">
+                <option value="">All Expense Categories</option>
+                {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"i" %}selected{% endif %}>{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="start_date" class="form-control" value="{{ start_date }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="end_date" class="form-control" value="{{ end_date }}">
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-secondary w-100">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Expense Description</th>
+                    <th>Category</th>
+                    <th>Amount (₹)</th>
+                    <th>Payment Mode</th>
+                    <th>Notes</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exp in page_obj %}
+                    <tr>
+                        <td>{{ exp.expense_date|date:"d-m-Y" }}</td>
+                        <td class="fw-bold text-dark">{{ exp.title }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ exp.category.name|default:"General" }}</span></td>
+                        <td class="fw-bold text-danger">{{ exp.amount|inr }}</td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">{{ exp.get_payment_method_display }}</span></td>
+                        <td class="small text-muted">{{ exp.notes|default:"-" }}</td>
+                        <td class="text-end">
+                            <form method="post" action="{% url 'expenses:delete' exp.pk %}" class="d-inline" onsubmit="return confirm('Delete this expense?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger btn-sm p-1"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">No expenses recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

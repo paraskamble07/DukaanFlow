@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Inventory & Stock Valuation — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Inventory Stock & Valuation</h4>
+        <span class="text-muted small">Realtime stock valuation and movement audit</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'reports:inventory' %}?export=csv" class="btn btn-outline-secondary"><i class="bi bi-download me-1"></i> Export CSV</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Total In-Stock Items</div>
+            <div class="fs-4 fw-bold text-dark">{{ total_items }} units</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Stock Valuation (Cost)</div>
+            <div class="fs-4 fw-bold text-secondary">{{ total_val_cost|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Stock Valuation (Retail MRP)</div>
+            <div class="fs-4 fw-bold text-primary">{{ total_val_mrp|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Low / Out of Stock</div>
+            <div class="fs-4 fw-bold text-danger">{{ low_stock_count }} items</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header fw-bold">Stock Movement Audit Log</div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Product</th>
+                    <th>Movement Type</th>
+                    <th>Qty</th>
+                    <th>Previous &rarr; New</th>
+                    <th>Reference / Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in recent_movements %}
+                    <tr>
+                        <td class="small">{{ m.created_at|date:"d-m-Y H:i" }}</td>
+                        <td class="fw-bold">{{ m.product.name }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ m.get_movement_type_display }}</span></td>
+                        <td class="fw-bold">{{ m.quantity }}</td>
+                        <td>{{ m.previous_stock }} &rarr; {{ m.new_stock }}</td>
+                        <td class="small text-muted">{{ m.notes|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted">No stock movements recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

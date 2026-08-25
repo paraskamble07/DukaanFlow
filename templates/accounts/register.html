@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Shop — DukaanFlow{% endblock %}
+
+{% block public_content %}
+<div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
+    <div class="card shadow-sm border p-4 p-md-5" style="max-width: 520px; width: 100%;">
+        <div class="text-center mb-4">
+            <a href="{% url 'landing:home' %}" class="text-decoration-none">
+                <h3 class="fw-bold text-dark"><i class="bi bi-phone-vibrate text-primary"></i> DUKAAN<span class="text-primary">FLOW</span></h3>
+            </a>
+            <p class="text-muted small">Create your shop account in 60 seconds</p>
+        </div>
+
+        {% if form.errors %}
+            <div class="alert alert-danger py-2 small" role="alert">
+                Please correct the errors below.
+                {{ form.errors }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'accounts:register' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Owner Full Name</label>
+                {{ form.full_name }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-bold">Shop / Business Name</label>
+                {{ form.shop_name }}
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">WhatsApp / Mobile No.</label>
+                    {{ form.phone }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Email Address</label>
+                    {{ form.email }}
+                </div>
+            </div>
+            <div class="row g-2 mb-4">
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Create Password</label>
+                    {{ form.password }}
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label small fw-bold">Confirm Password</label>
+                    {{ form.confirm_password }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2 shadow-sm">Create Shop & Start Free</button>
+        </form>
+
+        <div class="text-center mt-4 border-top pt-3">
+            <span class="text-muted small">Already have a shop account?</span>
+            <a href="{% url 'accounts:login' %}" class="fw-bold small text-primary text-decoration-none ms-1">Sign In</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

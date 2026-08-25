@@ -1,0 +1,125 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}{{ product.name }} — Product Details{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'products:list' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Products</a>
+        <h4 class="fw-bold mb-0 mt-1">{{ product.name }}</h4>
+        <span class="text-muted small">Brand: {{ product.brand|default:"Unbranded" }} | Category: {{ product.category.name|default:"General" }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'products:update' product.pk %}" class="btn btn-primary fw-bold"><i class="bi bi-pencil me-1"></i> Edit Product</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Selling Price / MRP</div>
+            <div class="fs-4 fw-bold text-primary">{{ product.selling_price|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Purchase Cost</div>
+            <div class="fs-4 fw-bold text-secondary">{{ product.purchase_price|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Available Stock</div>
+            <div class="fs-4 fw-bold {% if product.is_out_of_stock %}text-danger{% elif product.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                {{ product.stock_quantity }} units
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold text-uppercase">Profit Margin</div>
+            <div class="fs-4 fw-bold text-success">{{ product.get_profit_margin|floatformat:1 }}%</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Stock Movements Log -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header fw-bold"><i class="bi bi-arrow-left-right me-2"></i>Stock Movement History</div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Prev &rarr; New</th>
+                            <th>Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sm in stock_movements %}
+                            <tr>
+                                <td class="small">{{ sm.created_at|date:"d-m-Y H:i" }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ sm.get_movement_type_display }}</span></td>
+                                <td class="fw-bold">{{ sm.quantity }}</td>
+                                <td class="small">{{ sm.previous_stock }} &rarr; {{ sm.new_stock }}</td>
+                                <td class="small text-muted">{{ sm.notes|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="text-center py-3 text-muted">No stock movements logged.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMEI Serial Numbers if Tracked -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-upc-scan me-2"></i>Tracked Devices & IMEIs</span>
+                {% if product.is_imei_tracked %}
+                    <a href="{% url 'inventory:imei_create' %}" class="btn btn-outline-primary btn-sm">Add IMEI</a>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>IMEI 1</th>
+                            <th>Status</th>
+                            <th>Customer</th>
+                            <th>Warranty Exp.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dev in imei_devices %}
+                            <tr>
+                                <td class="font-monospace fw-bold">{{ dev.imei_1 }}</td>
+                                <td>
+                                    {% if dev.status == 'IN_STOCK' %}
+                                        <span class="badge bg-success">In Stock</span>
+                                    {% elif dev.status == 'SOLD' %}
+                                        <span class="badge bg-secondary">Sold</span>
+                                    {% else %}
+                                        <span class="badge bg-warning">{{ dev.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ dev.customer.name|default:"-" }}</td>
+                                <td class="small">{{ dev.warranty_expiry_date|date:"d-m-Y"|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center py-3 text-muted">{% if product.is_imei_tracked %}No serial devices attached yet.{% else %}IMEI tracking is disabled for this product.{% endif %}</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

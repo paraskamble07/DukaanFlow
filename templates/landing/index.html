@@ -1,0 +1,294 @@
+{% extends 'base.html' %}
+{% load static dukaan_tags %}
+
+{% block title %}DukaanFlow — Run Your Mobile Shop Smarter{% endblock %}
+
+{% block public_content %}
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top py-3">
+    <div class="container">
+        <a class="navbar-brand fw-bold fs-3" href="{% url 'landing:home' %}">
+            <i class="bi bi-phone-vibrate text-primary me-2"></i>DUKAAN<span class="text-primary">FLOW</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-3">
+                <li class="nav-item"><a class="nav-link text-white-50" href="#features">Features</a></li>
+                <li class="nav-item"><a class="nav-link text-white-50" href="#how-it-works">How It Works</a></li>
+                <li class="nav-item"><a class="nav-link text-white-50" href="#pricing">Pricing</a></li>
+                <li class="nav-item"><a class="nav-link text-white-50" href="#faq">FAQ</a></li>
+                <li class="nav-item"><a class="btn btn-outline-light btn-sm px-3" href="{% url 'accounts:login' %}">Login</a></li>
+                <li class="nav-item"><a class="btn btn-primary btn-sm fw-bold px-4" href="{% url 'accounts:register' %}">Start Free</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="py-5 bg-dark text-white border-bottom border-secondary text-center text-lg-start">
+    <div class="container py-lg-5">
+        <div class="row align-items-center">
+            <div class="col-lg-7">
+                <div class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill mb-3 fw-bold">
+                    🚀 India's #1 Dedicated Mobile Shop Management Platform
+                </div>
+                <h1 class="display-4 fw-bold lh-1 mb-3">
+                    Run your mobile shop <span class="text-primary">smarter</span>, faster & error-free.
+                </h1>
+                <p class="lead text-secondary mb-4">
+                    Replace notebooks and complex spreadsheets. Manage dual IMEI tracking, lightning-fast POS counter billing, customer Udhar/Khata ledgers, stock alerts, GST invoices, and 1-click WhatsApp payment reminders.
+                </p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg fw-bold px-4 py-3 shadow">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> Start 100% Free Forever
+                    </a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-light btn-lg px-4 py-3">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Existing Shop Login
+                    </a>
+                </div>
+                <div class="mt-4 text-muted small d-flex align-items-center justify-content-center justify-content-lg-start gap-4">
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> No Credit Card Required</span>
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> 2-Minute Setup</span>
+                    <span><i class="bi bi-check-circle-fill text-success me-1"></i> 100% Data Privacy</span>
+                </div>
+            </div>
+            <div class="col-lg-5 mt-5 mt-lg-0">
+                <div class="card bg-secondary bg-opacity-10 border-secondary p-4 shadow-lg text-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge bg-success">LIVE POS PREVIEW</span>
+                        <span class="text-muted small">Paras Mobile Hub</span>
+                    </div>
+                    <div class="p-3 bg-dark rounded border border-secondary mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>Samsung Galaxy A56 5G</strong>
+                            <span class="text-success fw-bold">₹28,999.00</span>
+                        </div>
+                        <div class="small text-primary">IMEI: 864521098765432</div>
+                    </div>
+                    <div class="p-3 bg-dark rounded border border-secondary mb-3">
+                        <div class="d-flex justify-content-between">
+                            <strong>25W Type-C Super Fast Charger</strong>
+                            <span class="text-success fw-bold">₹1,299.00</span>
+                        </div>
+                    </div>
+                    <div class="border-top border-secondary pt-2 d-flex justify-content-between fs-5 fw-bold">
+                        <span>Total Payable:</span>
+                        <span class="text-warning">₹30,298.00</span>
+                    </div>
+                    <button class="btn btn-success fw-bold mt-3 w-100 py-2">
+                        <i class="bi bi-whatsapp me-2"></i> Print Bill & Send on WhatsApp
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Core Features -->
+<section id="features" class="py-5 bg-white">
+    <div class="container py-4">
+        <div class="text-center max-w-700 mx-auto mb-5">
+            <span class="text-primary fw-bold text-uppercase">Built Specifically For Indian Mobile Retailers</span>
+            <h2 class="fw-bold mt-2">Everything you need to grow your retail business</h2>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-primary-subtle text-primary mb-3">
+                        <i class="bi bi-upc-scan"></i>
+                    </div>
+                    <h5 class="fw-bold">Dual IMEI & Serial Tracker</h5>
+                    <p class="text-muted small">
+                        Track every smartphone from purchase to sale. Instantly search any IMEI to find customer details, invoice, and manufacturer warranty status.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-success-subtle text-success mb-3">
+                        <i class="bi bi-journal-text"></i>
+                    </div>
+                    <h5 class="fw-bold">Indian Khata / Udhar Ledger</h5>
+                    <p class="text-muted small">
+                        Keep exact track of customer credit, partial payments, and overdue balances. Automatically updates balances with zero math mistakes.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-info-subtle text-info mb-3">
+                        <i class="bi bi-whatsapp"></i>
+                    </div>
+                    <h5 class="fw-bold">1-Click WhatsApp Reminders</h5>
+                    <p class="text-muted small">
+                        Send polite, pre-formatted payment reminders, invoice links, and digital receipts directly to customer WhatsApp with one tap. Zero API charges!
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-warning-subtle text-warning mb-3">
+                        <i class="bi bi-cart-check"></i>
+                    </div>
+                    <h5 class="fw-bold">Lightning Fast POS Counter</h5>
+                    <p class="text-muted small">
+                        Designed for busy shop counters. Complete sales in under 10 seconds with barcode/IMEI scanning, item discounts, and multi-mode payments (Cash, UPI, Card, Udhar).
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-danger-subtle text-danger mb-3">
+                        <i class="bi bi-calculator"></i>
+                    </div>
+                    <h5 class="fw-bold">True Gross & Net Profit</h5>
+                    <p class="text-muted small">
+                        Accurately calculates real profits based on True Cost of Goods Sold (COGS) and operational shop expenses like rent, salaries, and electricity.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <div class="stat-icon bg-dark-subtle text-dark mb-3">
+                        <i class="bi bi-file-earmark-pdf"></i>
+                    </div>
+                    <h5 class="fw-bold">GST Ready PDF Invoices</h5>
+                    <p class="text-muted small">
+                        Print beautiful, professional bills with your shop branding, logo, GSTIN, IMEI details, and payment summary on standard A4 or thermal receipt printers.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing Plans -->
+<section id="pricing" class="py-5 bg-light border-top">
+    <div class="container py-4">
+        <div class="text-center mb-5">
+            <span class="text-primary fw-bold text-uppercase">Transparent, Affordable Pricing</span>
+            <h2 class="fw-bold mt-2">Pick the plan that fits your shop</h2>
+            <p class="text-muted">No hidden fees. Start free and upgrade as your business expands.</p>
+        </div>
+        
+        <div class="row g-4 justify-content-center">
+            <!-- Free Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <h4 class="fw-bold">Free Starter</h4>
+                    <p class="text-muted small">Perfect for new single-counter mobile shops.</p>
+                    <div class="display-5 fw-bold my-3">₹0 <span class="fs-6 text-muted font-monospace">/ month</span></div>
+                    <ul class="list-unstyled d-flex flex-column gap-2 mb-4">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Up to 50 Customers</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Up to 100 Products</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Basic POS Billing</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> IMEI Device Tracking</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> PDF Invoicing & WhatsApp</li>
+                    </ul>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-primary fw-bold w-100 mt-auto py-2">Start Free</a>
+                </div>
+            </div>
+            
+            <!-- Pro Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 p-4 border-primary border-2 shadow position-relative">
+                    <div class="position-absolute top-0 end-0 bg-primary text-white small fw-bold px-3 py-1 rounded-bottom-start">MOST POPULAR</div>
+                    <h4 class="fw-bold">Pro Merchant</h4>
+                    <p class="text-muted small">For growing mobile & electronics retail stores.</p>
+                    <div class="display-5 fw-bold text-primary my-3">₹199 <span class="fs-6 text-muted font-monospace">/ month</span></div>
+                    <ul class="list-unstyled d-flex flex-column gap-2 mb-4">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> <strong>Unlimited</strong> Customers & Khata</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> <strong>Unlimited</strong> Products & Accessories</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Advanced Profit & Loss Analytics</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Full Supplier & Purchase Management</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> CSV Excel Data Exports</li>
+                    </ul>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary fw-bold w-100 mt-auto py-2">Get Pro Access</a>
+                </div>
+            </div>
+            
+            <!-- Business Plan -->
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 p-4 border shadow-sm">
+                    <h4 class="fw-bold">Business Ultra</h4>
+                    <p class="text-muted small">For busy retail hubs with staff members.</p>
+                    <div class="display-5 fw-bold my-3">₹499 <span class="fs-6 text-muted font-monospace">/ month</span></div>
+                    <ul class="list-unstyled d-flex flex-column gap-2 mb-4">
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Everything in Pro Plan</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Up to 10 Multi-User Staff Logins</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Priority Dedicated Support</li>
+                        <li><i class="bi bi-check2-circle text-success me-2"></i> Custom Invoice Branding</li>
+                    </ul>
+                    <a href="{% url 'accounts:register' %}" class="btn btn-outline-dark fw-bold w-100 mt-auto py-2">Get Business Ultra</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="py-5 bg-white">
+    <div class="container py-4 max-w-800">
+        <h2 class="fw-bold text-center mb-5">Frequently Asked Questions</h2>
+        <div class="accordion" id="faqAccordion">
+            <div class="accordion-item mb-3 border rounded">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                        Can other shop owners see my customer or sales data?
+                    </button>
+                </h2>
+                <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        <strong>Never.</strong> DukaanFlow is built with strict multi-tenant database isolation. Every shop's data, IMEI numbers, customers, and financial records are completely private and accessible only by you.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item mb-3 border rounded">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                        Do I need a barcode scanner or expensive POS hardware?
+                    </button>
+                </h2>
+                <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        No hardware required! You can use DukaanFlow on your mobile phone, laptop, or desktop computer. You can type or use standard USB barcode scanners directly.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item mb-3 border rounded">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                        How does WhatsApp reminder work? Is it free?
+                    </button>
+                </h2>
+                <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                    <div class="accordion-body text-muted">
+                        Yes, 100% free! DukaanFlow formats customized polite WhatsApp messages with your shop name, invoice amount, and due balance. Clicking the WhatsApp button opens WhatsApp Web or your phone's WhatsApp app with the message pre-typed.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white text-center">
+    <div class="container py-4">
+        <h2 class="display-6 fw-bold">Ready to modernize your mobile shop?</h2>
+        <p class="lead opacity-75 mb-4">Join thousands of Indian retailers running smarter with DukaanFlow.</p>
+        <a href="{% url 'accounts:register' %}" class="btn btn-light btn-lg fw-bold px-5 py-3 shadow">
+            Create Free Account Now
+        </a>
+    </div>
+</section>
+{% endblock %}

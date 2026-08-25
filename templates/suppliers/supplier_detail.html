@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}{{ supplier.company_name }} — Ledger{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'suppliers:list' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Suppliers</a>
+        <h4 class="fw-bold mb-0 mt-1">{{ supplier.company_name }}</h4>
+        <span class="text-muted small">Contact: {{ supplier.name }} | Phone: {{ supplier.phone }} | GSTIN: {{ supplier.gstin|default:"N/A" }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'payments:supplier_add' %}?supplier={{ supplier.pk }}" class="btn btn-success fw-bold">
+            <i class="bi bi-cash me-1"></i> Make Payment
+        </a>
+        <a href="{% url 'purchases:create' %}" class="btn btn-primary fw-bold">
+            <i class="bi bi-plus-lg me-1"></i> Inward Purchase
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">TOTAL PURCHASES</div>
+            <div class="fs-4 fw-bold text-dark">{{ total_purchases|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">TOTAL PAID</div>
+            <div class="fs-4 fw-bold text-success">{{ total_paid|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">OUTSTANDING PAYABLE</div>
+            <div class="fs-4 fw-bold text-danger">{{ due|inr }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

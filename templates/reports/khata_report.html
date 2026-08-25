@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Customer Khata Dues Report — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'reports:index' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Reports</a>
+        <h4 class="fw-bold mb-0 mt-1">Outstanding Customer Khata Dues</h4>
+        <span class="text-muted small">Total Market Udhar: <strong class="text-danger">{{ total_due_all|inr }}</strong></span>
+    </div>
+    <a href="{% url 'reports:khata' %}?export=csv" class="btn btn-outline-secondary">
+        <i class="bi bi-download me-1"></i> Export to CSV
+    </a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Mobile</th>
+                    <th>Total Purchases</th>
+                    <th>Total Paid</th>
+                    <th>Pending Due</th>
+                    <th class="text-end">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for k in khata_list %}
+                    <tr>
+                        <td class="fw-bold"><a href="{% url 'customers:detail' k.customer.pk %}" class="text-decoration-none">{{ k.customer.name }}</a></td>
+                        <td>{{ k.customer.phone }}</td>
+                        <td>{{ k.total_purchases|inr }}</td>
+                        <td class="text-success">{{ k.total_paid|inr }}</td>
+                        <td><span class="inr-badge-due">{{ k.due|inr }}</span></td>
+                        <td class="text-end">
+                            {% if k.wa_url %}
+                                <a href="{{ k.wa_url }}" target="_blank" class="btn btn-whatsapp btn-sm"><i class="bi bi-whatsapp me-1"></i> Remind</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center py-4 text-muted">All customer accounts are 100% cleared! No outstanding dues.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

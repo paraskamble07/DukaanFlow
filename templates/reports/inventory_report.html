@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Inventory & Stock Report — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'reports:index' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Reports</a>
+        <h4 class="fw-bold mb-0 mt-1">Inventory Valuation Report</h4>
+    </div>
+    <a href="{% url 'reports:inventory' %}?export=csv" class="btn btn-outline-secondary">
+        <i class="bi bi-download me-1"></i> Export to CSV
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">TOTAL STOCK ITEMS</div>
+            <div class="fs-4 fw-bold text-dark">{{ total_items }} units</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">STOCK VALUATION (PURCHASE COST)</div>
+            <div class="fs-4 fw-bold text-secondary">{{ total_cost_val|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3">
+            <div class="text-muted small fw-bold">STOCK VALUATION (RETAIL MRP)</div>
+            <div class="fs-4 fw-bold text-primary">{{ total_mrp_val|inr }}</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Product Name & Brand</th>
+                    <th>Category</th>
+                    <th>Cost Price</th>
+                    <th>Selling Price</th>
+                    <th>Qty</th>
+                    <th>Valuation (Cost)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in products %}
+                    <tr>
+                        <td class="fw-bold">{{ p.name }}</td>
+                        <td>{{ p.category.name|default:"General" }}</td>
+                        <td>{{ p.purchase_price|inr }}</td>
+                        <td>{{ p.selling_price|inr }}</td>
+                        <td class="fw-bold">{{ p.stock_quantity }}</td>
+                        <td>{{ p.stock_quantity|multiply:p.purchase_price|inr }}</td>
+                        <td>
+                            {% if p.is_out_of_stock %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elif p.is_low_stock %}
+                                <span class="badge bg-warning text-dark">Low Stock</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

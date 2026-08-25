@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}{{ customer.name }} — Customer Ledger{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'customers:list' %}" class="text-muted text-decoration-none small"><i class="bi bi-arrow-left"></i> Back to Customers</a>
+        <h4 class="fw-bold mb-0 mt-1">{{ customer.name }}</h4>
+        <span class="text-muted small"><i class="bi bi-telephone"></i> {{ customer.phone }} | {{ customer.address|default:"No address given" }}</span>
+    </div>
+    <div class="d-flex gap-2">
+        {% if due > 0 and wa_reminder %}
+            <a href="{{ wa_reminder }}" target="_blank" class="btn btn-whatsapp fw-bold shadow-sm">
+                <i class="bi bi-whatsapp me-1"></i> WhatsApp Reminder
+            </a>
+        {% endif %}
+        <a href="{% url 'payments:customer_add' %}?customer={{ customer.pk }}" class="btn btn-success fw-bold">
+            <i class="bi bi-plus-circle me-1"></i> Receive Payment
+        </a>
+        <a href="{% url 'customers:update' customer.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil"></i>
+        </a>
+    </div>
+</div>
+
+<!-- Ledger Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="text-muted small fw-bold text-uppercase">Total Sales Purchases</div>
+            <div class="fs-4 fw-bold text-dark">{{ total_sales|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="text-muted small fw-bold text-uppercase">Total Amount Paid</div>
+            <div class="fs-4 fw-bold text-success">{{ total_paid|inr }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-3 bg-white">
+            <div class="text-muted small fw-bold text-uppercase">Current Outstanding Due (Khata)</div>
+            <div class="fs-4 fw-bold {% if due > 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ due|inr }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customer Transactions Timeline -->
+<div class="row g-3">
+    <!-- Sales History -->
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header fw-bold">
+                <i class="bi bi-receipt me-2"></i>Sales Orders & Bills
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Bill Total</th>
+                            <th>Paid</th>
+                            <th>Due</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sales %}
+                            <tr>
+                                <td class="fw-bold text-primary">#{{ s.invoice_number }}</td>
+                                <td>{{ s.sale_date|date:"d-m-Y" }}</td>
+                                <td class="fw-bold">{{ s.total_amount|inr }}</td>
+                                <td class="text-success">{{ s.paid_amount|inr }}</td>
+                                <td>
+                                    {% if s.due_amount > 0 %}
+                                        <span class="inr-badge-due">{{ s.due_amount|inr }}</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Paid</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'invoices:detail' s.pk %}" class="btn btn-light btn-sm border"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="6" class="text-center py-4 text-muted">No sales orders found for this customer.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments History -->
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header fw-bold">
+                <i class="bi bi-cash-stack me-2"></i>Payment Receipts Received
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Ref</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in payments %}
+                            <tr>
+                                <td>{{ p.payment_date|date:"d-m-Y" }}</td>
+                                <td class="fw-bold text-success">{{ p.amount|inr }}</td>
+                                <td><span class="badge bg-light text-dark border">{{ p.get_payment_method_display }}</span></td>
+                                <td class="small text-muted">{{ p.reference_number|default:"-" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="4" class="text-center py-4 text-muted">No payment records found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Subscription Plans — DukaanFlow{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <span class="text-primary fw-bold text-uppercase">Subscription Management</span>
+    <h3 class="fw-bold mt-1">Upgrade or Switch Plan</h3>
+    <p class="text-muted">Currently Active Plan: <span class="badge bg-primary fs-6">{{ business.get_plan_tier_display }}</span></p>
+</div>
+
+<div class="row g-4 justify-content-center">
+    {% for key, plan in plans.items %}
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100 p-4 border {% if current_plan == key %}border-primary border-3 shadow{% else %}shadow-sm{% endif %} position-relative">
+            {% if current_plan == key %}
+                <div class="position-absolute top-0 end-0 bg-primary text-white small fw-bold px-3 py-1 rounded-bottom-start">CURRENT ACTIVE</div>
+            {% endif %}
+            <h4 class="fw-bold">{{ plan.name }}</h4>
+            <div class="display-6 fw-bold text-dark my-3">₹{{ plan.price }} <span class="fs-6 text-muted font-monospace">/ month</span></div>
+            
+            <ul class="list-unstyled d-flex flex-column gap-2 mb-4">
+                <li><i class="bi bi-check2 text-success me-2"></i> {% if plan.max_customers > 10000 %}<strong>Unlimited</strong>{% else %}Up to {{ plan.max_customers }}{% endif %} Customers</li>
+                <li><i class="bi bi-check2 text-success me-2"></i> {% if plan.max_products > 10000 %}<strong>Unlimited</strong>{% else %}Up to {{ plan.max_products }}{% endif %} Products</li>
+                <li><i class="bi bi-check2 text-success me-2"></i> Dual IMEI Tracking</li>
+                <li><i class="bi bi-check2 text-success me-2"></i> POS Billing & ReportLab PDF</li>
+                <li><i class="bi bi-check2 text-success me-2"></i> Free WhatsApp Reminders</li>
+                <li><i class="bi bi-check2 text-success me-2"></i> Up to {{ plan.max_staff }} Staff Accounts</li>
+            </ul>
+
+            <form method="post" class="mt-auto">
+                {% csrf_token %}
+                <input type="hidden" name="plan" value="{{ key }}">
+                {% if current_plan == key %}
+                    <button type="button" class="btn btn-secondary w-100 fw-bold disabled" disabled>Active Plan</button>
+                {% else %}
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Select {{ plan.name }}</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

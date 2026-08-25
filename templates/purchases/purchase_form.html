@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+
+{% block title %}New Stock Purchase — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card p-4 shadow-sm">
+            <h5 class="fw-bold mb-3 border-bottom pb-2"><i class="bi bi-bag-plus text-primary me-2"></i>Inward Stock Purchase Order</h5>
+            <form method="post" id="purchaseForm">
+                {% csrf_token %}
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Supplier / Distributor *</label>
+                        <select name="supplier" class="form-select" required>
+                            <option value="">-- Select Supplier --</option>
+                            {% for s in suppliers %}
+                                <option value="{{ s.id }}">{{ s.company_name }} ({{ s.name }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Supplier Bill / Invoice #</label>
+                        <input type="text" name="invoice_number" class="form-control" placeholder="e.g. BILL-9872">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Purchase Date *</label>
+                        <input type="date" name="purchase_date" class="form-control" value="{{ today|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+
+                <div class="card p-3 mb-3 bg-light border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold small">Purchased Items & Quantities</span>
+                        <button type="button" class="btn btn-outline-primary btn-sm fw-bold" onclick="addPurchaseRow()">+ Add Item</button>
+                    </div>
+                    <table class="table table-sm align-middle mb-0" id="purchaseItemsTable">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th style="width: 120px;">Qty</th>
+                                <th style="width: 150px;">Unit Cost (₹)</th>
+                                <th style="width: 40px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <select name="product_id[]" class="form-select form-select-sm" required>
+                                        <option value="">-- Choose Product --</option>
+                                        {% for p in products %}
+                                            <option value="{{ p.id }}">{{ p.name }} (Current Stock: {{ p.stock_quantity }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </td>
+                                <td><input type="number" name="quantity[]" min="1" value="1" class="form-control form-control-sm" required></td>
+                                <td><input type="number" name="unit_cost[]" step="0.01" min="0" placeholder="0.00" class="form-control form-control-sm" required></td>
+                                <td><button type="button" class="btn btn-outline-danger btn-sm p-1" onclick="this.closest('tr').remove()"><i class="bi bi-trash"></i></button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Payment Method</label>
+                        <select name="payment_method" class="form-select">
+                            <option value="CASH">Cash</option>
+                            <option value="UPI">UPI / Online</option>
+                            <option value="BANK">Bank Transfer / NEFT</option>
+                            <option value="CREDIT">Supplier Credit (Khata)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Amount Paid Now (₹)</label>
+                        <input type="number" name="paid_amount" step="0.01" min="0" value="0" class="form-control">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Notes / Transport details</label>
+                    <textarea name="notes" class="form-control" rows="2"></textarea>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary fw-bold px-4 py-2">Save Purchase & Add Stock</button>
+                    <a href="{% url 'purchases:list' %}" class="btn btn-light border">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function addPurchaseRow() {
+    const table = document.getElementById('purchaseItemsTable').getElementsByTagName('tbody')[0];
+    const row = table.rows[0].cloneNode(true);
+    row.querySelector('select').value = '';
+    row.querySelectorAll('input')[0].value = '1';
+    row.querySelectorAll('input')[1].value = '';
+    table.appendChild(row);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load dukaan_tags %}
+
+{% block title %}Sales History — {{ current_business.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="fw-bold mb-0">Sales Orders & Invoices</h4>
+        <span class="text-muted small">Complete invoice records and billing transactions</span>
+    </div>
+    <a href="{% url 'sales:pos' %}" class="btn btn-primary fw-bold"><i class="bi bi-cart-plus-fill me-1"></i> New Sale</a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="q" class="form-control" placeholder="Search by Invoice #, Customer name or phone..." value="{{ query }}">
+            </div>
+        </div>
+        <div class="col-md-3">
+            <select name="status" class="form-select">
+                <option value="">All Payment Statuses</option>
+                <option value="PAID" {% if status_filter == 'PAID' %}selected{% endif %}>Paid</option>
+                <option value="PARTIAL" {% if status_filter == 'PARTIAL' %}selected{% endif %}>Partial</option>
+                <option value="UNPAID" {% if status_filter == 'UNPAID' %}selected{% endif %}>Credit / Unpaid</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-secondary flex-grow-1">Filter</button>
+            <a href="{% url 'sales:list' %}" class="btn btn-outline-secondary">Reset</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Invoice No</th>
+                    <th>Date & Time</th>
+                    <th>Customer</th>
+                    <th>Total (₹)</th>
+                    <th>Paid (₹)</th>
+                    <th>Due (₹)</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in page_obj %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ s.invoice_number }}</td>
+                        <td class="small">{{ s.sale_date|date:"d-m-Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'customers:detail' s.customer.pk %}" class="text-decoration-none fw-bold">{{ s.customer.name }}</a>
+                            <div class="text-muted small">{{ s.customer.phone }}</div>
+                        </td>
+                        <td class="fw-bold">{{ s.total_amount|inr }}</td>
+                        <td class="text-success">{{ s.paid_amount|inr }}</td>
+                        <td>
+                            {% if s.due_amount > 0 %}
+                                <span class="inr-badge-due">{{ s.due_amount|inr }}</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success">₹0.00</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if s.payment_status == 'PAID' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif s.payment_status == 'PARTIAL' %}
+                                <span class="badge bg-warning text-dark">Partial</span>
+                            {% else %}
+                                <span class="badge bg-danger">Credit</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'invoices:detail' s.pk %}" class="btn btn-outline-secondary" title="View Invoice"><i class="bi bi-eye"></i></a>
+                                <a href="{% url 'invoices:pdf' s.pk %}" class="btn btn-outline-secondary" title="Download PDF"><i class="bi bi-file-earmark-pdf"></i></a>
+                                <a href="{% url 'invoices:print' s.pk %}" target="_blank" class="btn btn-outline-secondary" title="Print Bill"><i class="bi bi-printer"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="8" class="text-center py-4 text-muted">No sales orders found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
