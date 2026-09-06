@@ -6,6 +6,7 @@ class UserModel {
   final String lastName;
   final String? phone;
   final String role;
+  final bool isShopZenAdmin;
 
   UserModel({
     required this.id,
@@ -15,6 +16,7 @@ class UserModel {
     required this.lastName,
     this.phone,
     required this.role,
+    this.isShopZenAdmin = false,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,8 @@ class UserModel {
       lastName: json['last_name'] ?? '',
       phone: profile?['phone'],
       role: profile?['role'] ?? 'OWNER',
+      // Navigation hint only; the backend re-checks on every admin API call.
+      isShopZenAdmin: json['is_shopzen_admin'] == true,
     );
   }
 
@@ -38,5 +42,6 @@ class UserModel {
     'last_name': lastName,
     'phone': phone,
     'role': role,
+    'is_shopzen_admin': isShopZenAdmin,
   };
 }

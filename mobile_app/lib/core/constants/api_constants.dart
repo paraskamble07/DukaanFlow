@@ -65,6 +65,14 @@ class ApiConstants {
   static const String subscriptionMyRequests = '/api/subscription/requests/';
   static const String subscriptionSubmitPayment = '/api/subscription/payment-request/';
 
+  // ShopZen Admin (backend-enforced role; the APIs reject non-admins)
+  static const String adminDashboard = '/api/admin/dashboard/';
+  static const String adminPaymentRequests = '/api/admin/payment-requests/';
+  static String adminReviewPayment(int id) => '/api/admin/payment-requests/$id/review/';
+
+  // Health (public)
+  static const String health = '/api/health/';
+
   // Sales detail
   static String saleDetail(int id) => '/api/sales/$id/';
 }

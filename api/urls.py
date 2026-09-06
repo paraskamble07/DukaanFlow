@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from api.views import (
     auth_views, dashboard_views, product_views, inventory_views,
     pos_views, customer_views, supplier_views, expense_views,
-    payment_views, report_views, subscription_views
+    payment_views, report_views, subscription_views, health_views
 )
 from subscriptions import views as subscription_admin_views
 
@@ -76,4 +76,7 @@ urlpatterns = [
     path('reports/gst/', report_views.GSTReportAPIView.as_view(), name='report_gst'),
     path('reports/top-products/', report_views.TopProductsReportAPIView.as_view(), name='report_top_products'),
     path('reports/top-customers/', report_views.TopCustomersReportAPIView.as_view(), name='report_top_customers'),
+
+    # Health (public — Render/uptime monitors and the mobile app)
+    path('health/', health_views.HealthAPIView.as_view(), name='health'),
 ]

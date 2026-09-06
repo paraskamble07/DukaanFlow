@@ -12,6 +12,7 @@ import '../../features/inventory/product_list_screen.dart';
 import '../../features/reports/reports_screen.dart';
 import '../../features/subscription/subscription_screen.dart';
 import '../../features/settings/settings_screen.dart';
+import '../../features/admin/admin_dashboard_screen.dart';
 
 class MoreScreen extends ConsumerWidget {
   const MoreScreen({super.key});
@@ -100,6 +101,14 @@ class MoreScreen extends ConsumerWidget {
           ),
 
           _SectionHeader('ACCOUNT'),
+          if (auth.user?.isShopZenAdmin == true)
+            _NavTile(
+              icon: Icons.admin_panel_settings_rounded,
+              color: const Color(0xFF7C3AED),
+              title: 'ShopZen Admin',
+              subtitle: 'Verify ₹30 payments, shops & revenue',
+              onTap: () => _push(context, const AdminDashboardScreen()),
+            ),
           _NavTile(
             icon: Icons.workspace_premium_rounded,
             color: const Color(0xFFF59E0B),

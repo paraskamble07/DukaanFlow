@@ -19,10 +19,16 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(source='userprofile', read_only=True)
+    is_shopzen_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile', 'is_shopzen_admin']
+
+    def get_is_shopzen_admin(self, obj):
+        # Navigation hint only — every admin API re-checks this server-side.
+        from subscriptions.permissions import is_shopzen_admin
+        return is_shopzen_admin(obj)
 
 class BusinessSerializer(serializers.ModelSerializer):
     plan_info = serializers.SerializerMethodField()

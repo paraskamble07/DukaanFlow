@@ -1,0 +1,57 @@
+# Render Blueprint — Infrastructure as Code for the ShopZen production API.
+#
+# First-time setup (one-time):
+#   1. Render dashboard -> New -> Blueprint -> pick this GitHub repo.
+#   2. Render reads this file and creates the web service + PostgreSQL.
+#   3. Set the secrets below in the Render dashboard (Environment):
+#        DJANGO_SECRET_KEY  - long random string
+#        ADMIN_PASSWORD      - used once by the create-admin job (see docs/PRODUCTION_DEPLOYMENT.md)
+#   4. Deploy. The release command runs migrations automatically.
+#
+# If the service already exists (created manually before), instead open
+# the service -> Settings and verify:
+#   Build Command : pip install -r requirements.txt && python manage.py collectstatic --no-input
+#   Start Command : gunicorn config.wsgi --log-file -
+#   Auto-Deploy   : Yes (so every git push deploys)
+#   Health Check  : /api/health/
+
+services:
+  - type: web
+    name: dukaanflow
+    runtime: python
+    plan: starter
+    region: singapore
+    branch: main
+    autoDeploy: true
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --no-input
+    startCommand: gunicorn config.wsgi --workers 2 --threads 4 --log-file -
+    healthCheckPath: /api/health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DJANGO_SECRET_KEY
+        sync: false          # set in Render dashboard
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "dukaanflow.onrender.com,.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dukaanflow-db
+          property: connectionString
+      # Manual ₹30 subscription payment settings (override in dashboard if they change)
+      - key: SHOPZEN_UPI_ID
+        value: "kambleparas220-1@okaxis"
+      - key: SHOPZEN_PAYEE_NAME
+        value: "Paras Kamble"
+      - key: SHOPZEN_QR_IMAGE_URL
+        value: "https://dukaanflow.onrender.com/static/images/shopzen_payment_qr.png"
+      - key: WEB_CONCURRENCY
+        value: "2"
+
+databases:
+  - name: dukaanflow-db
+    plan: basic-256mb
+    region: singapore
+    databaseName: dukaanflow
+    user: dukaanflow
