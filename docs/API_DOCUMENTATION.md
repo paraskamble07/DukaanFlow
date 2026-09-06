@@ -122,9 +122,27 @@ All stock checks run **before** any write; the bill, invoice number, stock movem
 
 All financial maths is **Decimal, server-side** — the client never computes money.
 
-## 11. Subscription — one plan only
+## 11. Subscription — ₹30/month, manually verified
+
 - `GET /api/subscription/status/` → `{plan_name: "ShopZen Premium", price: 30, price_display: "₹30/month", is_active, status, start_date, end_date, days_remaining, features}`
-- `POST /api/subscription/renew/` — server-side 30-day extension (payment provider webhook hook point; never trust a client `payment_success` flag)
+- `GET /api/subscription/payment-config/` → `{price: 30, price_display, duration_days: 30, upi_id, payee_name, qr_image_url, upi_intent_url}` — the QR/UPI details the owner pays to (env-configured server-side; nothing hard-coded in the app)
+- `GET /api/subscription/requests/` → subscription summary + `pending_request` bool + last 10 payment requests (owner's own history)
+- `POST /api/subscription/payment-request/` `{amount, upi_reference, note}` → **201, status PENDING — Premium is NOT activated**. Duplicate while PENDING → 400. Amount must be a multiple of ₹30 (₹60/₹90 pay 2/3 months).
+
+## 12. ShopZen Admin (backend-enforced role)
+
+Accessible **only** to `is_superuser` or `UserProfile.role == SHOPZEN_ADMIN`; every other user gets `403`. The Flutter app shows the admin UI only when the login response carries `user.is_shopzen_admin`, but that flag is a navigation hint — the security check is always server-side.
+
+- `GET /api/admin/dashboard/` → `{total_users, total_shops, active_subscriptions, expired_subscriptions, pending_payments, approved_payments, rejected_payments, revenue, revenue_display, recent_registrations[], recent_payment_requests[], system_time}`
+- `GET /api/admin/payment-requests/?status=PENDING|APPROVED|REJECTED&q=<utr|shop|email>` → searchable review queue (shop, owner, email, phone, amount, UTR, dates, status, rejection_reason)
+- `POST /api/admin/payment-requests/{id}/review/` `{action: "APPROVE"|"REJECT", rejection_reason?}` →
+  - APPROVE: **atomic** (`transaction.atomic` + `select_for_update` + PENDING filter) — activates Premium, sets start/expiry (stacks on current expiry), records reviewer + timestamp, audits. Second call → **404** (duplicate/replay-proof).
+  - REJECT: records reason, keeps Premium inactive, audited.
+  - Non-admin → 403 audited as blocked. Already-reviewed id → 404 audited as blocked.
+
+## 13. Health (public, unauthenticated)
+
+- `GET /api/health/` → `{"status":"ok","app":"ShopZen","version":"1.0.0","database":"up","time":"…"}` — 200 when DB reachable, **503 with `database:"down"`** otherwise. Used by Render's health check and uptime monitors.
 
 ## Security guarantees
 - Every queryset is `filter(business=request.business)` — IDOR returns `404` (tested)

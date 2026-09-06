@@ -30,7 +30,8 @@ DukaanFlow Website (Django templates) ────┘  (same business logic & da
 - **Suppliers & Purchases**: supplier CRUD, purchase entry (stock auto-increase), supplier payments & payables
 - **Expenses**: 8 pre-seeded categories, list + entry, category breakdown
 - **Reports (server-calculated, Decimal)**: P&L, Sales, Stock + dead stock, Khata, Expenses, GST, Top Products, Top Customers
-- **Subscription**: one plan — **ShopZen Premium ₹30/month**, status screen, renew, expiry never deletes data
+- **Subscription**: one plan — **ShopZen Premium ₹30/month**, paid to the owner's UPI QR, **manually verified by the ShopZen Admin** (submit UTR → PENDING → admin approves → active). Duplicate/replay-proof, fully audited
+- **ShopZen Admin (in-app)**: for the authorized admin account only — totals (users/shops/active/expired), pending/approved/rejected payments, revenue, recent registrations, one-tap APPROVE/REJECT with atomic server guarantees
 - **Offline**: POS queue with auto-sync, safe 201-only dequeue
 - **i18n**: English / हिंदी / मराठी; Light/Dark/System themes; Material 3
 
@@ -43,7 +44,7 @@ Tenant is derived from the JWT on the server — `shop_id` from the client is ig
 ```bash
 # Backend
 ./venv/Scripts/python.exe manage.py runserver 0.0.0.0:8000
-./venv/Scripts/python.exe manage.py test            # 14 tests OK
+./venv/Scripts/python.exe manage.py test api subscriptions   # 23 tests OK
 
 # Mobile (see docs/INSTALLATION_GUIDE.md)
 cd mobile_app
@@ -53,13 +54,16 @@ flutter run                                         # live on device
 flutter build apk --release                        # → build/app/outputs/flutter-apk/app-release.apk
 ```
 
-Set the API base URL in `mobile_app/lib/core/constants/api_constants.dart`
-(emulator: `http://10.0.2.2:8000`, phone on Wi-Fi: `http://<LAN-IP>:8000`, production: `https://dukaanflow.onrender.com`).
+The release APK defaults to the **production URL** `https://dukaanflow.onrender.com` (override only for local debugging: `--dart-define=API_BASE_URL=http://127.0.0.1:8000` with `adb reverse tcp:8000 tcp:8000`).
 
 ## Documentation index
 
 - [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) — every endpoint with payloads
 - [INSTALLATION_GUIDE.md](docs/INSTALLATION_GUIDE.md) — phone setup, USB debugging, APK build/install
-- [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) — Render redeploy steps
+- [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) — Render deploy (blueprint + manual deploy + troubleshooting)
 - [SECURITY.md](docs/SECURITY.md) — tenant isolation, financial integrity, payment security
+- [USER_GUIDE.md](docs/USER_GUIDE.md) — end-user manual (English)
+- [PAYMENT_SUBSCRIPTION_GUIDE.md](docs/PAYMENT_SUBSCRIPTION_GUIDE.md) — the ₹30 flow: owner pays, admin verifies
+- [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) — creating and using YOUR admin account
+- [TESTING.md](docs/TESTING.md) — automated suites + manual phone checklist
 - [USER_GUIDE.md](docs/USER_GUIDE.md) — end-user manual (English)

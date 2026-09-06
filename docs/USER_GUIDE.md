@@ -34,9 +34,18 @@ If you are offline, the bill is saved on the phone and syncs automatically when 
 - **More → Expenses**: rent, electricity, salary, transport etc. (categories pre-loaded).
 - **More → Reports**: Profit & Loss, Sales, Stock (incl. dead stock), Khata, GST, Top Products, Top Customers — all computed by the backend with exact decimal money math.
 
-## Subscription
+## Subscription (₹30 Premium)
 
-ShopZen Premium — **₹30/month**, one simple plan, everything included. Even if it expires, **your data is never deleted**; renew any time and everything is back.
+ShopZen Premium — **₹30/month**, one simple plan, everything included. Even if it expires, **your data is never deleted**; pay any time and everything is back.
+
+**How to pay:**
+1. Go to **More → ShopZen Premium**.
+2. Scan the **QR code** with any UPI app (GooglePay/PhonePe/Paytm) and pay ₹30 (₹60 = 2 months, ₹90 = 3).
+3. Copy the **UTR / reference number** from your payment receipt.
+4. Type it in the app and tap **I HAVE PAID — SUBMIT**.
+5. You'll see **"Payment Under Verification"** — Premium starts only after ShopZen verifies your payment (usually within a few hours). You can tap *Check Status* anytime.
+
+**मराठी:** More → ShopZen Premium → QR स्कॅन करून ₹30 भरा → UTR नंबर ॲपमध्ये टाका → "I HAVE PAID" दाबा → approve होईपर्यंत "Verification साठी प्रतीक्षा" दिसेल. Premium फक्त verification नंतरच सुरू होतो.
 
 ## Settings
 
