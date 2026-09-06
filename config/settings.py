@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from datetime import timedelta
 from dotenv import load_dotenv
 import dj_database_url
 
@@ -24,6 +25,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
 
+    # Third Party Libraries
+    'corsheaders',
+    'rest_framework',
+    'rest_framework_simplejwt',
+
     # DukaanFlow SaaS Apps
     'core',
     'accounts',
@@ -36,13 +42,16 @@ INSTALLED_APPS = [
     'sales',
     'expenses',
     'payments',
+    'subscriptions',
     'invoices',
     'reports',
     'dashboard',
     'landing',
+    'api',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -53,6 +62,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.TenantMiddleware',
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True  # Allows Flutter mobile app & web clients to access APIs
 
 ROOT_URLCONF = 'config.urls'
 
@@ -90,6 +101,27 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# Django REST Framework & JWT Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 25,
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=90),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
@@ -108,3 +140,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'landing:home'
+
+# ===== ShopZen Premium payment configuration (env-driven — nothing hard-coded) =====
+# Decode of the owner's GooglePay QR: upi://pay?pa=kambleparas220-1@okaxis&pn=Paras%20kamble
+SHOPZEN_UPI_ID = os.environ.get('SHOPZEN_UPI_ID', 'kambleparas220-1@okaxis')
+SHOPZEN_PAYEE_NAME = os.environ.get('SHOPZEN_PAYEE_NAME', 'Paras Kamble')
+# Public URL of the payment QR image (served from /static/ or any CDN) — set on Render env.
+SHOPZEN_QR_IMAGE_URL = os.environ.get(
+    'SHOPZEN_QR_IMAGE_URL',
+    'https://dukaanflow.onrender.com/static/images/shopzen_payment_qr.png',
+)

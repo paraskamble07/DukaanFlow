@@ -19,6 +19,9 @@ urlpatterns = [
     path('payments/', include('payments.urls', namespace='payments')),
     path('invoices/', include('invoices.urls', namespace='invoices')),
     path('reports/', include('reports.urls', namespace='reports')),
+    
+    # REST API for Flutter Mobile Application
+    path('api/', include('api.urls', namespace='api')),
 ]
 
 if settings.DEBUG:

@@ -11,3 +11,13 @@ media/
 staticfiles/
 .DS_Store
 Thumbs.db
+
+# Flutter mobile app build artifacts
+mobile_app/build/
+mobile_app/.dart_tool/
+mobile_app/android/.gradle/
+mobile_app/android/local.properties
+mobile_app/.env
+.test_shots/
+mobile_app/.flutter-plugins-dependencies
+step_*.py
