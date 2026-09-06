@@ -22,8 +22,22 @@ class CustomerDetailScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(customerLedgerProvider(customer.id)),
         child: ledgerAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Error: $err')),
+          // RefreshIndicator requires a scrollable child in EVERY state, or
+          // the layout throws and the whole screen paints blank.
+          loading: () => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: const [
+              SizedBox(height: 200),
+              Center(child: CircularProgressIndicator()),
+            ],
+          ),
+          error: (err, _) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              const SizedBox(height: 120),
+              Center(child: Text('Error: $err', textAlign: TextAlign.center)),
+            ],
+          ),
           data: (data) {
             final summary = data['summary'] as Map<String, dynamic>? ?? {};
             final due = double.tryParse(summary['outstanding_due']?.toString() ?? '0') ?? 0.0;

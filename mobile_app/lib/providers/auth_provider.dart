@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../core/constants/api_constants.dart';
@@ -42,9 +43,18 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   final ApiClient _client;
+  final Completer<void> _restoreDone = Completer<void>();
+
+  /// Completes when the persisted login has been restored (or found absent).
+  /// The splash screen awaits this instead of guessing with a fixed timer —
+  /// Android keystore reads can outlast a hardcoded delay and would otherwise
+  /// log the user out on every cold start.
+  Future<void> get ready => _restoreDone.future;
 
   AuthNotifier(this._client) : super(AuthState()) {
-    checkAuth();
+    checkAuth().whenComplete(() {
+      if (!_restoreDone.isCompleted) _restoreDone.complete();
+    });
   }
 
   Future<void> checkAuth() async {

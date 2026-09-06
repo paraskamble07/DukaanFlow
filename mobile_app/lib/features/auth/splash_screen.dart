@@ -21,7 +21,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _checkNavigation() async {
-    await Future.delayed(const Duration(milliseconds: 1600));
+    // Wait for persisted login restore (keystore reads are slow on some
+    // devices), capped so a broken keystore can never hang the splash.
+    final auth = ref.read(authProvider.notifier);
+    try {
+      await auth.ready.timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Timeout (or provider disposed): fall through with whatever state we have.
+    }
     if (!mounted) return;
 
     final authState = ref.read(authProvider);

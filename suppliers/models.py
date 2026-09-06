@@ -18,11 +18,11 @@ class Supplier(TenantModel):
         return f"{self.company_name} ({self.name})"
 
     def get_total_purchases(self):
-        total = self.purchases_purchase_set.aggregate(models.Sum('total_amount'))['total_amount__sum']
+        total = self.purchases.aggregate(models.Sum('total_amount'))['total_amount__sum']
         return total or Decimal('0.00')
 
     def get_total_paid(self):
-        total = self.payments_payment_set.aggregate(models.Sum('amount'))['amount__sum']
+        total = self.payments.aggregate(models.Sum('amount'))['amount__sum']
         return total or Decimal('0.00')
 
     def get_outstanding_due(self):

@@ -23,15 +23,16 @@ class POSCheckoutAPIView(APIView):
         data = request.data
 
         customer_id = data.get('customer_id')
-        new_cust_name = data.get('new_customer_name', '').strip()
-        new_cust_phone = data.get('new_customer_phone', '').strip()
+        # App sends explicit null for walk-in sales — treat null like absent.
+        new_cust_name = (data.get('new_customer_name') or '').strip()
+        new_cust_phone = (data.get('new_customer_phone') or '').strip()
 
         items_data = data.get('items', [])
         discount_val = Decimal(str(data.get('discount', '0') or '0'))
         tax_val = Decimal(str(data.get('tax', '0') or '0'))
         paid_val = Decimal(str(data.get('paid_amount', '0') or '0'))
-        payment_method = data.get('payment_method', 'CASH')
-        notes = data.get('notes', '')
+        payment_method = data.get('payment_method') or 'CASH'
+        notes = data.get('notes') or ''
 
         if not items_data:
             return Response({'error': 'Cart is empty. Please add products.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -181,6 +182,12 @@ class POSCheckoutAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         except Exception:
+            # Log the real cause server-side; the client only gets a safe message.
+            import logging, traceback
+            logging.getLogger('shopzen.pos').error(
+                'Checkout failed for business %s: %s',
+                business.id, traceback.format_exc()
+            )
             return Response(
                 {'error': 'Checkout failed. Nothing was saved — please verify the cart and try again.'},
                 status=status.HTTP_400_BAD_REQUEST,

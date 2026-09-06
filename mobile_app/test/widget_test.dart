@@ -120,8 +120,9 @@ void main() {
     expect(find.text('Smart Shop Management'), findsOneWidget);
     expect(find.text('Developed by PARAS KAMBLE'), findsOneWidget);
 
-    // Flush the splash's 1.6s navigation timer so no Timer stays pending
-    // when the test framework verifies invariants.
+    // Splash now awaits auth restore with a 5s timeout — pump past it so no
+    // Timer stays pending when the test framework verifies invariants.
     await tester.pump(const Duration(seconds: 2));
+    await tester.pump(const Duration(seconds: 5));
   });
 }

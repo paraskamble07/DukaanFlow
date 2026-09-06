@@ -150,3 +150,15 @@ SHOPZEN_QR_IMAGE_URL = os.environ.get(
     'SHOPZEN_QR_IMAGE_URL',
     'https://dukaanflow.onrender.com/static/images/shopzen_payment_qr.png',
 )
+
+# Server-side error logging (checkout failures etc.)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler'},
+    },
+    'loggers': {
+        'shopzen': {'handlers': ['console'], 'level': 'ERROR', 'propagate': False},
+    },
+}

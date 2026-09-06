@@ -71,7 +71,17 @@ class Business(models.Model):
         return True, self.products_product_set.count(), 999999
 
     def generate_next_invoice_number(self):
+        # Skip past any numbers already used by earlier (possibly rolled-back)
+        # bills so the unique constraint can never collide.
+        from sales.models import Sale
+        used = set(
+            Sale.objects.filter(business=self)
+            .values_list('invoice_number', flat=True)
+        )
         num = f"{self.invoice_prefix}{self.next_invoice_number}"
+        while num in used:
+            self.next_invoice_number += 1
+            num = f"{self.invoice_prefix}{self.next_invoice_number}"
         self.next_invoice_number += 1
         self.save(update_fields=['next_invoice_number'])
         return num
