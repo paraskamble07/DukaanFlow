@@ -8,6 +8,7 @@ import '../../shared_widgets/whatsapp_button.dart';
 import '../pos/pos_screen.dart';
 import '../inventory/imei_scanner_screen.dart';
 import '../inventory/imei_lookup_screen.dart';
+import '../admin/admin_dashboard_screen.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/sales_chart_card.dart';
 import 'widgets/quick_actions_bar.dart';
@@ -20,6 +21,46 @@ class DashboardScreen extends ConsumerWidget {
     final authState = ref.watch(authProvider);
     final dashboardAsync = ref.watch(dashboardProvider);
     final business = authState.business;
+
+    // ShopZen Admin accounts have no shop of their own — every /api/dashboard/
+    // call would 403. Give them a clean landing instead of an error screen.
+    if (business == null && authState.user?.isShopZenAdmin == true) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('ShopZen')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.admin_panel_settings_rounded,
+                    size: 64, color: AppColors.primary),
+                const SizedBox(height: 16),
+                Text(
+                  'Signed in as ShopZen Admin',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This account manages payments and shops. Open the Admin Dashboard to verify ₹30 subscriptions.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                  ),
+                  icon: const Icon(Icons.dashboard_outlined),
+                  label: const Text('Open Admin Dashboard'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

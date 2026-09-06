@@ -97,7 +97,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     child: Center(child: CircularProgressIndicator()),
                   )),
                   error: (e, _) => const SizedBox.shrink(),
-                  data: (cfg) => _payCard(cfg),
+                  data: (cfg) => _payCard(cfg, isActive),
                 ),
               const SizedBox(height: 16),
               const Text('EVERYTHING INCLUDED', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 1)),
@@ -240,15 +240,15 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     );
   }
 
-  Widget _payCard(Map<String, dynamic> cfg) {
+  Widget _payCard(Map<String, dynamic> cfg, bool isActive) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('PAY ₹30 & GET PREMIUM',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold,
+            Text(isActive ? 'RENEW EARLY — ADD MORE MONTHS' : 'PAY ₹30 & GET PREMIUM',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold,
                     color: AppColors.textSecondary, letterSpacing: 1)),
             const SizedBox(height: 12),
             Center(
