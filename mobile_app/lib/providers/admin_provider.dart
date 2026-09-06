@@ -19,14 +19,20 @@ final adminPaymentRequestsProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
   final client = ref.watch(apiClientProvider);
   final status = ref.watch(adminPayStatusProvider);
+  final q = ref.watch(adminPaySearchProvider);
   final res = await client.dio.get(
     ApiConstants.adminPaymentRequests,
-    queryParameters: {'status': status},
+    queryParameters: {
+      'status': status,
+      if (q.isNotEmpty) 'q': q,
+    },
   );
-  if (res.data is List) return (res.data as List).cast<Map<String, dynamic>>();
-  if (res.data is Map && res.data['results'] is List) {
-    return (res.data['results'] as List).cast<Map<String, dynamic>>();
+  // Server wraps the list in {'requests': [...]}
+  final data = res.data;
+  if (data is Map && data['requests'] is List) {
+    return (data['requests'] as List).cast<Map<String, dynamic>>();
   }
+  if (data is List) return data.cast<Map<String, dynamic>>();
   return [];
 });
 

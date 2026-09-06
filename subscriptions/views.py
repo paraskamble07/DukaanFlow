@@ -179,6 +179,7 @@ class AdminPaymentRequestsAPIView(APIView):
             'amount': str(r.amount), 'upi_reference': r.upi_reference,
             'status': r.status,
             'created_at': r.created_at.strftime('%d-%m-%Y %H:%M'),
+            'rejection_reason': r.rejection_reason,
             'note': r.note,
         } for r in qs[:100]]})
 

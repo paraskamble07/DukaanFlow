@@ -66,10 +66,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         _statCard('Shops', d['total_shops'], Icons.storefront_outlined),
                         _statCard('Active Subs', d['active_subscriptions'], Icons.verified_outlined, color: AppColors.success),
                         _statCard('Expired', d['expired_subscriptions'], Icons.timer_off_outlined, color: AppColors.danger),
-                        _statCard('Pending', d['pending_payments'], Icons.hourglass_top_outlined, color: Colors.orange),
+                        _statCard('Pending', d['pending_payment_requests'], Icons.hourglass_top_outlined, color: Colors.orange),
                         _statCard('Approved', d['approved_payments'], Icons.check_circle_outline, color: AppColors.success),
                         _statCard('Rejected', d['rejected_payments'], Icons.cancel_outlined, color: AppColors.danger),
-                        _statCard('Revenue', d['revenue_display'], Icons.currency_rupee, color: AppColors.success),
+                        _statCard('Revenue ₹', d['total_subscription_revenue'], Icons.currency_rupee, color: AppColors.success),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -213,12 +213,13 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   contentPadding: EdgeInsets.zero,
                   dense: true,
                   leading: const Icon(Icons.store, size: 20, color: AppColors.primary),
-                  title: Text('${r['shop_name'] ?? '-'}', maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text('${r['email'] ?? ''} • ${r['date'] ?? ''}',
+                  title: Text('${r['shop'] ?? '-'}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                  subtitle: Text('${r['email'] ?? ''} • ${r['created'] ?? ''}',
                       maxLines: 1, overflow: TextOverflow.ellipsis),
                   trailing: Text(
-                    '${r['status'] ?? '-'}',
-                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                    '${r['owner'] ?? ''}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 );
               }),
@@ -241,7 +242,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(r['shop_name'] ?? '-',
+                  child: Text(r['shop'] ?? '-',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
@@ -264,7 +265,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ],
             ),
             const SizedBox(height: 6),
-            Text('Owner: ${r['owner_name'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
+            Text('Owner: ${r['owner'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
             Text('Email: ${r['email'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
             if ((r['phone'] ?? '').toString().isNotEmpty)
               Text('Phone: ${r['phone']}', style: const TextStyle(fontSize: 12.5)),
@@ -272,7 +273,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             Row(
               children: [
                 const Icon(Icons.currency_rupee, size: 16, color: AppColors.primary),
-                Text('${r['amount_display'] ?? r['amount'] ?? '-'}',
+                Text('${r['amount'] ?? '-'}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
                 const SizedBox(width: 12),
                 Expanded(
@@ -282,11 +283,8 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ],
             ),
-            Text('Submitted: ${r['requested_at_display'] ?? r['requested_at'] ?? '-'}',
+            Text('Submitted: ${r['created_at'] ?? '-'}',
                 style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            if (r['status'] == 'APPROVED')
-              Text('Approved: ${r['reviewed_at_display'] ?? r['reviewed_at'] ?? '-'}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.success)),
             if (r['status'] == 'REJECTED' && (r['rejection_reason'] ?? '').toString().isNotEmpty)
               Text('Reason: ${r['rejection_reason']}',
                   maxLines: 2, overflow: TextOverflow.ellipsis,
