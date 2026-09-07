@@ -26,7 +26,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     final statusFilter = ref.watch(adminPayStatusProvider);
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('ShopZen Admin'),
@@ -37,6 +37,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               onPressed: () {
                 ref.invalidate(adminDashboardProvider);
                 ref.invalidate(adminPaymentRequestsProvider);
+                ref.invalidate(adminShopsProvider);
               },
             ),
           ],
@@ -44,6 +45,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             tabs: [
               Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
               Tab(icon: Icon(Icons.payments_outlined), text: 'Payments'),
+              Tab(icon: Icon(Icons.storefront_outlined), text: 'Shops'),
             ],
           ),
         ),
@@ -145,6 +147,58 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                 ),
               ],
             ),
+
+            // ---------------- Shops list ----------------
+            Consumer(builder: (context, ref2, _) {
+              final shopsAsync = ref2.watch(adminShopsProvider);
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Search shop / owner / email / phone',
+                        prefixIcon: Icon(Icons.search),
+                        isDense: true,
+                        border: OutlineInputBorder(),
+                      ),
+                      onSubmitted: (v) =>
+                          ref2.read(adminShopSearchProvider.notifier).state = v.trim(),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Expanded(
+                    child: shopsAsync.when(
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (err, _) =>
+                          _errView('Could not load shops: $err'),
+                      data: (shops) {
+                        if (shops.isEmpty) {
+                          return ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 120),
+                              Center(child: Text('No shops found.',
+                                  style: TextStyle(color: AppColors.textSecondary))),
+                            ],
+                          );
+                        }
+                        return RefreshIndicator(
+                          onRefresh: () async =>
+                              ref2.refresh(adminShopsProvider.future),
+                          child: ListView.separated(
+                            padding: const EdgeInsets.all(12),
+                            itemCount: shops.length,
+                            separatorBuilder: (_, __) => const SizedBox(height: 10),
+                            itemBuilder: (_, i) => _shopCard(shops[i]),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }),
           ],
         ),
       ),
@@ -158,6 +212,63 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           Center(child: Text(msg, textAlign: TextAlign.center)),
         ],
       );
+
+  Widget _shopCard(Map<String, dynamic> s) {
+    final active = s['subscription_status'] == 'ACTIVE';
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(s['shop'] ?? '-',
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: (active ? AppColors.success : AppColors.danger)
+                        .withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    s['subscription_status'] ?? '-',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text('Owner: ${s['owner'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
+            Text('Email: ${s['email'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
+            if ((s['phone'] ?? '').toString().isNotEmpty)
+              Text('Phone: ${s['phone']}', style: const TextStyle(fontSize: 12.5)),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('Registered: ${s['created'] ?? '-'}',
+                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                Text(
+                  active
+                      ? 'Expires ${s['subscription_end']} (${s['days_remaining']}d)'
+                      : 'Expired ${s['subscription_end']}',
+                  style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: active ? AppColors.success : AppColors.danger),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _statCard(String label, dynamic value, IconData icon, {Color? color}) {
     return SizedBox(

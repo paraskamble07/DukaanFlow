@@ -156,6 +156,36 @@ class AdminDashboardAPIView(APIView):
         })
 
 
+class AdminShopsAPIView(APIView):
+    """ShopZen admin: every registered shop with owner email, registration
+    date and subscription status. Read-only platform oversight."""
+    permission_classes = [IsAuthenticated, IsShopZenAdmin]
+
+    def get(self, request):
+        q = request.query_params.get('q', '').strip()
+        qs = Business.objects.select_related('owner').order_by('-id')
+        if q:
+            from django.db.models import Q
+            qs = qs.filter(
+                Q(name__icontains=q) | Q(owner_name__icontains=q)
+                | Q(owner__email__icontains=q) | Q(phone__icontains=q)
+            )
+        shops = []
+        for b in qs[:200]:
+            shops.append({
+                'id': b.id,
+                'shop': b.name,
+                'owner': b.owner_name,
+                'email': b.owner.email if b.owner else '',
+                'phone': b.phone or '',
+                'created': b.created_at.strftime('%d-%m-%Y'),
+                'subscription_status': 'ACTIVE' if b.is_subscription_active() else 'EXPIRED',
+                'subscription_end': b.subscription_end_date.strftime('%d-%m-%Y'),
+                'days_remaining': b.days_until_expiry(),
+            })
+        return Response({'shops': shops})
+
+
 class AdminPaymentRequestsAPIView(APIView):
     """ShopZen admin: list/search payment requests."""
     permission_classes = [IsAuthenticated, IsShopZenAdmin]

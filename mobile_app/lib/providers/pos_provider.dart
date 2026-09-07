@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
@@ -211,16 +212,43 @@ class PosNotifier extends StateNotifier<PosState> {
         state = PosState();
         return res.data as Map<String, dynamic>;
       }
-    } catch (e) {
-      // If network failure, queue for offline sync
+      // Non-201 server answer — do NOT queue; the shop keeper must see it.
+      state = state.copyWith(
+        isSubmitting: false,
+        error: 'Checkout could not be completed. Please try again.',
+      );
+      return null;
+    } on DioException catch (e) {
+      // Only genuine network failures go to the offline queue — a server
+      // rejection (stock, auth, validation) must never be silently queued
+      // because it would fail again on sync.
+      final networkDown = e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
+      if (networkDown) {
+        await LocalStorageService.queueOfflineSale(payload);
+        state = state.copyWith(
+          isSubmitting: false,
+          error: 'Offline Mode: Sale saved locally and will sync when online.',
+        );
+        return null;
+      }
+      // Server responded with an error — surface its message.
+      final data = e.response?.data;
+      final msg = (data is Map && data['error'] is String)
+          ? data['error'] as String
+          : 'Checkout could not be completed. Please try again.';
+      state = state.copyWith(isSubmitting: false, error: msg);
+      return null;
+    } catch (_) {
       await LocalStorageService.queueOfflineSale(payload);
       state = state.copyWith(
         isSubmitting: false,
         error: 'Offline Mode: Sale saved locally and will sync when online.',
       );
+      return null;
     }
-    state = state.copyWith(isSubmitting: false);
-    return null;
   }
 }
 

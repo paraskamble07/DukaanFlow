@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../main.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -80,9 +81,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: AppColors.danger.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      authState.errorMessage!,
-                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          authState.errorMessage!,
+                          style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                        ),
+                        if (authState.errorMessage!
+                            .contains('already registered')) ...[
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: () =>
+                                  Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (_) => const LoginScreen()),
+                              ),
+                              icon: const Icon(Icons.login, size: 16),
+                              label: const Text('Login Instead'),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
 

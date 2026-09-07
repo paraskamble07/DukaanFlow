@@ -25,6 +25,7 @@ urlpatterns = [
 
     # ShopZen Admin (backend-enforced role)
     path('admin/dashboard/', subscription_admin_views.AdminDashboardAPIView.as_view(), name='admin_dashboard'),
+    path('admin/shops/', subscription_admin_views.AdminShopsAPIView.as_view(), name='admin_shops'),
     path('admin/payment-requests/', subscription_admin_views.AdminPaymentRequestsAPIView.as_view(), name='admin_payment_requests'),
     path('admin/payment-requests/<int:request_id>/review/', subscription_admin_views.AdminReviewPaymentAPIView.as_view(), name='admin_review_payment'),
 

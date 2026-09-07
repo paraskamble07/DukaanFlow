@@ -114,7 +114,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         } else if (data is Map && data['error'] is String) {
           message = data['error'] as String;
         } else if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout) {
-          message = 'Could not reach the server. Check your internet connection.';
+          message = 'Unable to connect to server. Please check your internet connection.';
         }
       }
       state = state.copyWith(
@@ -166,7 +166,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       // Show the server's own message (e.g. duplicate email, weak password)
       // when available; only fall back to a generic message on network errors.
-      String message = 'Could not reach the server. Check your internet connection and try again.';
+      String message = 'Unable to connect to server. Please check your internet connection.';
       if (e is DioException) {
         final data = e.response?.data;
         if (data is Map && data['error'] is String && (data['error'] as String).isNotEmpty) {

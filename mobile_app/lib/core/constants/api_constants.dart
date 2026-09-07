@@ -67,6 +67,7 @@ class ApiConstants {
 
   // ShopZen Admin (backend-enforced role; the APIs reject non-admins)
   static const String adminDashboard = '/api/admin/dashboard/';
+  static const String adminShops = '/api/admin/shops/';
   static const String adminPaymentRequests = '/api/admin/payment-requests/';
   static String adminReviewPayment(int id) => '/api/admin/payment-requests/$id/review/';
 

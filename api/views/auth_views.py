@@ -24,7 +24,7 @@ class RegisterAPIView(APIView):
             return Response({'error': 'All fields are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(email=email).exists() or User.objects.filter(username=email).exists():
-            return Response({'error': 'An account with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'This email is already registered. Please login instead.'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(
             username=email,
@@ -77,7 +77,7 @@ class LoginAPIView(APIView):
                 user = authenticate(request, username=user_obj.username, password=password)
 
         if not user:
-            return Response({'error': 'Invalid credentials. Please verify your email and password.'}, status=status.HTTP_401_UNAUTHORIZED)
+            return Response({'error': 'Incorrect email or password.'}, status=status.HTTP_401_UNAUTHORIZED)
 
         # Get business
         business = None

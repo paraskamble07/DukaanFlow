@@ -38,3 +38,22 @@ final adminPaymentRequestsProvider =
 
 /// UTR search across payment requests (server-side q search).
 final adminPaySearchProvider = StateProvider<String>((ref) => '');
+
+/// All registered shops with owner email + subscription status (admin only).
+final adminShopsProvider =
+    FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
+  final client = ref.watch(apiClientProvider);
+  final q = ref.watch(adminShopSearchProvider);
+  final res = await client.dio.get(
+    ApiConstants.adminShops,
+    queryParameters: {if (q.isNotEmpty) 'q': q},
+  );
+  final data = res.data;
+  if (data is Map && data['shops'] is List) {
+    return (data['shops'] as List).cast<Map<String, dynamic>>();
+  }
+  return [];
+});
+
+/// Shop search across the admin shops list (server-side q search).
+final adminShopSearchProvider = StateProvider<String>((ref) => '');
