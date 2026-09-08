@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/constants/api_constants.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_localizations.dart';
-import 'core/sync/offline_sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/splash_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
@@ -14,7 +12,6 @@ import 'features/inventory/product_list_screen.dart';
 import 'features/customers/customer_list_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/sales/sales_history_screen.dart';
-import 'features/subscription/subscription_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/settings_provider.dart';
 
@@ -77,24 +74,6 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     MoreScreen(),
   ];
 
-  /// Subscription expiry banner state — refreshed when tab changes.
-  bool _checkedSubscription = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // User is authenticated when this scaffold mounts — start offline sync.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      OfflineSyncService.start(ref.read(apiClientProvider));
-    });
-  }
-
-  @override
-  void dispose() {
-    OfflineSyncService.stop();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -117,7 +96,6 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) {
             setState(() => _currentIndex = i);
-            _checkSubscriptionBanner();
           },
           height: 68,
           destinations: [
@@ -154,35 +132,4 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     );
   }
 
-  /// One-time check: if subscription expired, show renewal banner once per session.
-  void _checkSubscriptionBanner() {
-    if (_checkedSubscription || _currentIndex != 4) return;
-    _checkedSubscription = true;
-    Future(() async {
-      try {
-        final client = ref.read(apiClientProvider);
-        final res = await client.dio.get(ApiConstants.subscriptionStatus);
-        if (res.statusCode == 200 &&
-            res.data['is_active'] == false &&
-            mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Your ShopZen Premium subscription has expired. Data is safe — renew to continue.',
-              ),
-              duration: const Duration(seconds: 6),
-              action: SnackBarAction(
-                label: 'Renew Premium',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                ),
-              ),
-            ),
-          );
-        }
-      } catch (_) {
-        // Offline or unauthenticated: banner suppressed, app stays usable.
-      }
-    });
-  }
 }

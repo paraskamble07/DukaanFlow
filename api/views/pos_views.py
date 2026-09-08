@@ -18,6 +18,21 @@ from api.permissions import HasActiveBusiness
 class POSCheckoutAPIView(APIView):
     permission_classes = [HasActiveBusiness]
 
+    @staticmethod
+    def _replay_response(sale):
+        """201 body for an idempotent replay: same shape as a fresh checkout
+        (minus regenerating the WhatsApp text — link is rebuilt)."""
+        wa_msg = f"Namaste {sale.customer.name},\n\nHere is your invoice *#{sale.invoice_number}* from *{sale.business.name}*:\n"
+        wa_msg += f"Total: *{format_inr(sale.total_amount)}*\nPaid: *{format_inr(sale.paid_amount)}*\n"
+        if sale.due_amount > 0:
+            wa_msg += f"Due: *{format_inr(sale.due_amount)}*\n"
+        wa_msg += f"Date: {sale.sale_date.strftime('%d-%m-%Y')}\n\nThank you for shopping with us!"
+        return {
+            'message': 'Sale completed successfully!',
+            'sale': SaleSerializer(sale).data,
+            'whatsapp_share_url': build_whatsapp_url(sale.customer.phone, wa_msg),
+        }
+
     def post(self, request):
         business = request.business
         data = request.data
@@ -36,6 +51,16 @@ class POSCheckoutAPIView(APIView):
 
         if not items_data:
             return Response({'error': 'Cart is empty. Please add products.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Idempotency: an offline-queued bill that gets retried (sync, double
+        # tap, timeout-after-commit) must return the original sale, not a
+        # second copy of the same bill.
+        client_request_id = str(data.get('client_request_id', '') or '').strip()[:64]
+        if client_request_id:
+            existing = Sale.objects.filter(
+                business=business, client_request_id=client_request_id).first()
+            if existing:
+                return Response(self._replay_response(existing), status=status.HTTP_201_CREATED)
 
         try:
             # Validate every cart line BEFORE writing anything so a rejected
@@ -99,7 +124,8 @@ class POSCheckoutAPIView(APIView):
                     paid_amount=paid_amt,
                     due_amount=max(Decimal('0.00'), total_amt - paid_amt),
                     payment_method=payment_method,
-                    notes=notes
+                    notes=notes,
+                    client_request_id=client_request_id or None
                 )
 
                 for product, qty, price, item_disc, line_total, device_id in processed_items:

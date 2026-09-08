@@ -12,6 +12,21 @@ subprojects {
     project.evaluationDependsOn(':app')
 }
 
+// file_picker 8.x ships with compileSdk 34 while its dependency
+// flutter_plugin_android_lifecycle 2.0.35 is built against 36, and that
+// library's AAR metadata check rejects anything below 36. Force every
+// Android library module to compile against 36; each module's own
+// minSdk/targetSdk stay untouched. afterProject is used because
+// evaluationDependsOn(':app') above can leave :app already evaluated,
+// which makes a plain subprojects.afterEvaluate closure throw.
+gradle.afterProject { project ->
+    if (project.plugins.hasPlugin("com.android.library")) {
+        project.android {
+            compileSdk = 36
+        }
+    }
+}
+
 tasks.register("clean", Delete) {
     delete rootProject.buildDir
 }

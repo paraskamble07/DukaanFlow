@@ -116,6 +116,39 @@ class APILayerIntegrationTest(TestCase):
         self.assertIn('gross_profit', res.data)
         self.assertIn('net_profit', res.data)
 
+    def test_pos_checkout_idempotent_replay(self):
+        """The same client_request_id must produce ONE sale no matter how many
+        times it is POSTed (offline sync retries, double taps)."""
+        from sales.models import Sale
+        from products.models import Product
+        product = Product.objects.create(
+            business=self.business, name='Idem Charger', selling_price=Decimal('500.00'),
+            purchase_price=Decimal('300.00'), stock_quantity=50)
+        payload = {
+            'payment_method': 'CASH',
+            'client_request_id': 'replay-test-001',
+            'items': [{'product_id': product.id, 'quantity': 2,
+                       'unit_price': 500, 'discount': 0}],
+        }
+        first = self.client.post('/api/pos/checkout/', payload, format='json')
+        self.assertEqual(first.status_code, 201)
+        first_invoice = first.data['sale']['invoice_number']
+
+        # Simulated double-tap + sync retry: same id posted twice more.
+        second = self.client.post('/api/pos/checkout/', payload, format='json')
+        third = self.client.post('/api/pos/checkout/', payload, format='json')
+        self.assertEqual(second.status_code, 201)
+        self.assertEqual(third.status_code, 201)
+        self.assertEqual(second.data['sale']['invoice_number'], first_invoice)
+        self.assertEqual(third.data['sale']['invoice_number'], first_invoice)
+
+        self.assertEqual(
+            Sale.objects.filter(business=self.business,
+                                client_request_id='replay-test-001').count(), 1)
+        # Stock reduced once, not three times.
+        product.refresh_from_db()
+        self.assertEqual(product.stock_quantity, 48)
+
 
 class TenantIsolationTest(TestCase):
     """CRITICAL: Shop A data must NEVER be visible to Shop B (Requirement #72)."""

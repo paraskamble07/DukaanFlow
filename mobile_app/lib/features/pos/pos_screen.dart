@@ -157,13 +157,35 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   onPressed: state.isSubmitting
                       ? null
                       : () async {
-                          final res = await ref.read(posProvider.notifier).checkout();
-                          if (res != null && context.mounted) {
+                          final notifier = ref.read(posProvider.notifier);
+                          final wasEmpty = ref.read(posProvider).items.isEmpty;
+                          final res = await notifier.checkout();
+                          if (!context.mounted) return;
+                          if (res != null) {
                             Navigator.of(context).pop(); // Close sheet
                             showDialog(
                               context: context,
                               barrierDismissible: false,
                               builder: (_) => SaleSuccessDialog(saleData: res),
+                            );
+                          } else if (!wasEmpty &&
+                              ref.read(posProvider).items.isEmpty) {
+                            // Cart went from non-empty to empty without a
+                            // success dialog → the bill was queued offline.
+                            Navigator.of(context).pop(); // Close sheet
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No internet — bill saved on this phone. It will upload automatically when online.',
+                                ),
+                                duration: Duration(seconds: 4),
+                              ),
+                            );
+                          } else if (ref.read(posProvider).error != null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(ref.read(posProvider).error!),
+                              ),
                             );
                           }
                         },

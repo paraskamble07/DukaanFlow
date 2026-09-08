@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../main.dart';
-import 'login_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -18,7 +17,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _shopNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -26,7 +24,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _shopNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -38,7 +35,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       shopName: _shopNameController.text,
       phone: _phoneController.text,
       email: _emailController.text,
-      password: _passwordController.text,
     );
 
     if (success && mounted) {
@@ -64,11 +60,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Start with ShopZen',
+                  'Set Up Your Shop',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
                 const Text(
-                  'Quick 60-second shop onboarding',
+                  'Your data stays on this phone — no account, no internet needed.',
                   style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
@@ -81,30 +77,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       color: AppColors.danger.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          authState.errorMessage!,
-                          style: const TextStyle(color: AppColors.danger, fontSize: 13),
-                        ),
-                        if (authState.errorMessage!
-                            .contains('already registered')) ...[
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () =>
-                                  Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                    builder: (_) => const LoginScreen()),
-                              ),
-                              icon: const Icon(Icons.login, size: 16),
-                              label: const Text('Login Instead'),
-                            ),
-                          ),
-                        ],
-                      ],
+                    child: Text(
+                      authState.errorMessage!,
+                      style: const TextStyle(color: AppColors.danger, fontSize: 13),
                     ),
                   ),
 
@@ -136,23 +111,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 14),
 
-                const Text('Email Address *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                const Text('Email Address (optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(hintText: 'rahul@example.com'),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter valid email' : null,
-                ),
-                const SizedBox(height: 14),
-
-                const Text('Create Password *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(hintText: 'Minimum 6 characters'),
-                  validator: (v) => (v == null || v.length < 6) ? 'Password must be 6+ chars' : null,
+                  validator: (v) => (v == null || v.isEmpty || v.contains('@')) ? null : 'Enter a valid email or leave it blank',
                 ),
                 const SizedBox(height: 24),
 
@@ -160,7 +125,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: authState.isLoading ? null : _handleRegister,
                   child: authState.isLoading
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Create Shop & Start Free Trial'),
+                      : const Text('Create My Shop'),
                 ),
               ],
             ),

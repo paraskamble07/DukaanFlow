@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
-import 'login_screen.dart';
 import 'register_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -45,7 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: TextButton(
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
                     );
                   },
                   child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -129,7 +128,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     );
                   }
                 },
-                child: Text(_currentPage == _slides.length - 1 ? 'Start Free Trial' : 'Next'),
+                child: Text(_currentPage == _slides.length - 1 ? 'Set Up My Shop' : 'Next'),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
@@ -139,10 +138,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
                   );
                 },
-                child: const Text('Existing Shop Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: const Text('Set Up My Shop', style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),

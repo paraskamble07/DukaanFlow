@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import 'onboarding_screen.dart';
-import 'login_screen.dart';
 import '../../main.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -21,13 +20,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _checkNavigation() async {
-    // Wait for persisted login restore (keystore reads are slow on some
-    // devices), capped so a broken keystore can never hang the splash.
+    // Local mode: wait for the local profile read, then go straight to the
+    // dashboard (profile exists) or first-launch onboarding (nothing yet).
     final auth = ref.read(authProvider.notifier);
     try {
-      await auth.ready.timeout(const Duration(seconds: 5));
+      await auth.checkAuth();
     } catch (_) {
-      // Timeout (or provider disposed): fall through with whatever state we have.
+      // A broken local DB read falls through to onboarding.
     }
     if (!mounted) return;
 

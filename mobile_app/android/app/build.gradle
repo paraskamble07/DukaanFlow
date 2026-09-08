@@ -21,7 +21,7 @@ android {
     // secure storage, etc.) is pure Dart/Kotlin — no C/C++ sources. Omitting
     // ndkVersion avoids AGP trying to auto-download a ~700MB NDK that this
     // project never uses.
-    compileSdk flutter.compileSdkVersion
+    compileSdk 36  // file_picker 8.x AAR requires API 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

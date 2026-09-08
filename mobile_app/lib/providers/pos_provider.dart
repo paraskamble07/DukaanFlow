@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
-import '../core/storage/local_storage.dart';
+import '../core/network/local_dio.dart';
 import '../models/product_model.dart';
 import '../models/sale_model.dart';
 import 'auth_provider.dart';
@@ -188,7 +188,13 @@ class PosNotifier extends StateNotifier<PosState> {
 
     state = state.copyWith(isSubmitting: true, error: null);
 
+    // Every checkout attempt carries one id: the server returns the same
+    // sale for a replayed id, so double taps and sync retries can never
+    // create a second copy of this bill.
     final payload = {
+      'client_request_id':
+          DateTime.now().microsecondsSinceEpoch.toString() +
+              '-${state.items.length}-${state.selectedCustomerId ?? 'w'}',
       'customer_id': state.selectedCustomerId,
       'new_customer_name': state.customerName,
       'new_customer_phone': state.customerPhone,
@@ -210,42 +216,22 @@ class PosNotifier extends StateNotifier<PosState> {
       final res = await _client.dio.post(ApiConstants.posCheckout, data: payload);
       if (res.statusCode == 201) {
         state = PosState();
-        return res.data as Map<String, dynamic>;
+        return res.data;
       }
-      // Non-201 server answer — do NOT queue; the shop keeper must see it.
       state = state.copyWith(
         isSubmitting: false,
         error: 'Checkout could not be completed. Please try again.',
       );
       return null;
-    } on DioException catch (e) {
-      // Only genuine network failures go to the offline queue — a server
-      // rejection (stock, auth, validation) must never be silently queued
-      // because it would fail again on sync.
-      final networkDown = e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.receiveTimeout;
-      if (networkDown) {
-        await LocalStorageService.queueOfflineSale(payload);
-        state = state.copyWith(
-          isSubmitting: false,
-          error: 'Offline Mode: Sale saved locally and will sync when online.',
-        );
-        return null;
-      }
-      // Server responded with an error — surface its message.
-      final data = e.response?.data;
-      final msg = (data is Map && data['error'] is String)
-          ? data['error'] as String
-          : 'Checkout could not be completed. Please try again.';
-      state = state.copyWith(isSubmitting: false, error: msg);
+    } on LocalApiError catch (e) {
+      // Local database rejected the bill (stock, validation) — show the
+      // clean message; nothing was saved.
+      state = state.copyWith(isSubmitting: false, error: e.message);
       return null;
-    } catch (_) {
-      await LocalStorageService.queueOfflineSale(payload);
+    } catch (e) {
       state = state.copyWith(
         isSubmitting: false,
-        error: 'Offline Mode: Sale saved locally and will sync when online.',
+        error: 'Checkout could not be completed: $e',
       );
       return null;
     }

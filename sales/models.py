@@ -32,11 +32,19 @@ class Sale(TenantModel):
     
     sale_date = models.DateTimeField(default=timezone.now)
     notes = models.TextField(blank=True, null=True)
+    # Idempotency: an offline-queued bill retried after a timeout must never
+    # create a second sale — the server returns the first one instead.
+    client_request_id = models.CharField(max_length=64, blank=True, null=True, db_index=True)
 
     class Meta:
         ordering = ['-sale_date', '-created_at']
         constraints = [
-            models.UniqueConstraint(fields=['business', 'invoice_number'], name='unique_invoice_per_business')
+            models.UniqueConstraint(fields=['business', 'invoice_number'], name='unique_invoice_per_business'),
+            models.UniqueConstraint(
+                fields=['business', 'client_request_id'],
+                name='unique_client_request_per_business',
+                condition=models.Q(client_request_id__isnull=False),
+            ),
         ]
 
     def __str__(self):

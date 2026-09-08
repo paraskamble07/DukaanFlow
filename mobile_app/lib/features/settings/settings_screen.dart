@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/storage/app_local_db.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../auth/splash_screen.dart';
@@ -58,7 +64,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         },
       );
       if (res.statusCode == 200 && mounted) {
-        await ref.read(authProvider.notifier).fetchProfile();
+        await ref.read(authProvider.notifier).checkAuth();
         setState(() => _isEditingShop = false);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Shop profile updated. Invoices will use the new details.')),
@@ -187,6 +193,38 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
+          // Backup & Restore
+          _sectionCard(
+            title: 'Backup & Restore',
+            children: [
+              const Text(
+                'Your entire shop record lives only on this phone. Export a backup regularly and keep it safe (Drive/WhatsApp to yourself).',
+                style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _exportBackup,
+                      icon: const Icon(Icons.file_download_outlined, size: 18),
+                      label: const Text('Export Backup'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _importBackup,
+                      icon: const Icon(Icons.file_upload_outlined, size: 18),
+                      label: const Text('Restore'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
           // Account
           _sectionCard(
             title: 'Account',
@@ -197,7 +235,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Logout
+          // Reset all local data (double confirmation — irreversible)
           OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
               foregroundColor: AppColors.danger,
@@ -208,20 +246,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Logout from ShopZen?'),
-                  content: const Text('All your shop data stays safe in the cloud. You can login again from any phone.'),
+                  title: const Text('Erase ALL shop data?'),
+                  content: const Text('This permanently deletes every product, sale, customer and expense stored on this phone. Export a backup first! This cannot be undone.'),
                   actions: [
                     TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Logout'),
+                      child: const Text('Continue'),
                     ),
                   ],
                 ),
               );
-              if (confirmed == true && context.mounted) {
-                await ref.read(authProvider.notifier).logout();
+              if (confirmed != true || !context.mounted) return;
+              final second = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Really erase everything?'),
+                  content: const Text('Final confirmation — all local data will be gone forever.'),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Keep My Data')),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
+                      onPressed: () => Navigator.of(ctx).pop(true),
+                      child: const Text('Erase Everything'),
+                    ),
+                  ],
+                ),
+              );
+              if (second == true && context.mounted) {
+                await AppLocalDb.resetAll();
+                await ref.read(authProvider.notifier).resetApp();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (_) => const SplashScreen()),
@@ -230,12 +285,81 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 }
               }
             },
-            icon: const Icon(Icons.logout),
-            label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.delete_forever),
+            label: const Text('Reset App Data', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
+  }
+
+
+  Future<void> _exportBackup() async {
+    try {
+      final data = await AppLocalDb.exportAll();
+      final stamp = DateTime.now()
+          .toIso8601String()
+          .replaceAll(':', '-')
+          .substring(0, 19);
+      final dir = await getApplicationDocumentsDirectory();
+      final file = File('${dir.path}/shopzen-backup-$stamp.json');
+      await file.writeAsString(const JsonEncoder.withIndent('  ').convert(data));
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'ShopZen backup $stamp',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Backup ready — save or send it somewhere safe.')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Backup failed: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _importBackup() async {
+    final picked = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+    final path = picked?.files.single.path;
+    if (path == null) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restore this backup?'),
+        content: const Text('Restoring REPLACES everything currently on this phone with the backup content. Export current data first if unsure.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('Restore')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final text = await File(path).readAsString();
+      await AppLocalDb.importAll(jsonDecode(text) as Map<String, dynamic>);
+      await ref.read(authProvider.notifier).checkAuth();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Backup restored successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Restore failed: $e')),
+        );
+      }
+    }
   }
 
   Widget _sectionCard({required String title, required List<Widget> children}) {

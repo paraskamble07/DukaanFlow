@@ -110,7 +110,8 @@ void main() {
     });
   });
 
-  testWidgets('ShopZen app renders splash screen', (WidgetTester tester) async {
+  testWidgets('ShopZen app renders splash then first-launch setup flow',
+      (WidgetTester tester) async {
     // The ProviderScope normally wraps ShopZenApp inside main(); widget tests
     // must provide it themselves or Riverpod consumers throw.
     await tester.pumpWidget(
@@ -120,9 +121,11 @@ void main() {
     expect(find.text('Smart Shop Management'), findsOneWidget);
     expect(find.text('Developed by PARAS KAMBLE'), findsOneWidget);
 
-    // Splash now awaits auth restore with a 5s timeout — pump past it so no
-    // Timer stays pending when the test framework verifies invariants.
+    // Local mode: profile read fails fast in the test sandbox (no platform
+    // channels) and the app falls through to the onboarding screen.
     await tester.pump(const Duration(seconds: 2));
-    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+    expect(find.text('Manage Your Entire Shop'), findsOneWidget);
+    expect(find.text('Set Up My Shop'), findsWidgets);
   });
 }
