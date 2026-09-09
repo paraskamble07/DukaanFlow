@@ -60,11 +60,13 @@ The release APK defaults to the **production URL** `https://dukaanflow.onrender.
 
 - [API_DOCUMENTATION.md](docs/API_DOCUMENTATION.md) — every endpoint with payloads
 - [INSTALLATION_GUIDE.md](docs/INSTALLATION_GUIDE.md) — phone setup, USB debugging, APK build/install
+- [DEPLOYMENT.md](docs/DEPLOYMENT.md) — deployment entry point (checklist + links to the full guides)
 - [PRODUCTION_SETUP.md](docs/PRODUCTION_SETUP.md) — from repo to permanently-running production (Render + admin + ₹30 setup)
 - [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) — Render deploy (blueprint + manual deploy + troubleshooting)
 - [ANDROID_BUILD.md](docs/ANDROID_BUILD.md) — building debug/release APK + Play Store AAB, keystore signing
 - [SECURITY.md](docs/SECURITY.md) — tenant isolation, financial integrity, payment security
 - [USER_GUIDE.md](docs/USER_GUIDE.md) — end-user manual (English)
+- [PAYMENT_SETUP.md](docs/PAYMENT_SETUP.md) — configuring YOUR ₹30 UPI/QR + verifying payments
 - [PAYMENT_SUBSCRIPTION_GUIDE.md](docs/PAYMENT_SUBSCRIPTION_GUIDE.md) — the ₹30 flow: owner pays, admin verifies
 - [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) — creating and using YOUR admin account
 - [TESTING.md](docs/TESTING.md) — automated suites + manual phone checklist
