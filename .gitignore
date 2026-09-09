@@ -21,3 +21,5 @@ mobile_app/.env
 .test_shots/
 mobile_app/.flutter-plugins-dependencies
 step_*.py
+.tmp/
+release/

@@ -101,7 +101,16 @@ class ProfileAPIView(APIView):
 
     def get(self, request):
         user = request.user
+        # TenantMiddleware runs before DRF's JWT authentication populates
+        # request.user, so for Bearer-token clients request.business is None
+        # here — resolve the business from the authenticated user directly
+        # (same fallback LoginAPIView uses).
         business = getattr(request, 'business', None)
+        if business is None:
+            if hasattr(user, 'userprofile') and user.userprofile.business:
+                business = user.userprofile.business
+            else:
+                business = Business.objects.filter(owner=user).first()
         return Response({
             'user': UserSerializer(user).data,
             'business': BusinessSerializer(business, context={'request': request}).data if business else None,

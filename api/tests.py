@@ -72,6 +72,17 @@ class APILayerIntegrationTest(TestCase):
         self.assertIn('receivables', res.data)
         self.assertIn('charts', res.data)
 
+    def test_profile_returns_business_for_jwt_client(self):
+        """The Flutter app calls /api/auth/profile/ with a Bearer token.
+        TenantMiddleware runs before DRF JWT auth, so request.business is
+        None there — the view must fall back to resolving it from
+        request.user (regression: business used to come back null)."""
+        res = self.client.get('/api/auth/profile/')
+        self.assertEqual(res.status_code, 200)
+        self.assertIsNotNone(res.data['business'])
+        self.assertEqual(res.data['business']['name'], 'Vikas Mobile Hub')
+        self.assertEqual(res.data['user']['email'], 'api_test@dukaanflow.com')
+
     def test_products_api(self):
         res = self.client.get('/api/products/')
         self.assertEqual(res.status_code, 200)
