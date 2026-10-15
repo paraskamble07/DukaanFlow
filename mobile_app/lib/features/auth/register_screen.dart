@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
@@ -51,10 +52,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Shop Account')),
+      appBar: AppBar(title: Text(l10n.translate('create_shop_account'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -63,13 +65,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Start with ShopZen',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.translate('start_with_app'),
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                const Text(
-                  'Quick 60-second shop onboarding',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                Text(
+                  l10n.translate('onboarding_fast'),
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
                 ),
                 const SizedBox(height: 24),
 
@@ -100,7 +102,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                                     builder: (_) => const LoginScreen()),
                               ),
                               icon: const Icon(Icons.login, size: 16),
-                              label: const Text('Login Instead'),
+                              label: Text(l10n.translate('login_instead')),
                             ),
                           ),
                         ],
@@ -108,51 +110,51 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
 
-                const Text('Owner Full Name *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('owner_full_name'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(hintText: 'e.g. Rahul Sharma'),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter your name' : null,
+                  decoration: InputDecoration(hintText: l10n.translate('owner_name_hint')),
+                  validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_your_name') : null,
                 ),
                 const SizedBox(height: 14),
 
-                const Text('Shop / Business Name *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('shop_name_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _shopNameController,
-                  decoration: const InputDecoration(hintText: 'e.g. Sharma Mobile & Electronics'),
-                  validator: (v) => (v == null || v.isEmpty) ? 'Please enter shop name' : null,
+                  decoration: InputDecoration(hintText: l10n.translate('shop_name_hint')),
+                  validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_shop_name') : null,
                 ),
                 const SizedBox(height: 14),
 
-                const Text('Mobile / WhatsApp Number *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('mobile_whatsapp_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(hintText: '10-digit mobile number'),
-                  validator: (v) => (v == null || v.length < 10) ? 'Enter valid 10-digit mobile' : null,
+                  decoration: InputDecoration(hintText: l10n.translate('mobile_hint')),
+                  validator: (v) => (v == null || v.length < 10) ? l10n.translate('enter_valid_mobile') : null,
                 ),
                 const SizedBox(height: 14),
 
-                const Text('Email Address *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('email_address'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(hintText: 'rahul@example.com'),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter valid email' : null,
+                  decoration: InputDecoration(hintText: l10n.translate('email_hint')),
+                  validator: (v) => (v == null || !v.contains('@')) ? l10n.translate('enter_valid_email') : null,
                 ),
                 const SizedBox(height: 14),
 
-                const Text('Create Password *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('create_password'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 6),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(hintText: 'Minimum 6 characters'),
-                  validator: (v) => (v == null || v.length < 6) ? 'Password must be 6+ chars' : null,
+                  decoration: InputDecoration(hintText: l10n.translate('password_hint')),
+                  validator: (v) => (v == null || v.length < 6) ? l10n.translate('password_min_chars') : null,
                 ),
                 const SizedBox(height: 24),
 
@@ -160,7 +162,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: authState.isLoading ? null : _handleRegister,
                   child: authState.isLoading
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Create Shop & Start Free Trial'),
+                      : Text(l10n.translate('create_shop_trial')),
                 ),
               ],
             ),

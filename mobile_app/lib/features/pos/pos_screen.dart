@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/customer_provider.dart';
-import '../../models/product_model.dart';
 import '../inventory/imei_scanner_screen.dart';
 import 'widgets/cart_item_tile.dart';
 import 'widgets/sale_success_dialog.dart';
@@ -43,6 +43,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       builder: (ctx) => Consumer(
         builder: (context, ref, _) {
           final state = ref.watch(posProvider);
+          final l10n = AppLocalizations.of(context);
           return Padding(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -57,7 +58,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Complete Sale & Payment', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(l10n.translate('complete_sale_payment'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
                   ],
                 ),
@@ -65,14 +66,14 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 const SizedBox(height: 8),
 
                 // Payment Method Selector Chips
-                const Text('Payment Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                Text(l10n.translate('payment_mode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: ['CASH', 'UPI', 'CARD', 'CREDIT'].map((method) {
                     final isSelected = state.paymentMethod == method;
                     return ChoiceChip(
-                      label: Text(method == 'CREDIT' ? 'Khata (Udhar)' : method),
+                      label: Text(method == 'CREDIT' ? l10n.translate('khata_udhar') : method),
                       selected: isSelected,
                       onSelected: (_) => ref.read(posProvider.notifier).setPaymentMethod(method),
                     );
@@ -86,7 +87,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Discount (₹)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(l10n.translate('discount'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 4),
                           TextField(
                             controller: _discountController,
@@ -102,7 +103,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Paid Amount (₹)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                          Text(l10n.translate('paid_amount'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                           const SizedBox(height: 4),
                           TextField(
                             controller: _paidController,
@@ -129,7 +130,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Grand Total:'),
+                          Text('${l10n.translate('grand_total')}:'),
                           Text(CurrencyFormatter.format(state.grandTotal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
                         ],
                       ),
@@ -137,7 +138,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Balance Due:'),
+                          Text('${l10n.translate('due_amount')}:'),
                           Text(
                             CurrencyFormatter.format(state.dueAmount),
                             style: TextStyle(
@@ -169,7 +170,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         },
                   child: state.isSubmitting
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Generate Invoice & Bill'),
+                      : Text(l10n.translate('generate_invoice')),
                 ),
               ],
             ),
@@ -183,15 +184,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   Widget build(BuildContext context) {
     final posState = ref.watch(posProvider);
     final productsAsync = ref.watch(productsListProvider);
+    final l10n = AppLocalizations.of(context);
     final customersAsync = ref.watch(customerListProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('POS Counter Sale'),
+        title: Text(l10n.translate('pos_counter_sale')),
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Scan Barcode',
+            tooltip: l10n.translate('scan_barcode'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ImeiScannerScreen()),
             ),
@@ -199,7 +201,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           if (posState.items.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.delete_sweep_outlined),
-              tooltip: 'Clear Cart',
+              tooltip: l10n.translate('clear_cart'),
               onPressed: () => ref.read(posProvider.notifier).clearCart(),
             ),
         ],
@@ -219,10 +221,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     data: (customers) => DropdownButtonHideUnderline(
                       child: DropdownButton<int?>(
                         value: posState.selectedCustomerId,
-                        hint: const Text('Walk-in / Cash Customer', style: TextStyle(fontSize: 14)),
+                        hint: Text(l10n.translate('walk_in_customer'), style: const TextStyle(fontSize: 14)),
                         isExpanded: true,
                         items: [
-                          const DropdownMenuItem(value: null, child: Text('Walk-in / Cash Customer')),
+                          DropdownMenuItem(value: null, child: Text(l10n.translate('walk_in_customer'))),
                           ...customers.map((c) => DropdownMenuItem(
                             value: c.id,
                             child: Text('${c.name} (${c.phone})', style: const TextStyle(fontSize: 14)),
@@ -234,8 +236,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         },
                       ),
                     ),
-                    loading: () => const Text('Loading customers...'),
-                    error: (_, __) => const Text('Walk-in Customer'),
+                    loading: () => Text(l10n.translate('loading_customers')),
+                    error: (_, __) => Text(l10n.translate('walk_in_customer_short')),
                   ),
                 ),
               ],
@@ -252,8 +254,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       children: [
                         Icon(Icons.shopping_cart_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
-                        const Text('Cart is empty', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                        const Text('Select products from catalog below to add.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                        Text(l10n.translate('cart_empty'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        Text(l10n.translate('select_products'), style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       ],
                     ),
                   )
@@ -284,8 +286,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: TextField(
                     controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search phones, chargers, accessories...',
+                    decoration: InputDecoration(
+                      hintText: l10n.translate('search_products'),
                       prefixIcon: Icon(Icons.search, size: 20),
                       isDense: true,
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -319,7 +321,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                 const Spacer(),
                                 Text(CurrencyFormatter.format(p.sellingPrice), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 13)),
-                                Text('${p.stockQuantity} in stock', style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                Text('${p.stockQuantity} ${l10n.translate('in_stock')}', style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
                               ],
                             ),
                           ),
@@ -327,7 +329,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       },
                     ),
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(child: Text('Error: $err')),
+                    error: (err, _) => Center(child: Text("${l10n.translate('error_prefix')}$err")),
                   ),
                 ),
                 // Bottom Checkout Button Bar
@@ -338,7 +340,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Total Payable', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                          Text(l10n.translate('total_payable'), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                           Text(
                             CurrencyFormatter.format(posState.grandTotal),
                             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -350,7 +352,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         child: ElevatedButton.icon(
                           onPressed: posState.items.isEmpty ? null : _showCheckoutSheet,
                           icon: const Icon(Icons.arrow_forward),
-                          label: const Text('Proceed to Bill'),
+                          label: Text(l10n.translate('proceed_to_bill')),
                         ),
                       ),
                     ],

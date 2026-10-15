@@ -326,8 +326,9 @@ is stale rather than broken.
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
    the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
    `businesses` 0003 migration).
-2. Phase 7: complete HI/MR localization coverage across all screens.
-3. Phase 8–9: backup/restore, offline mode + sync indicator.
+2. Phase 8–9: backup/restore, offline mode + sync indicator.
+3. Phase 11–12: IMEI history/warranty/low+dead stock/purchase history;
+   AdMob banner SDK + UMP consent flow.
 
 ---
 
@@ -345,3 +346,33 @@ is stale rather than broken.
   Backend: 90/90 full suite (pre-UPI) + 12/12 ledger + 15/15 UPI;
   Flutter: `analyze` 0 errors, 6/6 tests. New dependency `qrcode==8.2`
   pinned in `requirements.txt` — Render installs it on next deploy.
+
+- **2026-10-15 (Phase 7, complete):** Full HI/MR localization of the
+  Flutter app. The `AppLocalizations` contract grew from ~115 to
+  **529 keys per locale (en/hi/mr), exact key parity** verified
+  programmatically. Every user-visible string in all feature screens is
+  routed through `translate()`:
+
+  - Auth & onboarding (splash, login, register, onboarding slides)
+  - Dashboard + quick actions, More screen, admin dashboard (tabs/stat cards)
+  - POS checkout sheet & sale-success dialog
+  - Sales history, sale detail (invoice rows, totals, WhatsApp share text)
+  - Customers (list, form, detail, receive-payment modal, UPI QR dialog)
+  - Inventory (product list/form, IMEI lookup & scanner, stock-adjustment
+    dialog with locale-neutral backend reason codes)
+  - Suppliers, purchases, expenses, reminders, reports (period filters),
+    settings (shop profile rows), app-update screen
+  - Shared widgets (WhatsApp button)
+
+  Form validators, SnackBars, empty states, error branches and the
+  WhatsApp message templates are localized too. Locale-neutral items are
+  deliberately kept literal (brand name "ShopZen", payment-method chips
+  CASH/UPI/CARD, stock-adjustment reason codes sent to the backend,
+  pure punctuation such as `*:` WhatsApp markup).
+
+  Verification: `flutter test` **12/12 passed** (6 localization tests
+  incl. key-parity and "no hi/mr value empty or left in English");
+  `flutter analyze` **0 errors / 0 warnings** (34 infos, all
+  `prefer_const`/`use_build_context` style hints). Test assertions were
+  not weakened — the failing parity test was fixed by genuinely
+  translating values and eliminating one punctuation-only key.

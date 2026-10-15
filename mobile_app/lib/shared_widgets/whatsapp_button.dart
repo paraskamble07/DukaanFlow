@@ -1,44 +1,46 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../core/constants/app_colors.dart';
+import '../core/localization/app_localizations.dart';
 
 class WhatsAppButton extends StatelessWidget {
   final String? url;
-  final String label;
+  final String? label;
   final bool isCompact;
 
   const WhatsAppButton({
     super.key,
     required this.url,
-    this.label = 'WhatsApp Reminder',
+    this.label,
     this.isCompact = false,
   });
 
   Future<void> _launchWhatsApp(BuildContext context) async {
     if (url == null || url!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No phone number available for WhatsApp.')),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('no_phone_whatsapp'))),
       );
       return;
     }
     final uri = Uri.parse(url!);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
+    } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not launch WhatsApp. Please check if app is installed.')),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('could_not_launch_whatsapp_app'))),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final resolvedLabel = label ?? AppLocalizations.of(context).translate('whatsapp_reminder_label');
     if (isCompact) {
       return IconButton.filled(
         style: IconButton.styleFrom(backgroundColor: AppColors.whatsapp),
         onPressed: () => _launchWhatsApp(context),
         icon: const Icon(Icons.chat, color: Colors.white, size: 18),
-        tooltip: label,
+        tooltip: resolvedLabel,
       );
     }
 
@@ -51,7 +53,7 @@ class WhatsAppButton extends StatelessWidget {
       ),
       onPressed: () => _launchWhatsApp(context),
       icon: const Icon(Icons.chat, size: 18),
-      label: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      label: Text(resolvedLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
     );
   }
 }

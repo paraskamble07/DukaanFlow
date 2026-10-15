@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
 import '../../core/utils/pdf_share.dart';
@@ -39,7 +40,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
     if (!mounted) return;
     if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Start date cannot be after end date.')),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('start_after_end'))),
       );
       return;
     }
@@ -52,11 +53,11 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
         name: customer.name, fromDate: fromDate, toDate: toDate,
       );
       if (!mounted) return;
-      await shareLedgerPdf(file, subject: 'Ledger statement — ${customer.name}');
+      await shareLedgerPdf(file, subject: "${AppLocalizations.of(context).translate('ledger_subject')}${customer.name}");
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Could not generate statement: $e')),
+        SnackBar(content: Text("${AppLocalizations.of(context).translate('could_not_generate_statement')}$e")),
       );
     } finally {
       if (mounted) setState(() => _statementBusy = false);
@@ -65,6 +66,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final ledgerAsync = ref.watch(customerLedgerProvider(customer.id));
 
     return Scaffold(
@@ -85,7 +87,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
               const SizedBox(height: 120),
-              Center(child: Text('Error: $err', textAlign: TextAlign.center)),
+              Center(child: Text("${AppLocalizations.of(context).translate('error_prefix')}$err", textAlign: TextAlign.center)),
             ],
           ),
           data: (data) {
@@ -108,7 +110,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(customer.name, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                          Text('Mobile: ${customer.phone}', style: const TextStyle(color: Colors.white70)),
+                          Text("${AppLocalizations.of(context).translate('mobile_label')}${customer.phone}", style: const TextStyle(color: Colors.white70)),
                           const Divider(color: Colors.white24, height: 24),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -116,7 +118,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('OUTSTANDING BALANCE', style: TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                                  Text(l10n.translate('outstanding_balance'), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
                                   Text(
                                     CurrencyFormatter.format(due),
                                     style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
@@ -138,7 +140,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                                   ),
                                 ),
                                 icon: const Icon(Icons.add, size: 18),
-                                label: const Text('Add Payment'),
+                                label: Text(l10n.translate('add_payment')),
                               ),
                             ],
                           ),
@@ -159,7 +161,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                      label: Text(_statementBusy ? 'Generating statement…' : 'Share Ledger Statement (PDF)'),
+                      label: Text(_statementBusy ? 'Generating statement…' : l10n.translate('share_ledger_pdf')),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -167,7 +169,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                   if (due > 0) ...[
                     WhatsAppButton(
                       url: summary['whatsapp_reminder_url'],
-                      label: 'Send WhatsApp Payment Reminder',
+                      label: l10n.translate('send_whatsapp_reminder'),
                     ),
                     const SizedBox(height: 20),
                   ],
@@ -183,34 +185,34 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                           ),
                         ),
                         icon: const Icon(Icons.qr_code_2_rounded, size: 20),
-                        label: const Text('Collect via UPI QR'),
+                        label: Text(l10n.translate('collect_upi_qr')),
                       ),
                     ),
 
                   // Transaction History Tabs / Section
-                  const Text('Sales Orders', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(l10n.translate('sales_orders'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   if (sales.isEmpty)
-                    const Text('No sales records found.', style: TextStyle(color: AppColors.textSecondary))
+                    Text(l10n.translate('no_sales'), style: const TextStyle(color: AppColors.textSecondary))
                   else
                     ...sales.map((s) => Card(
                       child: ListTile(
-                        title: Text('Invoice #${s['invoice_number']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text("${AppLocalizations.of(context).translate('invoice_hash')}${s['invoice_number']}", style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(AppDateFormatter.formatDateTime(s['sale_date'])),
                         trailing: Text(CurrencyFormatter.format(s['total_amount']), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary)),
                       ),
                     )),
 
                   const SizedBox(height: 20),
-                  const Text('Payment Receipts Received', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(l10n.translate('payment_receipts'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   if (payments.isEmpty)
-                    const Text('No payments recorded.', style: TextStyle(color: AppColors.textSecondary))
+                    Text(l10n.translate('no_payments'), style: const TextStyle(color: AppColors.textSecondary))
                   else
                     ...payments.map((p) => Card(
                       child: ListTile(
                         leading: const Icon(Icons.check_circle_outline, color: AppColors.success),
-                        title: Text('Payment via ${p['payment_method_display']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        title: Text("${AppLocalizations.of(context).translate('payment_via')}${p['payment_method_display']}", style: const TextStyle(fontWeight: FontWeight.bold)),
                         subtitle: Text(AppDateFormatter.formatDate(p['payment_date'])),
                         trailing: Text(CurrencyFormatter.format(p['amount']), style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.success)),
                       ),
@@ -247,7 +249,7 @@ class _StatementPeriodDialogState extends State<_StatementPeriodDialog> {
       initialDate: now,
       firstDate: DateTime(2020),
       lastDate: now,
-      helpText: isFrom ? 'Statement start date' : 'Statement end date',
+      helpText: isFrom ? AppLocalizations.of(context).translate('statement_start_date') : AppLocalizations.of(context).translate('statement_end_date'),
     );
     if (picked != null) {
       setState(() {
@@ -260,30 +262,31 @@ class _StatementPeriodDialogState extends State<_StatementPeriodDialog> {
     }
   }
 
-  String _fmt(DateTime? d) => d == null ? 'Any date' : AppDateFormatter.formatDate(d.toIso8601String());
+  String? _fmt(DateTime? d) => d == null ? null : AppDateFormatter.formatDate(d.toIso8601String());
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return AlertDialog(
-      title: Text('Statement period — ${widget.customerName}'),
+      title: Text('${l10n.translate('statement_period')} — ${widget.customerName}'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Leave both dates unset for the full account history.',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          Text(l10n.translate('full_history'),
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
           const SizedBox(height: 12),
           ListTile(
             dense: true,
             leading: const Icon(Icons.event_outlined),
-            title: const Text('From'),
-            subtitle: Text(_fmt(_from)),
+            title: Text(l10n.translate('from')),
+            subtitle: Text(_fmt(_from) ?? l10n.translate('any_date')),
             onTap: () => _pick(true),
           ),
           ListTile(
             dense: true,
             leading: const Icon(Icons.event_available_outlined),
-            title: const Text('To'),
-            subtitle: Text(_fmt(_to)),
+            title: Text(l10n.translate('to')),
+            subtitle: Text(_fmt(_to) ?? l10n.translate('any_date')),
             onTap: () => _pick(false),
           ),
         ],
@@ -291,11 +294,11 @@ class _StatementPeriodDialogState extends State<_StatementPeriodDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.translate('cancel')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(context, {'from': _from, 'to': _to}),
-          child: const Text('Generate PDF'),
+          child: Text(l10n.translate('generate_pdf')),
         ),
       ],
     );

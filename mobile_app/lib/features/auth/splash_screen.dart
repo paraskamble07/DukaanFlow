@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import 'onboarding_screen.dart';
-import 'login_screen.dart';
 import '../../main.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -81,9 +81,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Smart Shop Management',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).translate('smart_shop_management'),
+              style: const TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
@@ -91,9 +91,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
               ),
             ),
             const SizedBox(height: 42),
-            const Text(
-              'Developed by PARAS KAMBLE',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).translate('developed_by_credit'),
+              style: const TextStyle(
                 fontSize: 12,
                 color: AppColors.textSecondary,
                 fontWeight: FontWeight.w600,

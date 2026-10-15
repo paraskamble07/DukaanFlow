@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../providers/auth_provider.dart';
@@ -35,6 +36,7 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
@@ -53,16 +55,16 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
         },
       );
       if (res.statusCode == 201 && mounted) {
-        await ref.refresh(supplierListProvider.future);
+        ref.invalidate(supplierListProvider);
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Supplier added successfully.')),
+          SnackBar(content: Text(l10n.translate('supplier_saved'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save supplier. Please try again.')),
+          SnackBar(content: Text(l10n.translate('could_not_save_supplier'))),
         );
       }
     } finally {
@@ -72,8 +74,9 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Supplier')),
+      appBar: AppBar(title: Text(l10n.translate('add_supplier'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -82,53 +85,53 @@ class _SupplierFormScreenState extends ConsumerState<SupplierFormScreen> {
             children: [
               TextFormField(
                 controller: _companyController,
-                decoration: const InputDecoration(labelText: 'Company / Distributor Name *'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Company name is required' : null,
+                decoration: InputDecoration(labelText: l10n.translate('company_name_label')),
+                validator: (v) => (v == null || v.trim().isEmpty) ? l10n.translate('company_name_required') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _contactController,
-                decoration: const InputDecoration(labelText: 'Contact Person'),
+                decoration: InputDecoration(labelText: l10n.translate('contact_person')),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Phone Number *'),
+                decoration: InputDecoration(labelText: l10n.translate('phone_number')),
                 validator: (v) {
                   final digits = (v ?? '').replaceAll(RegExp(r'[^0-9]'), '');
-                  return digits.length < 10 ? 'Enter a valid 10-digit number' : null;
+                  return digits.length < 10 ? l10n.translate('enter_valid_10_digit') : null;
                 },
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Email (Optional)'),
+                decoration: InputDecoration(labelText: l10n.translate('email_optional')),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _addressController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Address (Optional)'),
+                decoration: InputDecoration(labelText: l10n.translate('address_optional')),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _gstinController,
-                decoration: const InputDecoration(labelText: 'GSTIN (Optional)'),
+                decoration: InputDecoration(labelText: l10n.translate('gstin_optional')),
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _notesController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notes (Optional)'),
+                decoration: InputDecoration(labelText: l10n.translate('notes_optional')),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox(height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save Supplier'),
+                    : Text(l10n.translate('save_supplier')),
               ),
             ],
           ),

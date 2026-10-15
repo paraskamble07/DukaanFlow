@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../providers/pos_provider.dart';
@@ -57,7 +58,7 @@ class CartItemTile extends StatelessWidget {
                 color: AppColors.borderLight,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text('1 unit', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              child: Text('${item.quantity}${AppLocalizations.of(context).translate('unit')}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ),
           ] else ...[
             Row(

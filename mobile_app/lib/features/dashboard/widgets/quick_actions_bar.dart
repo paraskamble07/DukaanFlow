@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/localization/app_localizations.dart';
 import '../../pos/pos_screen.dart';
 import '../../inventory/product_form_screen.dart';
 import '../../inventory/imei_scanner_screen.dart';
@@ -11,33 +12,34 @@ class QuickActionsBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final actions = [
       {
-        'label': 'New Sale',
+        'label': l10n.translate('new_sale'),
         'icon': Icons.point_of_sale_rounded,
         'color': AppColors.primary,
         'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PosScreen())),
       },
       {
-        'label': 'Scan IMEI',
+        'label': l10n.translate('scan_imei'),
         'icon': Icons.qr_code_scanner_rounded,
         'color': AppColors.accentTeal,
         'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ImeiScannerScreen())),
       },
       {
-        'label': 'Add Item',
+        'label': l10n.translate('add_item'),
         'icon': Icons.add_box_rounded,
         'color': const Color(0xFF8B5CF6),
         'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProductFormScreen())),
       },
       {
-        'label': 'Add Customer',
+        'label': l10n.translate('add_customer'),
         'icon': Icons.person_add_alt_1_rounded,
         'color': const Color(0xFFEC4899),
         'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CustomerFormScreen())),
       },
       {
-        'label': 'Add Expense',
+        'label': l10n.translate('add_expense'),
         'icon': Icons.receipt_long_rounded,
         'color': AppColors.warning,
         'onTap': () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExpenseFormScreen())),
@@ -47,9 +49,9 @@ class QuickActionsBar extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        Text(
+          l10n.translate('quick_actions'),
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         SizedBox(

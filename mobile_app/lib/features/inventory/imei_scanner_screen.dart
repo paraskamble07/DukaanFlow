@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'imei_lookup_screen.dart';
 
@@ -32,7 +33,7 @@ class _ImeiScannerScreenState extends State<ImeiScannerScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Scan IMEI / Barcode'),
+        title: Text(AppLocalizations.of(context).translate('scan_imei_barcode')),
         actions: [
           IconButton(
             icon: const Icon(Icons.flash_on),
@@ -66,9 +67,9 @@ class _ImeiScannerScreenState extends State<ImeiScannerScreen> {
                 color: Colors.black87,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Text(
-                'Point camera at 15-digit IMEI or retail product barcode',
-                style: TextStyle(color: Colors.white, fontSize: 13),
+              child: Text(
+                AppLocalizations.of(context).translate('point_camera_imei'),
+                style: const TextStyle(color: Colors.white, fontSize: 13),
                 textAlign: TextAlign.center,
               ),
             ),

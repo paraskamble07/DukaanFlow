@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -43,11 +44,11 @@ class SalesChartCard extends StatelessWidget {
                   children: [
                     Container(width: 8, height: 8, color: AppColors.primary),
                     const SizedBox(width: 4),
-                    const Text('Sales', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text(AppLocalizations.of(context).translate('sales_tab'), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                     const SizedBox(width: 12),
                     Container(width: 8, height: 8, color: AppColors.danger),
                     const SizedBox(width: 4),
-                    const Text('Expense', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                    Text(AppLocalizations.of(context).translate('expense_label'), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   ],
                 ),
               ],

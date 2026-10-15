@@ -134,6 +134,7 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: IndexedStack(index: _currentIndex, children: _screens),
       floatingActionButton: FloatingActionButton.extended(
@@ -143,7 +144,8 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.point_of_sale_rounded),
-        label: const Text('New Sale', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(l10n.translate('new_sale'),
+            style: const TextStyle(fontWeight: FontWeight.bold)),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: NavigationBarTheme(
@@ -159,23 +161,23 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
           destinations: [
             NavigationDestination(
               icon: _navIcon(Icons.home_outlined, Icons.home_rounded, 0),
-              label: 'Home',
+              label: l10n.translate('dashboard'),
             ),
             NavigationDestination(
               icon: _navIcon(Icons.receipt_long_outlined, Icons.receipt_long_rounded, 1),
-              label: 'Sales',
+              label: l10n.translate('pos_billing'),
             ),
             NavigationDestination(
               icon: _navIcon(Icons.inventory_2_outlined, Icons.inventory_2_rounded, 2),
-              label: 'Stock',
+              label: l10n.translate('inventory'),
             ),
             NavigationDestination(
               icon: _navIcon(Icons.people_outline_rounded, Icons.people_rounded, 3),
-              label: 'Khata',
+              label: l10n.translate('khata'),
             ),
             NavigationDestination(
               icon: _navIcon(Icons.grid_view_outlined, Icons.grid_view_rounded, 4),
-              label: 'More',
+              label: l10n.translate('more'),
             ),
           ],
         ),

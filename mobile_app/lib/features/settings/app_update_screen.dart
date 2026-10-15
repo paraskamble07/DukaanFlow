@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -16,11 +17,12 @@ class AppUpdateScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final update = ref.watch(appUpdateProvider);
     final info = update.info;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('App Updates')),
+      appBar: AppBar(title: Text(l10n.translate('app_updates'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -34,25 +36,25 @@ class AppUpdateScreen extends ConsumerWidget {
           else if (info != null && info.updateAvailable)
             _UpdateAvailableCard(info: info)
           else if (info != null)
-            const _StatusCard(
+            _StatusCard(
               icon: Icons.check_circle_rounded,
               color: AppColors.success,
-              title: 'You are on the latest version',
-              body: 'No update is available for your build of ShopZen.',
+              title: l10n.translate('latest_version_title'),
+              body: l10n.translate('no_update_available'),
             )
           else if (update.errorMessage != null)
             _StatusCard(
               icon: Icons.cloud_off_rounded,
               color: AppColors.warning,
-              title: 'Check failed',
+              title: l10n.translate('check_failed_title'),
               body: update.errorMessage!,
             )
           else
-            const _StatusCard(
+            _StatusCard(
               icon: Icons.system_update_rounded,
               color: AppColors.info,
-              title: 'Not checked yet',
-              body: 'Tap "Check for updates" to look for a newer ShopZen build.',
+              title: l10n.translate('not_checked_yet'),
+              body: l10n.translate('not_checked_desc'),
             ),
           const SizedBox(height: 16),
           FilledButton.icon(
@@ -60,7 +62,7 @@ class AppUpdateScreen extends ConsumerWidget {
                 ? null
                 : () => ref.read(appUpdateProvider.notifier).checkForUpdates(),
             icon: const Icon(Icons.refresh_rounded),
-            label: const Text('Check for updates'),
+            label: Text(l10n.translate('check_for_updates')),
           ),
         ],
       ),
@@ -93,14 +95,14 @@ class _InstalledCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Installed ShopZen',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  Text(
+                    AppLocalizations.of(context).translate('installed_shopzen'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     update.installedVersion.isEmpty
-                        ? 'Version unavailable'
+                        ? AppLocalizations.of(context).translate('version_unavailable')
                         : 'v${update.installedVersion} • build ${update.installedBuildNumber}',
                     style: const TextStyle(
                         fontSize: 13, color: AppColors.textSecondary),
@@ -155,7 +157,7 @@ class _UpdateAvailableCard extends StatelessWidget {
     final hasNotes = (info.releaseNotes ?? '').isNotEmpty;
     final notes = hasNotes
         ? info.releaseNotes!
-        : 'Release notes are not available for this build.';
+        : AppLocalizations.of(context).translate('no_release_notes');
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -185,8 +187,8 @@ class _UpdateAvailableCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     mandatory
-                        ? 'Mandatory update required'
-                        : 'A new version is available',
+                        ? AppLocalizations.of(context).translate('mandatory_update_required')
+                        : AppLocalizations.of(context).translate('new_version_available'),
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -198,28 +200,28 @@ class _UpdateAvailableCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             _MetaRow(
-              label: 'Latest version',
+              label: AppLocalizations.of(context).translate('label_latest_version'),
               value: 'v${info.latestVersion} • build ${info.latestBuildNumber}',
             ),
             if (info.minimumSupportedVersion != null)
               _MetaRow(
-                label: 'Minimum supported',
+                label: AppLocalizations.of(context).translate('label_min_supported'),
                 value: 'v${info.minimumSupportedVersion}',
               ),
             if (info.releasedAt != null)
               _MetaRow(
-                label: 'Released',
+                label: AppLocalizations.of(context).translate('label_released'),
                 value: '${info.releasedAt!.toLocal()}'.split('.').first,
               ),
             if ((info.checksumSha256 ?? '').isNotEmpty)
               _MetaRow(
-                label: 'SHA-256',
+                label: AppLocalizations.of(context).translate('sha256_label'),
                 value: '${info.checksumSha256!.substring(0, 16)}…',
               ),
             const SizedBox(height: 12),
-            const Text(
-              'What’s new',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            Text(
+              AppLocalizations.of(context).translate('whats_new'),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
             const SizedBox(height: 6),
             Container(
@@ -236,11 +238,11 @@ class _UpdateAvailableCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             if (mandatory)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 10),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
                 child: Text(
-                  'This build is no longer supported. Please update ShopZen to keep using your shop data safely.',
-                  style: TextStyle(fontSize: 12.5, color: AppColors.danger),
+                  AppLocalizations.of(context).translate('unsupported_build_msg'),
+                  style: const TextStyle(fontSize: 12.5, color: AppColors.danger),
                 ),
               ),
             if ((info.downloadUrl ?? '').isNotEmpty)
@@ -249,7 +251,7 @@ class _UpdateAvailableCard extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => _openDownload(context, info.downloadUrl),
                   icon: const Icon(Icons.download_rounded),
-                  label: const Text('Download update'),
+                  label: Text(AppLocalizations.of(context).translate('download_update')),
                 ),
               ),
           ],
@@ -265,7 +267,7 @@ class _UpdateAvailableCard extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open the download link.')),
+        SnackBar(content: Text(AppLocalizations.of(context).translate('could_not_open_link'))),
       );
     }
   }

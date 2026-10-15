@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../shared_widgets/whatsapp_button.dart';
-import '../pos/pos_screen.dart';
 import '../inventory/imei_scanner_screen.dart';
 import '../inventory/imei_lookup_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
@@ -18,6 +18,7 @@ class DashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authProvider);
     final dashboardAsync = ref.watch(dashboardProvider);
     final business = authState.business;
@@ -26,7 +27,8 @@ class DashboardScreen extends ConsumerWidget {
     // call would 403. Give them a clean landing instead of an error screen.
     if (business == null && authState.user?.isShopZenAdmin == true) {
       return Scaffold(
-        appBar: AppBar(title: const Text('ShopZen')),
+        appBar: AppBar(title: Text(l10n.translate('app_name'))),
+        // (brand name stays Latin across locales)
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
@@ -37,15 +39,15 @@ class DashboardScreen extends ConsumerWidget {
                     size: 64, color: AppColors.primary),
                 const SizedBox(height: 16),
                 Text(
-                  'Signed in as ShopZen Admin',
+                  l10n.translate('signed_in_as_admin'),
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'This account manages app releases and registered shops. Open the Admin Dashboard to publish an update or review shops.',
+                Text(
+                  l10n.translate('admin_landing_desc'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
@@ -53,7 +55,7 @@ class DashboardScreen extends ConsumerWidget {
                     MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
                   ),
                   icon: const Icon(Icons.dashboard_outlined),
-                  label: const Text('Open Admin Dashboard'),
+                  label: Text(AppLocalizations.of(context).translate('open_admin_dashboard')),
                 ),
               ],
             ),
@@ -72,7 +74,7 @@ class DashboardScreen extends ConsumerWidget {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
             Text(
-              'Good Morning, ${authState.user?.firstName ?? "Owner"} 👋',
+              "${l10n.translate('good_morning')}${authState.user?.firstName ?? l10n.translate('owner_label')} 👋",
               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
@@ -80,14 +82,14 @@ class DashboardScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner_rounded),
-            tooltip: 'Scan IMEI',
+            tooltip: l10n.translate('scan_imei'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ImeiScannerScreen()),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.search),
-            tooltip: 'Search Device',
+            tooltip: l10n.translate('search_device'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ImeiLookupScreen()),
             ),
@@ -104,16 +106,17 @@ class DashboardScreen extends ConsumerWidget {
               children: [
                 const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
                 const SizedBox(height: 12),
-                Text('Could not load dashboard: $err', textAlign: TextAlign.center),
+                Text('${l10n.translate('could_not_load_dashboard')}$err', textAlign: TextAlign.center),
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () => ref.refresh(dashboardProvider),
-                  child: const Text('Retry'),
+                  child: Text(AppLocalizations.of(context).translate('retry')),
                 ),
               ],
             ),
           ),
           data: (data) {
+            final l10n = AppLocalizations.of(context);
             return SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16.0),
@@ -130,33 +133,33 @@ class DashboardScreen extends ConsumerWidget {
                     childAspectRatio: 1.35,
                     children: [
                       KpiCard(
-                        title: "Today's Sales",
+                        title: l10n.translate('today_sales'),
                         amount: data.today.sales,
-                        subtitle: '${data.today.salesCount} bills generated',
+                        subtitle: '${data.today.salesCount} ${l10n.translate('bills_generated')}',
                         icon: Icons.receipt_long_rounded,
                         iconColor: AppColors.primary,
                         amountColor: AppColors.primary,
                       ),
                       KpiCard(
-                        title: "Today's Net Profit",
+                        title: l10n.translate('net_profit'),
                         amount: data.today.netProfit,
-                        subtitle: 'Gross: ${CurrencyFormatter.format(data.today.grossProfit)}',
+                        subtitle: "${l10n.translate('gross_colon')}${CurrencyFormatter.format(data.today.grossProfit)}",
                         icon: Icons.trending_up_rounded,
                         iconColor: AppColors.success,
                         amountColor: AppColors.success,
                       ),
                       KpiCard(
-                        title: 'Customer Khata Due',
+                        title: l10n.translate('outstanding_khata'),
                         amount: data.totalReceivable,
-                        subtitle: 'Market Udhar',
+                        subtitle: l10n.translate('market_udhar'),
                         icon: Icons.people_alt_rounded,
                         iconColor: AppColors.danger,
                         amountColor: AppColors.danger,
                       ),
                       KpiCard(
-                        title: 'Supplier Payable',
+                        title: l10n.translate('supplier_payable'),
                         amount: data.totalPayable,
-                        subtitle: 'Vendor Outstanding',
+                        subtitle: l10n.translate('vendor_outstanding'),
                         icon: Icons.local_shipping_rounded,
                         iconColor: AppColors.warning,
                         amountColor: AppColors.warning,
@@ -203,12 +206,12 @@ class DashboardScreen extends ConsumerWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '${data.lowStockCount} Products Low on Stock',
+                                    "${data.lowStockCount}${l10n.translate('low_stock_products')}",
                                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: AppColors.danger),
                                   ),
-                                  const Text(
-                                    'Reorder inventory before items run out.',
-                                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                  Text(
+                                    l10n.translate('reorder_inventory'),
+                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                   ),
                                 ],
                               ),
@@ -224,12 +227,12 @@ class DashboardScreen extends ConsumerWidget {
                   if (data.topPendingKhata.isNotEmpty) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: const [
+                      children: [
                         Text(
-                          'Pending Khata Reminders',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          l10n.translate('pending_khata_reminders'),
+                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
-                        Text('1-Tap WhatsApp', style: TextStyle(fontSize: 11, color: AppColors.whatsapp, fontWeight: FontWeight.bold)),
+                        Text(l10n.translate('one_tap_whatsapp'), style: const TextStyle(fontSize: 11, color: AppColors.whatsapp, fontWeight: FontWeight.bold)),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -252,10 +255,10 @@ class DashboardScreen extends ConsumerWidget {
                               ),
                             ),
                             title: Text(item['name'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                            subtitle: Text('Due: ${CurrencyFormatter.format(dueAmt)}', style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+                            subtitle: Text("${l10n.translate('due_label')}${CurrencyFormatter.format(dueAmt)}", style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
                             trailing: WhatsAppButton(
                               url: item['whatsapp_reminder_url'],
-                              label: 'Remind',
+                              label: AppLocalizations.of(context).translate('remind'),
                               isCompact: true,
                             ),
                           );

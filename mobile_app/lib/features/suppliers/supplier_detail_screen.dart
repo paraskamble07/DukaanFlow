@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/api_constants.dart';
@@ -44,16 +45,17 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
         },
       );
       if (res.statusCode == 201 && mounted) {
-        ref.refresh(supplierListProvider);
+        final l10n = AppLocalizations.of(context);
+        ref.invalidate(supplierListProvider);
         Navigator.of(context).pop(); // close payment sheet
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment of ${CurrencyFormatter.format(amt)} recorded. Payable: ${CurrencyFormatter.format(res.data['remaining_due'] ?? 0)}')),
+          SnackBar(content: Text("${l10n.translate('payment_of')}${CurrencyFormatter.format(amt)}${l10n.translate('recorded_payable')}${CurrencyFormatter.format(res.data['remaining_due'] ?? 0)}")),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not record payment. Please try again.')),
+          SnackBar(content: Text(AppLocalizations.of(context).translate('could_not_record_supplier_payment'))),
         );
       }
     } finally {
@@ -72,7 +74,9 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
+        builder: (context, setSheetState) {
+          final l10n = AppLocalizations.of(context);
+          return Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             left: 20, right: 20, top: 20,
@@ -81,10 +85,10 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Pay Supplier', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(l10n.translate('pay_supplier'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const Divider(),
               const SizedBox(height: 8),
-              const Text('Amount Paid (₹) *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('amount_paid_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextField(
                 controller: _payAmountController,
@@ -92,7 +96,7 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
                 decoration: const InputDecoration(hintText: '0.00'),
               ),
               const SizedBox(height: 14),
-              const Text('Payment Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('payment_mode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               Wrap(
                 spacing: 8,
@@ -109,17 +113,19 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
                 onPressed: _isPaying ? null : _recordPayment,
                 child: _isPaying
                     ? const SizedBox(height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Record Supplier Payment'),
+                    : Text(l10n.translate('record_supplier_payment')),
               ),
             ],
           ),
-        ),
+        );
+        },
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final s = widget.supplier;
     return Scaffold(
       appBar: AppBar(title: Text(s.companyName, style: const TextStyle(fontSize: 17))),
@@ -160,7 +166,7 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
                             if (await canLaunchUrl(uri)) await launchUrl(uri);
                           },
                           icon: const Icon(Icons.call, size: 18),
-                          label: const Text('Call'),
+                          label: Text(l10n.translate('call')),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -170,7 +176,7 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
                             MaterialPageRoute(builder: (_) => PurchaseFormScreen(supplier: s)),
                           ),
                           icon: const Icon(Icons.add_shopping_cart, size: 18),
-                          label: const Text('Purchase'),
+                          label: Text(l10n.translate('purchase')),
                         ),
                       ),
                     ],
@@ -185,11 +191,11 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  _kvRow('Total Purchases', CurrencyFormatter.format(s.totalPurchases), AppColors.primary),
-                  _kvRow('Total Paid', CurrencyFormatter.format(s.totalPaid), AppColors.success),
+                  _kvRow(l10n.translate('total_purchases'), CurrencyFormatter.format(s.totalPurchases), AppColors.primary),
+                  _kvRow(l10n.translate('total_paid'), CurrencyFormatter.format(s.totalPaid), AppColors.success),
                   const Divider(),
                   _kvRow(
-                    'Outstanding Payable',
+                    l10n.translate('outstanding_payable'),
                     CurrencyFormatter.format(s.outstandingDue),
                     s.outstandingDue > 0 ? AppColors.warning : AppColors.success,
                     bold: true,
@@ -203,12 +209,12 @@ class _SupplierDetailScreenState extends ConsumerState<SupplierDetailScreen> {
             ElevatedButton.icon(
               onPressed: _showPaymentSheet,
               icon: const Icon(Icons.payments_outlined),
-              label: const Text('Record Payment to Supplier'),
+              label: Text(l10n.translate('record_payment_to_supplier')),
             ),
           const SizedBox(height: 24),
-          if (s.gstin != null && s.gstin!.isNotEmpty) _kvRow('GSTIN', s.gstin!, AppColors.textPrimary),
-          if (s.email != null && s.email!.isNotEmpty) _kvRow('Email', s.email!, AppColors.textPrimary),
-          if (s.address != null && s.address!.isNotEmpty) _kvRow('Address', s.address!, AppColors.textPrimary),
+          if (s.gstin != null && s.gstin!.isNotEmpty) _kvRow(l10n.translate('gstin_label'), s.gstin!, AppColors.textPrimary),
+          if (s.email != null && s.email!.isNotEmpty) _kvRow(l10n.translate('email_label'), s.email!, AppColors.textPrimary),
+          if (s.address != null && s.address!.isNotEmpty) _kvRow(l10n.translate('address_label'), s.address!, AppColors.textPrimary),
         ],
       ),
     );

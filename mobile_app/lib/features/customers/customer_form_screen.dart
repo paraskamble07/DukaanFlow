@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../models/customer_model.dart';
@@ -42,6 +43,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
   }
 
   Future<void> _saveCustomer() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
@@ -59,16 +61,16 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
       } else {
         await client.dio.post(ApiConstants.customers, data: payload);
       }
-      ref.refresh(customerListProvider);
+      ref.invalidate(customerListProvider);
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Customer saved successfully!')),
+          SnackBar(content: Text(l10n.translate('customer_saved'))),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${l10n.translate('error_prefix')}$e")));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -77,8 +79,9 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.customer != null ? 'Edit Customer' : 'Add New Customer')),
+      appBar: AppBar(title: Text(widget.customer != null ? l10n.translate('edit_customer') : l10n.translate('add_new_customer'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Form(
@@ -86,45 +89,45 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Customer Full Name *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('customer_name_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(hintText: 'e.g. Rahul Patil'),
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter name' : null,
+                decoration: InputDecoration(hintText: l10n.translate('customer_name_hint')),
+                validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_name') : null,
               ),
               const SizedBox(height: 14),
 
-              const Text('Mobile / WhatsApp Number *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('mobile_whatsapp_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(hintText: '10-digit mobile number'),
-                validator: (v) => (v == null || v.length < 10) ? 'Enter valid 10-digit mobile' : null,
+                decoration: InputDecoration(hintText: l10n.translate('mobile_hint')),
+                validator: (v) => (v == null || v.length < 10) ? l10n.translate('enter_valid_mobile') : null,
               ),
               const SizedBox(height: 14),
 
-              const Text('Address / Locality', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('address_locality'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(hintText: 'e.g. Dadar West, Mumbai'),
+                decoration: InputDecoration(hintText: l10n.translate('address_hint')),
               ),
               const SizedBox(height: 14),
 
-              const Text('Credit / Khata Limit (₹)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('credit_limit'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _creditLimitController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(hintText: '5000'),
+                decoration: InputDecoration(hintText: '5000'),
               ),
               const SizedBox(height: 24),
 
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _saveCustomer,
-                child: _isSubmitting ? const CircularProgressIndicator() : const Text('Save Customer'),
+                child: _isSubmitting ? const CircularProgressIndicator() : Text(l10n.translate('save_customer')),
               ),
             ],
           ),

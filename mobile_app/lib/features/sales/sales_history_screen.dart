@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/business_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
@@ -13,16 +14,17 @@ class SalesHistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final salesAsync = ref.watch(salesListProvider);
     final statusFilter = ref.watch(saleStatusFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sales & Invoices'),
+        title: Text(l10n.translate('sales_invoices')),
         actions: [
           IconButton(
             icon: const Icon(Icons.point_of_sale_rounded),
-            tooltip: 'New Sale',
+            tooltip: l10n.translate('new_sale'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const PosScreen()),
             ),
@@ -34,8 +36,8 @@ class SalesHistoryScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search invoice number or customer...',
+              decoration: InputDecoration(
+                hintText: l10n.translate('search_invoice_customer'),
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -47,13 +49,13 @@ class SalesHistoryScreen extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
-                _statusChip(ref, '', 'All Bills', statusFilter),
+                _statusChip(ref, '', l10n.translate('all_bills'), statusFilter),
                 const SizedBox(width: 8),
-                _statusChip(ref, 'PAID', 'Paid ✅', statusFilter),
+                _statusChip(ref, 'PAID', l10n.translate('paid'), statusFilter),
                 const SizedBox(width: 8),
-                _statusChip(ref, 'PARTIAL', 'Khata Due ⚠️', statusFilter),
+                _statusChip(ref, 'PARTIAL', l10n.translate('khata_due'), statusFilter),
                 const SizedBox(width: 8),
-                _statusChip(ref, 'UNPAID', 'Unpaid', statusFilter),
+                _statusChip(ref, 'UNPAID', l10n.translate('unpaid'), statusFilter),
               ],
             ),
           ),
@@ -67,11 +69,11 @@ class SalesHistoryScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Could not load sales: $err', textAlign: TextAlign.center),
+                      Text('${l10n.translate('could_not_load_sales')}$err', textAlign: TextAlign.center),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () => ref.refresh(salesListProvider),
-                        child: const Text('Retry'),
+                        child: Text(l10n.translate('retry')),
                       ),
                     ],
                   ),
@@ -80,9 +82,9 @@ class SalesHistoryScreen extends ConsumerWidget {
                   if (sales.isEmpty) {
                     return EmptyStateView(
                       icon: Icons.receipt_long_outlined,
-                      title: 'No Sales Yet',
-                      description: 'Create your first bill to see it here with invoice history.',
-                      actionLabel: 'Create Sale',
+                      title: l10n.translate('no_sales_title'),
+                      description: l10n.translate('no_sales_desc'),
+                      actionLabel: l10n.translate('create_sale'),
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const PosScreen()),
                       ),
@@ -101,9 +103,9 @@ class SalesHistoryScreen extends ConsumerWidget {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('${sales.length} bills', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                            Text('${sales.length} ${l10n.translate('bills')}', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                             Text(
-                              'Total: ${CurrencyFormatter.format(dayTotal)}',
+                              "${l10n.translate('total_colon')}${CurrencyFormatter.format(dayTotal)}",
                               style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.primary),
                             ),
                           ],
@@ -188,7 +190,7 @@ class _SaleTile extends StatelessWidget {
             ),
             if (sale.dueAmount > 0)
               Text(
-                'Due: ${CurrencyFormatter.format(sale.dueAmount)}',
+                "${AppLocalizations.of(context).translate('due_label')}${CurrencyFormatter.format(sale.dueAmount)}",
                 style: const TextStyle(fontSize: 11, color: AppColors.danger, fontWeight: FontWeight.bold),
               ),
           ],

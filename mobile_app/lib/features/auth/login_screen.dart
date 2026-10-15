@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
@@ -42,6 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authProvider);
 
     return Scaffold(
@@ -65,16 +67,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Center(
+                  Center(
                     child: Text(
-                      'Welcome to ShopZen',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      l10n.translate('welcome_to_app'),
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  const Center(
+                  Center(
                     child: Text(
-                      'Sign in to manage your mobile store',
-                      style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                      l10n.translate('sign_in_subtitle'),
+                      style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -102,33 +104,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
 
-                  const Text('Email Address or Username', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(l10n.translate('email_or_username'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'e.g. shop@example.com',
-                      prefixIcon: Icon(Icons.email_outlined),
+                    decoration: InputDecoration(
+                      hintText: l10n.translate('email_or_username_hint'),
+                      prefixIcon: const Icon(Icons.email_outlined),
                     ),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Please enter email' : null,
+                    validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_email') : null,
                   ),
                   const SizedBox(height: 16),
 
-                  const Text('Password', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                  Text(l10n.translate('password'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      hintText: 'Enter password',
+                      hintText: l10n.translate('enter_password'),
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    validator: (v) => (v == null || v.isEmpty) ? 'Please enter password' : null,
+                    validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_password') : null,
                   ),
                   const SizedBox(height: 24),
 
@@ -136,7 +138,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: authState.isLoading ? null : _handleLogin,
                     child: authState.isLoading
                         ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : const Text('Sign In to ShopZen'),
+                        : Text(l10n.translate('sign_in')),
                   ),
                   const SizedBox(height: 20),
 
@@ -150,7 +152,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             MaterialPageRoute(builder: (_) => const RegisterScreen()),
                           );
                         },
-                        child: const Text('Register Free', style: TextStyle(fontWeight: FontWeight.bold)),
+                        child: Text(l10n.translate('register_free'), style: const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),

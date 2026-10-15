@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../models/product_model.dart';
@@ -56,6 +57,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
   }
 
   Future<void> _saveProduct() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
@@ -78,17 +80,17 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
       } else {
         await client.dio.post(ApiConstants.products, data: payload);
       }
-      ref.refresh(productsListProvider);
+      ref.invalidate(productsListProvider);
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product saved successfully!')),
+          SnackBar(content: Text(l10n.translate('product_saved'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving product: $e')),
+          SnackBar(content: Text("${l10n.translate('error_saving_product')}$e")),
         );
       }
     } finally {
@@ -98,8 +100,9 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(title: Text(widget.product != null ? 'Edit Product' : 'Add New Product')),
+      appBar: AppBar(title: Text(widget.product != null ? l10n.translate('edit_product') : l10n.translate('add_new_product'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Form(
@@ -107,12 +110,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Product Name / Model *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('product_name_label'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(hintText: 'e.g. Samsung Galaxy A56 5G (8GB/128GB)'),
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter name' : null,
+                decoration: InputDecoration(hintText: l10n.translate('product_name_hint')),
+                validator: (v) => (v == null || v.isEmpty) ? l10n.translate('please_enter_name') : null,
               ),
               const SizedBox(height: 14),
 
@@ -122,11 +125,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Brand', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('brand'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _brandController,
-                          decoration: const InputDecoration(hintText: 'e.g. Apple, Samsung'),
+                          decoration: InputDecoration(hintText: l10n.translate('brand_hint')),
                         ),
                       ],
                     ),
@@ -136,11 +139,11 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Barcode / SKU', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('barcode_sku'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _barcodeController,
-                          decoration: const InputDecoration(hintText: 'Scan or code'),
+                          decoration: InputDecoration(hintText: l10n.translate('barcode_hint')),
                         ),
                       ],
                     ),
@@ -155,13 +158,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Cost Price (₹) *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('cost_price'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _costController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(hintText: '0.00'),
-                          validator: (v) => (v == null || v.isEmpty) ? 'Enter cost' : null,
+                          decoration: InputDecoration(hintText: '0.00'),
+                          validator: (v) => (v == null || v.isEmpty) ? l10n.translate('enter_cost_price') : null,
                         ),
                       ],
                     ),
@@ -171,13 +174,13 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Selling MRP (₹) *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('selling_mrp'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _priceController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(hintText: '0.00'),
-                          validator: (v) => (v == null || v.isEmpty) ? 'Enter price' : null,
+                          validator: (v) => (v == null || v.isEmpty) ? l10n.translate('enter_selling_price') : null,
                         ),
                       ],
                     ),
@@ -192,12 +195,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Initial Stock', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('initial_stock'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _stockController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(hintText: '1'),
+                          decoration: InputDecoration(hintText: '1'),
                         ),
                       ],
                     ),
@@ -207,12 +210,12 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Low Stock Alert', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                        Text(l10n.translate('low_stock_alert'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                         const SizedBox(height: 6),
                         TextFormField(
                           controller: _minStockController,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(hintText: '5'),
+                          decoration: InputDecoration(hintText: '5'),
                         ),
                       ],
                     ),
@@ -223,8 +226,8 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Track Serial / IMEI Numbers', style: TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: const Text('Enable for Smartphones and Laptops to track individual 15-digit IMEIs.'),
+                title: Text(l10n.translate('track_imei'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(l10n.translate('track_imei_sub')),
                 value: _isImeiTracked,
                 onChanged: (val) => setState(() => _isImeiTracked = val),
               ),
@@ -232,7 +235,7 @@ class _ProductFormScreenState extends ConsumerState<ProductFormScreen> {
 
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _saveProduct,
-                child: _isSubmitting ? const CircularProgressIndicator() : const Text('Save Product'),
+                child: _isSubmitting ? const CircularProgressIndicator() : Text(l10n.translate('save_product')),
               ),
             ],
           ),

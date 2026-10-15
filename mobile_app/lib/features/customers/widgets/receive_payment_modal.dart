@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,6 +40,7 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
   }
 
   Future<void> _submitPayment() async {
+    final l10n = AppLocalizations.of(context);
     final amt = double.tryParse(_amountController.text) ?? 0.0;
     if (amt <= 0) return;
 
@@ -57,8 +59,8 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
       );
 
       if (res.statusCode == 201 && mounted) {
-        ref.refresh(customerListProvider);
-        ref.refresh(customerLedgerProvider(widget.customerId));
+        ref.invalidate(customerListProvider);
+        ref.invalidate(customerLedgerProvider(widget.customerId));
         Navigator.of(context).pop();
 
         final waUrl = res.data['whatsapp_receipt_url'] as String?;
@@ -66,10 +68,10 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
           showDialog(
             context: context,
             builder: (_) => AlertDialog(
-              title: const Text('Payment Recorded!'),
-              content: Text('Payment of ₹$amt recorded. Send WhatsApp receipt to customer?'),
+              title: Text(l10n.translate('payment_recorded_title')),
+              content: Text("${l10n.translate('payment_of_amt')}$amt${l10n.translate('recorded_send_receipt')}"),
               actions: [
-                TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Skip')),
+                TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(l10n.translate('skip'))),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(backgroundColor: AppColors.whatsapp, foregroundColor: Colors.white),
                   onPressed: () async {
@@ -78,7 +80,7 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
                     if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
                   },
                   icon: const Icon(Icons.chat),
-                  label: const Text('Send Receipt'),
+                  label: Text(l10n.translate('send_receipt')),
                 ),
               ],
             ),
@@ -92,13 +94,13 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
         final serverError = e.response?.data;
         final msg = (serverError is Map && serverError['error'] is String)
             ? serverError['error'] as String
-            : 'Could not record payment. Check the amount and try again.';
+            : l10n.translate('could_not_record_payment_retry');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Could not record payment: $e')));
+            .showSnackBar(SnackBar(content: Text("${l10n.translate('could_not_record_payment')}$e")));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -107,6 +109,7 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom + 20,
@@ -121,14 +124,14 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Receive Payment: ${widget.customerName}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text("${l10n.translate('receive_payment_for')}${widget.customerName}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.of(context).pop()),
             ],
           ),
           const Divider(),
           const SizedBox(height: 8),
 
-          const Text('Amount Received (₹) *', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(l10n.translate('amount_received'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 6),
           TextField(
             controller: _amountController,
@@ -137,7 +140,7 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
           ),
           const SizedBox(height: 14),
 
-          const Text('Payment Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(l10n.translate('payment_mode'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 6),
           Wrap(
             spacing: 8,
@@ -151,17 +154,17 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
           ),
           const SizedBox(height: 14),
 
-          const Text('UPI Ref / UTR / Cheque (Optional)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(l10n.translate('upi_ref_optional'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
           const SizedBox(height: 6),
           TextField(
             controller: _refController,
-            decoration: const InputDecoration(hintText: 'e.g. 423188992100'),
+            decoration: InputDecoration(hintText: AppLocalizations.of(context).translate('utr_hint')),
           ),
           const SizedBox(height: 20),
 
           ElevatedButton(
             onPressed: _isSubmitting ? null : _submitPayment,
-            child: _isSubmitting ? const CircularProgressIndicator() : const Text('Record Payment & Send Receipt'),
+            child: _isSubmitting ? const CircularProgressIndicator() : Text(l10n.translate('record_payment_receipt')),
           ),
         ],
       ),

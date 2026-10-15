@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/customer_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
@@ -13,16 +14,17 @@ class CustomerListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final customersAsync = ref.watch(customerListProvider);
     final dueFilter = ref.watch(customerDueFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customers & Digital Khata'),
+        title: Text(l10n.translate('customers')),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add),
-            tooltip: 'Add Customer',
+            tooltip: AppLocalizations.of(context).translate('add_customer'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const CustomerFormScreen()),
             ),
@@ -34,11 +36,11 @@ class CustomerListScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(12.0),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search customer name or phone...',
-                prefixIcon: Icon(Icons.search),
+              decoration: InputDecoration(
+                hintText: l10n.translate('search'),
+                prefixIcon: const Icon(Icons.search),
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               onChanged: (q) => ref.read(customerSearchProvider.notifier).state = q,
             ),
@@ -49,19 +51,19 @@ class CustomerListScreen extends ConsumerWidget {
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text('All Customers'),
+                  label: Text(l10n.translate('customers')),
                   selected: dueFilter.isEmpty,
                   onSelected: (_) => ref.read(customerDueFilterProvider.notifier).state = '',
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: const Text('Pending Udhar (Due) ⚠️'),
+                  label: Text(l10n.translate('outstanding_khata')),
                   selected: dueFilter == 'yes',
                   onSelected: (_) => ref.read(customerDueFilterProvider.notifier).state = 'yes',
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: const Text('Cleared Accounts ✅'),
+                  label: Text(l10n.translate('due_amount')),
                   selected: dueFilter == 'cleared',
                   onSelected: (_) => ref.read(customerDueFilterProvider.notifier).state = 'cleared',
                 ),
@@ -75,14 +77,14 @@ class CustomerListScreen extends ConsumerWidget {
               onRefresh: () async => ref.refresh(customerListProvider),
               child: customersAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Error: $err')),
+                error: (err, _) => Center(child: Text("${AppLocalizations.of(context).translate('error_prefix')}$err")),
                 data: (customers) {
                   if (customers.isEmpty) {
                     return EmptyStateView(
                       icon: Icons.people_outline,
-                      title: 'No Customers Found',
-                      description: 'Add your regular customers to maintain credit (Khata) balances.',
-                      actionLabel: 'Add Customer',
+                      title: l10n.translate('no_data'),
+                      description: l10n.translate('no_customers_desc'),
+                      actionLabel: l10n.translate('add_customer'),
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const CustomerFormScreen()),
                       ),
@@ -115,7 +117,7 @@ class CustomerListScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                c.outstandingDue > 0 ? 'Due: ${CurrencyFormatter.format(c.outstandingDue)}' : 'Cleared',
+                                c.outstandingDue > 0 ? "${l10n.translate('due_label')}${CurrencyFormatter.format(c.outstandingDue)}" : l10n.translate('cleared'),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
@@ -127,7 +129,7 @@ class CustomerListScreen extends ConsumerWidget {
                                   padding: const EdgeInsets.only(top: 4.0),
                                   child: WhatsAppButton(
                                     url: c.whatsappReminderUrl,
-                                    label: 'Remind',
+                                    label: l10n.translate('remind'),
                                     isCompact: true,
                                   ),
                                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../auth/splash_screen.dart';
@@ -48,6 +49,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Future<void> _saveShop() async {
+    final l10n = AppLocalizations.of(context);
     setState(() => _isSaving = true);
     final client = ref.read(apiClientProvider);
     try {
@@ -66,13 +68,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         await ref.read(authProvider.notifier).fetchProfile();
         setState(() => _isEditingShop = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Shop profile updated. Invoices will use the new details.')),
+          SnackBar(content: Text(l10n.translate('shop_profile_updated'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save shop profile. Please try again.')),
+          SnackBar(content: Text(l10n.translate('could_not_save_profile'))),
         );
       }
     } finally {
@@ -84,36 +86,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final auth = ref.watch(authProvider);
+    final l10n = AppLocalizations.of(context);
     final business = auth.business;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l10n.translate('settings'))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Appearance
           _sectionCard(
-            title: 'Appearance',
+            title: l10n.translate('appearance'),
             children: [
-              const Text('Theme', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('theme'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 8),
               SegmentedButton<ThemeMode>(
-                segments: const [
-                  ButtonSegment(value: ThemeMode.light, label: Text('Light'), icon: Icon(Icons.light_mode)),
-                  ButtonSegment(value: ThemeMode.system, label: Text('System'), icon: Icon(Icons.settings_suggest)),
-                  ButtonSegment(value: ThemeMode.dark, label: Text('Dark'), icon: Icon(Icons.dark_mode)),
+                segments: [
+                  ButtonSegment(value: ThemeMode.light, label: Text(l10n.translate('light')), icon: const Icon(Icons.light_mode)),
+                  ButtonSegment(value: ThemeMode.system, label: Text(l10n.translate('system')), icon: const Icon(Icons.settings_suggest)),
+                  ButtonSegment(value: ThemeMode.dark, label: Text(l10n.translate('dark')), icon: const Icon(Icons.dark_mode)),
                 ],
                 selected: {settings.themeMode},
                 onSelectionChanged: (modes) => ref.read(settingsProvider.notifier).setThemeMode(modes.first),
               ),
               const SizedBox(height: 16),
-              const Text('Language', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+              Text(l10n.translate('language'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               const SizedBox(height: 8),
               SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'en', label: Text('English')),
-                  ButtonSegment(value: 'hi', label: Text('हिंदी')),
-                  ButtonSegment(value: 'mr', label: Text('मराठी')),
+                segments: [
+                  ButtonSegment(value: 'en', label: Text(l10n.translate('english'))),
+                  const ButtonSegment(value: 'hi', label: Text('हिंदी')),
+                  const ButtonSegment(value: 'mr', label: Text('मराठी')),
                 ],
                 selected: {settings.locale.languageCode},
                 onSelectionChanged: (langs) => ref.read(settingsProvider.notifier).setLocale(langs.first),
@@ -124,43 +127,43 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Shop profile
           _sectionCard(
-            title: 'Shop Profile',
+            title: l10n.translate('shop_profile'),
             children: _isEditingShop
                 ? [
                     TextField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Shop Name'),
+                      decoration: InputDecoration(labelText: l10n.translate('shop_name')),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'Phone'),
+                      decoration: InputDecoration(labelText: l10n.translate('phone')),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _addressController,
                       maxLines: 2,
-                      decoration: const InputDecoration(labelText: 'Address'),
+                      decoration: InputDecoration(labelText: l10n.translate('address')),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _gstinController,
-                      decoration: const InputDecoration(labelText: 'GSTIN'),
+                      decoration: InputDecoration(labelText: l10n.translate('gstin_label')),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _upiController,
-                      decoration: const InputDecoration(
-                        labelText: 'UPI ID',
-                        hintText: 'e.g. myshop@okaxis',
-                        helperText: 'Shown as a collect QR on a customer\'s ledger.',
+                      decoration: InputDecoration(
+                        labelText: l10n.translate('upi_id'),
+                        hintText: l10n.translate('upi_id_hint'),
+                        helperText: l10n.translate('upi_id_helper'),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _prefixController,
-                      decoration: const InputDecoration(labelText: 'Invoice Prefix', hintText: 'SZ-'),
+                      decoration: InputDecoration(labelText: l10n.translate('invoice_prefix'), hintText: 'SZ-'),
                     ),
                     const SizedBox(height: 16),
                     Row(
@@ -168,7 +171,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         Expanded(
                           child: OutlinedButton(
                             onPressed: () => setState(() => _isEditingShop = false),
-                            child: const Text('Cancel'),
+                            child: Text(l10n.translate('cancel')),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -176,26 +179,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: _isSaving ? null : _saveShop,
-                          child: _isSaving ? const Text('Saving...') : const Text('Save Changes'),
+                          child: _isSaving ? const Text('Saving...') : Text(l10n.translate('save_changes')),
                           ),
                         ),
                       ],
                     ),
                   ]
                 : [
-                    _profileRow('Shop', business?.name ?? '-'),
-                    _profileRow('Owner', business?.ownerName ?? auth.user?.firstName ?? '-'),
-                    _profileRow('Phone', business?.phone ?? '-'),
-                    _profileRow('GSTIN', (business?.gstin ?? '').isEmpty ? 'Not set' : business!.gstin!),
-                    _profileRow('UPI ID', (business?.upiId ?? '').isEmpty ? 'Not set' : business!.upiId!),
-                    _profileRow('Invoice Prefix', business?.invoicePrefix ?? '-'),
+                    _profileRow(l10n.translate('shop_label'), business?.name ?? '-'),
+                    _profileRow(l10n.translate('owner_label'), business?.ownerName ?? auth.user?.firstName ?? '-'),
+                    _profileRow(l10n.translate('phone'), business?.phone ?? '-'),
+                    _profileRow(l10n.translate('gstin_label'), (business?.gstin ?? '').isEmpty ? l10n.translate('not_set') : business!.gstin!),
+                    _profileRow(l10n.translate('upi_id'), (business?.upiId ?? '').isEmpty ? l10n.translate('not_set') : business!.upiId!),
+                    _profileRow(l10n.translate('invoice_prefix'), business?.invoicePrefix ?? '-'),
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton.icon(
                         onPressed: _startEditing,
                         icon: const Icon(Icons.edit, size: 18),
-                        label: const Text('Edit Shop Profile'),
+                        label: Text(l10n.translate('edit_shop_profile')),
                       ),
                     ),
                   ],
@@ -204,23 +207,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           // Account
           _sectionCard(
-            title: 'Account',
+            title: l10n.translate('account'),
             children: [
-              _profileRow('Logged in as', auth.user?.email ?? '-'),
-              _profileRow('Role', auth.user?.role ?? 'OWNER'),
+              _profileRow(l10n.translate('logged_in_as'), auth.user?.email ?? '-'),
+              _profileRow(l10n.translate('role'), auth.user?.role ?? 'OWNER'),
             ],
           ),
           const SizedBox(height: 16),
 
           // App Updates (Phase 21)
           _sectionCard(
-            title: 'Application',
+            title: l10n.translate('application'),
             children: [
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.system_update_rounded, color: AppColors.primary),
-                title: const Text('App Updates', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                subtitle: const Text('Check for newer ShopZen builds & release notes',
+                title: Text(l10n.translate('app_updates'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: Text(l10n.translate('app_updates_sub'),
                     style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                 trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                 onTap: () => Navigator.of(context).push(
@@ -242,14 +245,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               final confirmed = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Logout from ShopZen?'),
-                  content: const Text('All your shop data stays safe in the cloud. You can login again from any phone.'),
+                  title: Text(l10n.translate('logout_title')),
+                  content: Text(l10n.translate('logout_content')),
                   actions: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: Text(l10n.translate('cancel'))),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, foregroundColor: Colors.white),
                       onPressed: () => Navigator.of(ctx).pop(true),
-                      child: const Text('Logout'),
+                      child: Text(l10n.translate('logout')),
                     ),
                   ],
                 ),
@@ -265,7 +268,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               }
             },
             icon: const Icon(Icons.logout),
-            label: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: Text(l10n.translate('logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
         ],
       ),

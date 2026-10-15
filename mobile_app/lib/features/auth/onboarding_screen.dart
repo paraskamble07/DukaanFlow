@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/constants/app_colors.dart';
 import 'login_screen.dart';
 import 'register_screen.dart';
@@ -16,24 +17,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<Map<String, String>> _slides = [
     {
-      'title': 'Manage Your Entire Shop',
-      'desc': 'All-in-one mobile SaaS for sales, inventory, dual IMEI tracking, and vendor purchases.',
+      'titleKey': 'slide1_title',
+      'descKey': 'slide1_desc',
       'icon': 'shop',
     },
     {
-      'title': 'Know Your Stock & Khata',
-      'desc': 'Track live store valuation and send instant WhatsApp payment reminders with 1-tap.',
+      'titleKey': 'slide2_title',
+      'descKey': 'slide2_desc',
       'icon': 'khata',
     },
     {
-      'title': 'Sell Faster. Earn Smarter.',
-      'desc': 'Lightning fast 10-second POS checkout with automatic stock deduction and true profit analytics.',
+      'titleKey': 'slide3_title',
+      'descKey': 'slide3_desc',
       'icon': 'pos',
     },
   ];
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -48,7 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-                  child: const Text('Skip', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(l10n.translate('skip'), style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               Expanded(
@@ -78,7 +80,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 32),
                         Text(
-                          slide['title']!,
+                          l10n.translate(slide['titleKey']!),
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -87,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          slide['desc']!,
+                          l10n.translate(slide['descKey']!),
                           style: const TextStyle(
                             fontSize: 15,
                             color: AppColors.textSecondary,
@@ -129,7 +131,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     );
                   }
                 },
-                child: Text(_currentPage == _slides.length - 1 ? 'Start Free Trial' : 'Next'),
+                child: Text(_currentPage == _slides.length - 1 ? l10n.translate('start_free_trial') : l10n.translate('next')),
               ),
               const SizedBox(height: 12),
               OutlinedButton(
@@ -142,7 +144,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 },
-                child: const Text('Existing Shop Login', style: TextStyle(fontWeight: FontWeight.bold)),
+                child: Text(l10n.translate('existing_shop_login'), style: const TextStyle(fontWeight: FontWeight.bold)),
               ),
             ],
           ),

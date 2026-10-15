@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
@@ -27,10 +28,11 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final lookupAsync = ref.watch(imeiLookupProvider(_searchQuery));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('IMEI Device Lookup')),
+      appBar: AppBar(title: Text(l10n.translate('imei_lookup'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -42,8 +44,8 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                   child: TextField(
                     controller: _imeiController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      hintText: 'Enter 15-digit IMEI or Serial...',
+                    decoration: InputDecoration(
+                      hintText: l10n.translate('imei_search_hint'),
                       prefixIcon: Icon(Icons.search),
                     ),
                   ),
@@ -52,7 +54,7 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(minimumSize: const Size(80, 48)),
                   onPressed: () => setState(() => _searchQuery = _imeiController.text.trim()),
-                  child: const Text('Search'),
+                  child: Text(l10n.translate('search')),
                 ),
               ],
             ),
@@ -61,7 +63,7 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
             if (_searchQuery.isNotEmpty)
               lookupAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => const Center(child: Text('Device not found with this IMEI.')),
+                error: (err, _) => Center(child: Text(l10n.translate('device_not_found'))),
                 data: (device) {
                   if (device == null) {
                     return Card(
@@ -73,7 +75,7 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                             children: [
                               const Icon(Icons.search_off, size: 48, color: AppColors.danger),
                               const SizedBox(height: 8),
-                              Text('No record found for IMEI: $_searchQuery', style: const TextStyle(fontWeight: FontWeight.bold)),
+                              Text('${l10n.translate('no_record_for_imei')}$_searchQuery', style: const TextStyle(fontWeight: FontWeight.bold)),
                             ],
                           ),
                         ),
@@ -106,8 +108,8 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                           if (device.modelName != null) Text(device.modelName!, style: const TextStyle(color: AppColors.textSecondary)),
                           const Divider(height: 24),
 
-                          Text('IMEI 1: ${device.imei1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                          if (device.imei2 != null) Text('IMEI 2: ${device.imei2}', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                          Text("${l10n.translate('imei_1')}${device.imei1}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          if (device.imei2 != null) Text("${l10n.translate('imei_2')}${device.imei2}", style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
                           const SizedBox(height: 12),
 
                           if (device.customerName != null) ...[
@@ -117,12 +119,12 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('PURCHASED BY CUSTOMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
+                                  Text(l10n.translate('purchased_by_customer'), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary)),
                                   const SizedBox(height: 4),
                                   Text(device.customerName!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                  Text('Mobile: ${device.customerPhone ?? "-"}'),
-                                  Text('Sale Date: ${AppDateFormatter.formatDate(device.saleDate)}'),
-                                  if (device.invoiceNumber != null) Text('Invoice Bill: #${device.invoiceNumber}'),
+                                  Text('${l10n.translate('mobile_label')}${device.customerPhone ?? "-"}'),
+                                  Text('${l10n.translate('sale_date_label')}${AppDateFormatter.formatDate(device.saleDate)}'),
+                                  if (device.invoiceNumber != null) Text('${l10n.translate('invoice_bill')}${device.invoiceNumber}'),
                                 ],
                               ),
                             ),

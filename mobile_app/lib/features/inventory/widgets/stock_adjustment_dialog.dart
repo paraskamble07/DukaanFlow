@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/product_provider.dart';
 
@@ -27,7 +27,13 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
   final _notesController = TextEditingController();
   bool _isSubmitting = false;
 
-  final _reasons = ['Audit Correction', 'Damaged / Defective', 'Missing / Lost', 'Customer Return', 'Supplier Inward'];
+  final _reasons = [
+    ('Audit Correction', 'reason_audit'),
+    ('Damaged / Defective', 'reason_damaged'),
+    ('Missing / Lost', 'reason_missing'),
+    ('Customer Return', 'reason_return'),
+    ('Supplier Inward', 'reason_inward'),
+  ];
 
   Future<void> _submitAdjustment() async {
     setState(() => _isSubmitting = true);
@@ -46,16 +52,16 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
       );
 
       if (res.statusCode == 200 && mounted) {
-        ref.refresh(productsListProvider);
+        ref.invalidate(productsListProvider);
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(res.data['message'] ?? 'Stock adjusted successfully!')),
+          SnackBar(content: Text(res.data['message'] ?? AppLocalizations.of(context).translate('stock_adjusted_success'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
+          SnackBar(content: Text("${AppLocalizations.of(context).translate('error_prefix')}${e.toString()}")),
         );
       }
     } finally {
@@ -66,30 +72,30 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Adjust Stock: ${widget.productName}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      title: Text("${AppLocalizations.of(context).translate('adjust_stock_for')}${widget.productName}", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Current Stock: ${widget.currentStock} units', style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text("${AppLocalizations.of(context).translate('current_stock_units')}${widget.currentStock}${AppLocalizations.of(context).translate('units_suffix')}", style: const TextStyle(fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Row(
             children: [
               ChoiceChip(
-                label: const Text('Add Stock (+)'),
+                label: Text(AppLocalizations.of(context).translate('add_stock')),
                 selected: _action == 'INCREASE',
                 onSelected: (_) => setState(() => _action = 'INCREASE'),
               ),
               const SizedBox(width: 8),
               ChoiceChip(
-                label: const Text('Deduct Stock (-)'),
+                label: Text(AppLocalizations.of(context).translate('deduct_stock')),
                 selected: _action == 'DECREASE',
                 onSelected: (_) => setState(() => _action = 'DECREASE'),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          const Text('Quantity', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(AppLocalizations.of(context).translate('quantity'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           Row(
             children: [
               IconButton(
@@ -104,20 +110,20 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
             ],
           ),
           const SizedBox(height: 8),
-          const Text('Reason', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          Text(AppLocalizations.of(context).translate('reason'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
           DropdownButton<String>(
             value: _reason,
             isExpanded: true,
-            items: _reasons.map((r) => DropdownMenuItem(value: r, child: Text(r))).toList(),
+            items: _reasons.map((r) => DropdownMenuItem(value: r.$1, child: Text(AppLocalizations.of(context).translate(r.$2)))).toList(),
             onChanged: (v) => setState(() => _reason = v!),
           ),
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context).translate('cancel'))),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submitAdjustment,
-          child: _isSubmitting ? const CircularProgressIndicator() : const Text('Confirm'),
+          child: _isSubmitting ? const CircularProgressIndicator() : Text(AppLocalizations.of(context).translate('confirm')),
         ),
       ],
     );

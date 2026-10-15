@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
@@ -79,9 +80,9 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
         expand: false,
         builder: (ctx, scrollController) => Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16),
-              child: Text('Select Product to Purchase', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(AppLocalizations.of(context).translate('select_product_to_purchase'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
             const Divider(height: 1),
             Expanded(
@@ -91,7 +92,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 itemBuilder: (ctx, i) => ListTile(
                   title: Text(productsAsync[i].name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                   subtitle: Text(
-                    'Current stock: ${productsAsync[i].stockQuantity}',
+                    '${AppLocalizations.of(context).translate('current_stock')}${productsAsync[i].stockQuantity}',
                     style: const TextStyle(fontSize: 12),
                   ),
                   trailing: Text(
@@ -113,9 +114,10 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (_supplier == null || _lines.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a supplier and at least one product.')),
+        SnackBar(content: Text(l10n.translate('select_supplier_product'))),
       );
       return;
     }
@@ -125,7 +127,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
       final cost = double.tryParse(l.costController.text) ?? 0;
       if (qty <= 0 || cost <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Every purchase line needs a positive quantity and unit cost.')),
+          SnackBar(content: Text(l10n.translate('purchase_lines_invalid'))),
         );
         return;
       }
@@ -151,18 +153,18 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
         },
       );
       if (res.statusCode == 201 && mounted) {
-        ref.refresh(productsListProvider);
-        ref.refresh(purchaseListProvider);
-        ref.refresh(supplierListProvider);
+        ref.invalidate(productsListProvider);
+        ref.invalidate(purchaseListProvider);
+        ref.invalidate(supplierListProvider);
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Purchase recorded. Stock updated (+${_lines.length} lines).')),
+          SnackBar(content: Text('${l10n.translate('purchase_recorded')}${_lines.length}${l10n.translate('purchase_recorded_tail')}')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not record purchase. Please try again.')),
+          SnackBar(content: Text(l10n.translate('could_not_record_purchase'))),
         );
       }
     } finally {
@@ -175,7 +177,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
     final suppliersAsync = ref.watch(supplierListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('New Purchase Entry')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context).translate('new_purchase'))),
       bottomNavigationBar: SafeArea(
         child: Container(
           padding: const EdgeInsets.all(12),
@@ -189,7 +191,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text('Purchase Total', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                  Text(AppLocalizations.of(context).translate('purchase_total'), style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
                   Text(
                     CurrencyFormatter.format(_total),
                     style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -201,7 +203,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isSubmitting ? null : _submit,
                   icon: const Icon(Icons.inventory),
-                  label: _isSubmitting ? const Text('Saving...') : const Text('Save & Increase Stock'),
+                  label: _isSubmitting ? const Text('Saving...') : Text(AppLocalizations.of(context).translate('save_increase_stock')),
                 ),
               ),
             ],
@@ -216,11 +218,11 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             // Supplier selector
             suppliersAsync.when(
               loading: () => const LinearProgressIndicator(),
-              error: (_, __) => const Text('Could not load suppliers.'),
+              error: (_, __) => Text(AppLocalizations.of(context).translate('could_not_load_suppliers')),
               data: (suppliers) => DropdownButtonFormField<SupplierModel>(
                 value: _supplier,
                 isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Supplier / Distributor *'),
+                decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('supplier_distributor')),
                 items: suppliers
                     .map((s) => DropdownMenuItem(value: s, child: Text(s.companyName, overflow: TextOverflow.ellipsis)))
                     .toList(),
@@ -230,7 +232,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             const SizedBox(height: 16),
             TextFormField(
               controller: _billController,
-              decoration: const InputDecoration(labelText: 'Supplier Bill / Invoice No (Optional)'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('supplier_bill_no')),
             ),
             const SizedBox(height: 20),
 
@@ -238,11 +240,11 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('PRODUCTS', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 1)),
+                Text(AppLocalizations.of(context).translate('products_section'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 1)),
                 TextButton.icon(
                   onPressed: _addProduct,
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text('Add Product'),
+                  label: Text(AppLocalizations.of(context).translate('add_product')),
                 ),
               ],
             ),
@@ -273,7 +275,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                                 child: TextField(
                                   controller: entry.value.qtyController,
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Qty', isDense: true),
+                                  decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('qty'), isDense: true),
                                   onChanged: (_) => setState(() {}),
                                 ),
                               ),
@@ -282,7 +284,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                                 child: TextField(
                                   controller: entry.value.costController,
                                   keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(labelText: 'Unit Cost ₹', isDense: true),
+                                  decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('unit_cost'), isDense: true),
                                   onChanged: (_) => setState(() {}),
                                 ),
                               ),
@@ -295,7 +297,7 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
                 ),
 
             const SizedBox(height: 20),
-            const Text('Payment', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context).translate('payment_section'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -311,13 +313,13 @@ class _PurchaseFormScreenState extends ConsumerState<PurchaseFormScreen> {
             TextFormField(
               controller: _paidController,
               keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Amount Paid Now (₹)', hintText: '0'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('amount_paid_now'), hintText: '0'),
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _notesController,
               maxLines: 2,
-              decoration: const InputDecoration(labelText: 'Notes (Optional)'),
+              decoration: InputDecoration(labelText: AppLocalizations.of(context).translate('notes_optional')),
             ),
           ],
         ),

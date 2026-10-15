@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/currency_formatter.dart';
@@ -32,12 +33,12 @@ class SaleSuccessDialog extends StatelessWidget {
             child: const Icon(Icons.check, size: 40, color: Colors.white),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Bill Generated!',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            AppLocalizations.of(context).translate('bill_generated'),
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Text(
-            'Invoice #$invoiceNo',
+            "${AppLocalizations.of(context).translate('invoice_hash')}$invoiceNo",
             style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
@@ -52,7 +53,7 @@ class SaleSuccessDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Bill:'),
+                    Text(AppLocalizations.of(context).translate('total_bill')),
                     Text(CurrencyFormatter.format(total), style: const TextStyle(fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -60,7 +61,7 @@ class SaleSuccessDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Paid Amount:'),
+                    Text(AppLocalizations.of(context).translate('paid_amount_colon')),
                     Text(CurrencyFormatter.format(paid), style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -69,7 +70,7 @@ class SaleSuccessDialog extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Balance Due (Khata):'),
+                      Text(AppLocalizations.of(context).translate('balance_due_khata')),
                       Text(CurrencyFormatter.format(due), style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
                     ],
                   ),
@@ -91,14 +92,14 @@ class SaleSuccessDialog extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.chat, size: 18),
-              label: const Text('Share Invoice on WhatsApp'),
+              label: Text(AppLocalizations.of(context).translate('share_invoice_whatsapp')),
             ),
             const SizedBox(height: 8),
           ],
           OutlinedButton(
             style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(44)),
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Start Next Sale'),
+            child: Text(AppLocalizations.of(context).translate('start_next_sale')),
           ),
         ],
       ),

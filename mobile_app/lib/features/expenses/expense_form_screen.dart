@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../providers/auth_provider.dart';
@@ -40,6 +41,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSubmitting = true);
 
@@ -57,17 +59,17 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
         },
       );
       if (res.statusCode == 201 && mounted) {
-        ref.refresh(expenseListProvider);
-        ref.refresh(expenseReportProvider);
+        ref.invalidate(expenseListProvider);
+        ref.invalidate(expenseReportProvider);
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Expense recorded successfully.')),
+          SnackBar(content: Text(l10n.translate('expense_saved'))),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not save expense. Please check the amount and try again.')),
+          SnackBar(content: Text(l10n.translate('could_not_save_expense'))),
         );
       }
     } finally {
@@ -77,10 +79,11 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final categoriesAsync = ref.watch(expenseCategoriesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Expense')),
+      appBar: AppBar(title: Text(l10n.translate('add_expense'))),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -90,26 +93,26 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Expense Title *', hintText: 'e.g. Shop Electricity Bill'),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a title' : null,
+                decoration: InputDecoration(labelText: l10n.translate('expense_title_label'), hintText: l10n.translate('expense_title_hint')),
+                validator: (v) => (v == null || v.trim().isEmpty) ? l10n.translate('please_enter_title') : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Amount (₹) *', hintText: '0.00'),
+                decoration: InputDecoration(labelText: l10n.translate('amount_label'), hintText: '0.00'),
                 validator: (v) {
                   final amt = double.tryParse(v ?? '');
-                  return (amt == null || amt <= 0) ? 'Please enter a valid amount' : null;
+                  return (amt == null || amt <= 0) ? l10n.translate('enter_valid_amount') : null;
                 },
               ),
               const SizedBox(height: 16),
               categoriesAsync.when(
                 loading: () => const LinearProgressIndicator(),
-                error: (_, __) => const Text('Could not load categories. Amount will be uncategorised.'),
+                error: (_, __) => Text(l10n.translate('could_not_load_categories')),
                 data: (cats) => DropdownButtonFormField<int?>(
                   value: _categoryId,
-                  decoration: const InputDecoration(labelText: 'Category'),
+                  decoration: InputDecoration(labelText: l10n.translate('category')),
                   items: cats
                       .map((c) => DropdownMenuItem(
                             value: c['id'] as int,
@@ -120,7 +123,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              const Text('Payment Method', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text(l10n.translate('payment_mode'), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -137,7 +140,7 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
                 onTap: _pickDate,
                 borderRadius: BorderRadius.circular(10),
                 child: InputDecorator(
-                  decoration: const InputDecoration(labelText: 'Expense Date', suffixIcon: Icon(Icons.calendar_month)),
+                  decoration: InputDecoration(labelText: l10n.translate('expense_date'), suffixIcon: const Icon(Icons.calendar_month)),
                   child: Text(
                     '${_expenseDate.day.toString().padLeft(2, '0')}-${_expenseDate.month.toString().padLeft(2, '0')}-${_expenseDate.year}',
                     style: const TextStyle(fontSize: 15),
@@ -148,14 +151,14 @@ class _ExpenseFormScreenState extends ConsumerState<ExpenseFormScreen> {
               TextFormField(
                 controller: _notesController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Notes (Optional)'),
+                decoration: InputDecoration(labelText: l10n.translate('notes_optional')),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 child: _isSubmitting
                     ? const SizedBox(height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save Expense'),
+                    : Text(l10n.translate('save_expense')),
               ),
             ],
           ),

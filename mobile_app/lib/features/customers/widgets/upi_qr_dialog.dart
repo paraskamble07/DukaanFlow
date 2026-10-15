@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import '../../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/api_constants.dart';
@@ -62,10 +63,9 @@ class _UpiQrDialogState extends ConsumerState<UpiQrDialog> {
       _amountText = data['amount']?.toString() ?? '0.00';
       _upiId = data['upi_id']?.toString() ?? '';
     } catch (e) {
-      String msg = 'Could not load UPI QR.';
+      String msg = AppLocalizations.of(context).translate('could_not_load_qr');
       if (e.toString().contains('400')) {
-        msg = 'No UPI ID configured for this shop. The owner can add one in '
-              'Settings → Shop Profile (UPI ID).';
+        msg = AppLocalizations.of(context).translate('no_upi_configured');
       }
       _error = msg;
     } finally {
@@ -90,17 +90,17 @@ class _UpiQrDialogState extends ConsumerState<UpiQrDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Collect ₹ from ${widget.customer.name}'),
+      title: Text("${AppLocalizations.of(context).translate('collect_from')}${widget.customer.name}"),
       content: SizedBox(
         width: double.maxFinite,
         child: _loading
-            ? const Column(
+            ? Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   CircularProgressIndicator(),
                   SizedBox(height: 12),
-                  Text('Generating UPI QR…', style: TextStyle(fontSize: 12)),
+                  Text(AppLocalizations.of(context).translate('generating_qr'), style: const TextStyle(fontSize: 12)),
                 ],
               )
             : _error != null
@@ -141,17 +141,15 @@ class _UpiQrDialogState extends ConsumerState<UpiQrDialog> {
                           color: const Color(0xFFFFFBEB),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Row(
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(Icons.info_outline, size: 16, color: Colors.orange),
-                            SizedBox(width: 8),
+                            const Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                            const SizedBox(width: 8),
                             Expanded(
                               child: Text(
-                                'Scanning this QR only requests the payment in the '
-                                'customer\'s UPI app. Record the payment here only '
-                                'after you have actually received it.',
-                                style: TextStyle(fontSize: 11.5),
+                                AppLocalizations.of(context).translate('qr_scan_note'),
+                                style: const TextStyle(fontSize: 11.5),
                               ),
                             ),
                           ],
@@ -163,13 +161,13 @@ class _UpiQrDialogState extends ConsumerState<UpiQrDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Close'),
+          child: Text(AppLocalizations.of(context).translate('close')),
         ),
         if (_error == null && !_loading)
           FilledButton.icon(
             onPressed: _recordPayment,
             icon: const Icon(Icons.check_circle_outline, size: 18),
-            label: const Text('Record Received Payment'),
+            label: Text(AppLocalizations.of(context).translate('record_payment')),
           ),
       ],
     );

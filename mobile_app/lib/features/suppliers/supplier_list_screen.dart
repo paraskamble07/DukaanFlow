@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/business_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
@@ -12,16 +13,17 @@ class SupplierListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final suppliersAsync = ref.watch(supplierListProvider);
     final query = ref.watch(supplierSearchProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Suppliers'),
+        title: Text(l10n.translate('suppliers')),
         actions: [
           IconButton(
             icon: const Icon(Icons.local_shipping),
-            tooltip: 'Add Supplier',
+            tooltip: l10n.translate('add_supplier'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const SupplierFormScreen()),
             ),
@@ -33,8 +35,8 @@ class SupplierListScreen extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
-              decoration: const InputDecoration(
-                hintText: 'Search supplier or company...',
+              decoration: InputDecoration(
+                hintText: l10n.translate('search_supplier'),
                 prefixIcon: Icon(Icons.search),
                 isDense: true,
               ),
@@ -46,7 +48,7 @@ class SupplierListScreen extends ConsumerWidget {
               onRefresh: () async => ref.refresh(supplierListProvider),
               child: suppliersAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Could not load suppliers: $err')),
+                error: (err, _) => Center(child: Text('${l10n.translate('could_not_load_suppliers')}$err')),
                 data: (suppliers) {
                   final filtered = query.isEmpty
                       ? suppliers
@@ -59,9 +61,9 @@ class SupplierListScreen extends ConsumerWidget {
                   if (filtered.isEmpty) {
                     return EmptyStateView(
                       icon: Icons.local_shipping_outlined,
-                      title: 'No Suppliers Yet',
-                      description: 'Add your distributors to record purchases and track payables.',
-                      actionLabel: 'Add Supplier',
+                      title: l10n.translate('no_suppliers_title'),
+                      description: l10n.translate('no_suppliers_desc'),
+                      actionLabel: l10n.translate('add_supplier'),
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SupplierFormScreen()),
                       ),
@@ -94,7 +96,7 @@ class SupplierListScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                s.outstandingDue > 0 ? 'Payable: ${CurrencyFormatter.format(s.outstandingDue)}' : 'Settled',
+                                s.outstandingDue > 0 ? "${l10n.translate('payable_label')}${CurrencyFormatter.format(s.outstandingDue)}" : l10n.translate('settled'),
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,

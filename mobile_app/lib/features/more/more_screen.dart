@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../features/customers/customer_list_screen.dart';
 import '../../features/expenses/expense_list_screen.dart';
@@ -21,6 +22,7 @@ class MoreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
     final business = auth.business;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -29,7 +31,7 @@ class MoreScreen extends ConsumerWidget {
           children: [
             Text(business?.name ?? 'ShopZen', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             Text(
-              '${auth.user?.firstName ?? 'Owner'} • Free ShopZen Account',
+              "${auth.user?.firstName ?? l10n.translate('owner_label')} • ${l10n.translate('free_account')}",
               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
@@ -38,97 +40,97 @@ class MoreScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [
-          _SectionHeader('SHOP OPERATIONS'),
+          _SectionHeader(l10n.translate('inventory')),
           _NavTile(
             icon: Icons.inventory_2_rounded,
             color: AppColors.primary,
-            title: 'Stock & Products',
-            subtitle: 'Manage inventory, low stock alerts',
+            title: l10n.translate('inventory'),
+            subtitle: l10n.translate('low_stock_alert'),
             onTap: () => _push(context, const ProductListScreen()),
           ),
           _NavTile(
             icon: Icons.qr_code_scanner_rounded,
             color: AppColors.accentTeal,
-            title: 'IMEI Scanner',
-            subtitle: 'Scan / register device IMEIs',
+            title: l10n.translate('scan_imei'),
+            subtitle: l10n.translate('imei_register'),
             onTap: () => _push(context, const ImeiScannerScreen()),
           ),
           _NavTile(
             icon: Icons.search_rounded,
             color: AppColors.info,
-            title: 'IMEI Lookup',
-            subtitle: 'Trace device lifecycle & warranty',
+            title: l10n.translate('imei_lookup_title'),
+            subtitle: l10n.translate('warranty_lifecycle'),
             onTap: () => _push(context, const ImeiLookupScreen()),
           ),
           _NavTile(
             icon: Icons.people_alt_rounded,
             color: const Color(0xFFEC4899),
-            title: 'Customers & Khata',
-            subtitle: 'Udhar ledger, payments, reminders',
+            title: l10n.translate('customers'),
+            subtitle: l10n.translate('khata'),
             onTap: () => _push(context, const CustomerListScreen()),
           ),
 
-          _SectionHeader('PURCHASES & SUPPLIERS'),
+          _SectionHeader('${l10n.translate('suppliers')} & ${l10n.translate('purchases')}'),
           _NavTile(
             icon: Icons.local_shipping_rounded,
             color: AppColors.warning,
-            title: 'Suppliers',
-            subtitle: 'Distributors & payables',
+            title: l10n.translate('suppliers'),
+            subtitle: l10n.translate('distributors_payables'),
             onTap: () => _push(context, const SupplierListScreen()),
           ),
           _NavTile(
             icon: Icons.add_shopping_cart_rounded,
             color: AppColors.primary,
-            title: 'New Purchase',
-            subtitle: 'Record stock received from supplier',
+            title: l10n.translate('purchases'),
+            subtitle: l10n.translate('stock'),
             onTap: () => _push(context, const PurchaseFormScreen()),
           ),
 
-          _SectionHeader('MONEY & REPORTS'),
+          _SectionHeader('${l10n.translate('reports')} & ${l10n.translate('expenses')}'),
           _NavTile(
             icon: Icons.notifications_active_rounded,
             color: AppColors.danger,
-            title: 'Payment Reminders',
-            subtitle: 'Overdue Khata balances, WhatsApp / SMS reminders',
+            title: l10n.translate('payment_reminders'),
+            subtitle: l10n.translate('payment_reminders_sub'),
             onTap: () => _push(context, const RemindersScreen()),
           ),
           _NavTile(
             icon: Icons.receipt_long_rounded,
             color: AppColors.danger,
-            title: 'Expenses',
-            subtitle: 'Rent, electricity, salary & more',
+            title: l10n.translate('expenses'),
+            subtitle: l10n.translate('rent_electricity_salary'),
             onTap: () => _push(context, const ExpenseListScreen()),
           ),
           _NavTile(
             icon: Icons.assessment_rounded,
             color: AppColors.accentTeal,
-            title: 'Reports & Insights',
-            subtitle: 'P&L, GST, top products, dead stock',
+            title: l10n.translate('reports'),
+            subtitle: l10n.translate('profit_loss'),
             onTap: () => _push(context, const ReportsScreen()),
           ),
 
-          _SectionHeader('ACCOUNT'),
+          _SectionHeader(l10n.translate('account')),
           if (auth.user?.isShopZenAdmin == true)
             _NavTile(
               icon: Icons.admin_panel_settings_rounded,
               color: const Color(0xFF7C3AED),
-              title: 'ShopZen Admin',
-              subtitle: 'Manage app releases & registered shops',
+              title: l10n.translate('admin_dashboard'),
+              subtitle: l10n.translate('admin_dashboard_sub'),
               onTap: () => _push(context, const AdminDashboardScreen()),
             ),
           _NavTile(
             icon: Icons.settings_rounded,
             color: AppColors.textSecondary,
-            title: 'Settings',
-            subtitle: 'Shop profile, theme, language',
+            title: l10n.translate('app_settings'),
+            subtitle: l10n.translate('app_settings_sub'),
             onTap: () => _push(context, const SettingsScreen()),
           ),
           const SizedBox(height: 24),
-          const Center(
+          Center(
             child: Text(
-              'ShopZen v1.0.0\nSell. Stock. Khata. Profit. Simplified.',
+              "${l10n.translate('app_version_label')}${l10n.translate('footer_tagline')}",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
+              style: const TextStyle(fontSize: 11.5, color: AppColors.textSecondary),
             ),
           ),
         ],

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/product_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
@@ -13,23 +14,24 @@ class ProductListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final productsAsync = ref.watch(productsListProvider);
     final filter = ref.watch(productFilterProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products & Stock'),
+        title: Text(l10n.translate('inventory')),
         actions: [
           IconButton(
             icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Barcode Scanner',
+            tooltip: AppLocalizations.of(context).translate('barcode_scanner'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ImeiScannerScreen()),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Add Product',
+            tooltip: AppLocalizations.of(context).translate('add_product'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ProductFormScreen()),
             ),
@@ -43,7 +45,7 @@ class ProductListScreen extends ConsumerWidget {
             padding: const EdgeInsets.all(12.0),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search product, brand, SKU or barcode...',
+                hintText: l10n.translate('search'),
                 prefixIcon: const Icon(Icons.search),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -67,21 +69,21 @@ class ProductListScreen extends ConsumerWidget {
             child: Row(
               children: [
                 FilterChip(
-                  label: const Text('All Products'),
+                  label: Text(l10n.translate('inventory')),
                   selected: filter.stockStatus == null,
                   onSelected: (_) => ref.read(productFilterProvider.notifier).state =
                       ref.read(productFilterProvider).copyWith(stockStatus: null),
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: const Text('Low Stock ⚠️'),
+                  label: Text(l10n.translate('low_stock_alert')),
                   selected: filter.stockStatus == 'low',
                   onSelected: (_) => ref.read(productFilterProvider.notifier).state =
                       ref.read(productFilterProvider).copyWith(stockStatus: 'low'),
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: const Text('Out of Stock ❌'),
+                  label: Text(l10n.translate('stock')),
                   selected: filter.stockStatus == 'out',
                   onSelected: (_) => ref.read(productFilterProvider.notifier).state =
                       ref.read(productFilterProvider).copyWith(stockStatus: 'out'),
@@ -97,14 +99,14 @@ class ProductListScreen extends ConsumerWidget {
               onRefresh: () async => ref.refresh(productsListProvider),
               child: productsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, _) => Center(child: Text('Error loading products: $err')),
+                error: (err, _) => Center(child: Text("${AppLocalizations.of(context).translate('error_loading_products')}$err")),
                 data: (products) {
                   if (products.isEmpty) {
                     return EmptyStateView(
                       icon: Icons.inventory_2_outlined,
-                      title: 'No Products Found',
-                      description: 'Start by adding your mobile phones, chargers, and accessories.',
-                      actionLabel: 'Add First Product',
+                      title: l10n.translate('no_data'),
+                      description: l10n.translate('no_products_desc'),
+                      actionLabel: l10n.translate('add_first_product'),
                       onAction: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ProductFormScreen()),
                       ),
@@ -148,7 +150,7 @@ class ProductListScreen extends ConsumerWidget {
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
-                                        'Cost: ${CurrencyFormatter.format(p.purchasePrice)} | Margin: ${p.profitMargin}%',
+                                        "${l10n.translate('cost_colon')}${CurrencyFormatter.format(p.purchasePrice)} | ${l10n.translate('margin_colon')}${p.profitMargin}%",
                                         style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                                       ),
                                       const SizedBox(height: 4),
@@ -166,7 +168,7 @@ class ProductListScreen extends ConsumerWidget {
                                                 color: AppColors.primary.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
-                                              child: const Text('IMEI Tracked', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                                              child: Text(AppLocalizations.of(context).translate('imei_tracked'), style: const TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
                                             ),
                                         ],
                                       ),
@@ -196,7 +198,7 @@ class ProductListScreen extends ConsumerWidget {
                                     const SizedBox(height: 6),
                                     IconButton(
                                       icon: const Icon(Icons.edit_calendar_outlined, size: 18),
-                                      tooltip: 'Adjust Stock',
+                                      tooltip: AppLocalizations.of(context).translate('adjust_stock'),
                                       onPressed: () => showDialog(
                                         context: context,
                                         builder: (_) => StockAdjustmentDialog(

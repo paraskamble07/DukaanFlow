@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/expense_model.dart';
 import '../../providers/business_provider.dart';
@@ -12,15 +13,16 @@ class ExpenseListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     final expensesAsync = ref.watch(expenseListProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Expenses'),
+        title: Text(l10n.translate('expenses')),
         actions: [
           IconButton(
             icon: const Icon(Icons.add_circle),
-            tooltip: 'Add Expense',
+            tooltip: l10n.translate('add_expense'),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ExpenseFormScreen()),
             ),
@@ -31,14 +33,14 @@ class ExpenseListScreen extends ConsumerWidget {
         onRefresh: () async => ref.refresh(expenseListProvider),
         child: expensesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(child: Text('Could not load expenses: $err')),
+          error: (err, _) => Center(child: Text('${l10n.translate('could_not_load_expenses')}$err')),
           data: (expenses) {
             if (expenses.isEmpty) {
               return EmptyStateView(
                 icon: Icons.receipt_long_outlined,
-                title: 'No Expenses Recorded',
-                description: 'Track shop rent, electricity, salary and other costs to know your true profit.',
-                actionLabel: 'Add Expense',
+                title: l10n.translate('no_expenses_title'),
+                description: l10n.translate('no_expenses_desc'),
+                actionLabel: l10n.translate('add_expense'),
                 onAction: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const ExpenseFormScreen()),
                 ),
@@ -67,7 +69,7 @@ class ExpenseListScreen extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('Total Expenses (recent)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          Text(l10n.translate('total_expenses_recent'), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                           Text(
                             CurrencyFormatter.format(total),
                             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary),
@@ -116,7 +118,7 @@ class _ExpenseTile extends StatelessWidget {
         ),
         title: Text(expense.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
         subtitle: Text(
-          '${expense.categoryName ?? 'Uncategorised'} • ${expense.paymentMethodDisplay} • ${expense.expenseDate.length >= 10 ? expense.expenseDate.substring(0, 10) : expense.expenseDate}',
+          "${expense.categoryName ?? AppLocalizations.of(context).translate('uncategorised')} • ${expense.paymentMethodDisplay} • ${expense.expenseDate.length >= 10 ? expense.expenseDate.substring(0, 10) : expense.expenseDate}",
           style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         trailing: Text(

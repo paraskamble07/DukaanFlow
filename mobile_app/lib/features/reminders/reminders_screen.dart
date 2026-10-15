@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/localization/app_localizations.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
@@ -26,7 +27,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   Future<void> _openWhatsApp(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) {
-      _toast('This customer has no valid WhatsApp number.');
+      _toast(AppLocalizations.of(context).translate('no_whatsapp_number'));
       return;
     }
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -37,8 +38,8 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     final uri = Uri.parse('sms:$clean?body=${Uri.encodeComponent(body)}');
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
-    } else {
-      _toast('No SMS app available on this phone.');
+    } else if (mounted) {
+      _toast(AppLocalizations.of(context).translate('no_sms_app'));
     }
   }
 
@@ -52,15 +53,15 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Log this reminder?'),
+        title: Text(AppLocalizations.of(context).translate('log_this_reminder')),
         content: Text(
           channel == 'WHATSAPP'
-              ? 'WhatsApp opened with the message for ${c.name}. Record this reminder in the history?'
-              : 'The SMS composer opened for ${c.name}. Record this reminder in the history?',
+              ? "${AppLocalizations.of(context).translate('whatsapp_opened_prefix')}${c.name}${AppLocalizations.of(context).translate('whatsapp_name_suffix')}"
+              : "${AppLocalizations.of(context).translate('sms_opened_prefix')}${c.name}${AppLocalizations.of(context).translate('sms_name_suffix')}",
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('LOG REMINDER')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(AppLocalizations.of(context).translate('cancel'))),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(AppLocalizations.of(context).translate('log_reminder'))),
         ],
       ),
     );
@@ -76,7 +77,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
         ApiConstants.remindersLog,
         data: {'customer_id': c.customerId, 'channel': channel},
       );
-      _toast('Reminder logged for ${c.name}.');
+      if (mounted) _toast("${AppLocalizations.of(context).translate('reminder_logged_prefix')}${c.name}.");
       ref.invalidate(reminderHistoryProvider);
       await ref.read(reminderProvider.notifier).load();
     } catch (e) {
@@ -94,20 +95,21 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       final data = res?.data;
       if (data is Map && data['error'] is String) return data['error'];
     } catch (_) {}
-    return 'Could not log the reminder. Please try again.';
+    return AppLocalizations.of(context).translate('could_not_log_reminder');
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final state = ref.watch(reminderProvider);
     final history = ref.watch(reminderHistoryProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Payment Reminders'),
+        title: Text(l10n.translate('payment_reminders')),
         actions: [
           IconButton(
-            tooltip: 'Refresh balances',
+            tooltip: AppLocalizations.of(context).translate('refresh'),
             icon: const Icon(Icons.refresh),
             onPressed: state.isLoading ? null : () => ref.read(reminderProvider.notifier).load(),
           ),
@@ -119,7 +121,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               ? _Centered(state.error!, onRetry: () => ref.read(reminderProvider.notifier).load())
               : state.dueList.isEmpty
                   ? _Centered(
-                      'All settled! No customer has an outstanding balance right now.',
+                      AppLocalizations.of(context).translate('no_due_customers'),
                       onRetry: () => ref.read(reminderProvider.notifier).load(),
                     )
                   : ListView(
@@ -128,28 +130,28 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),
                           child: Text(
-                            'Credit period: ${state.creditDays} days · amounts are recalculated by the server',
+                            '${AppLocalizations.of(context).translate('due_date')}: ${state.creditDays} d',
                             style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                           ),
                         ),
                         for (final c in state.dueList) _dueCard(c),
                         const SizedBox(height: 20),
-                        const _SectionTitle('REMINDER HISTORY'),
+                        _SectionTitle(AppLocalizations.of(context).translate('reminder_history').toUpperCase()),
                         history.when(
                           loading: () => const Padding(
                             padding: EdgeInsets.all(16),
                             child: Center(child: CircularProgressIndicator()),
                           ),
-                          error: (_, __) => const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text('Could not load history.',
+                          error: (_, __) => Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Text(AppLocalizations.of(context).translate('could_not_load_history'),
                                 style: TextStyle(color: AppColors.textSecondary)),
                           ),
                           data: (rows) => rows.isEmpty
-                              ? const Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: Text('No reminders logged yet.',
-                                      style: TextStyle(color: AppColors.textSecondary)),
+                              ? Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Text(AppLocalizations.of(context).translate('no_data'),
+                                      style: const TextStyle(color: AppColors.textSecondary)),
                                 )
                               : Card(
                                   child: Column(
@@ -171,11 +173,12 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
         : c.status == 'DUE_SOON'
             ? Colors.orange
             : AppColors.success;
+    final l10n = AppLocalizations.of(context);
     final statusLabel = c.status == 'OVERDUE'
-        ? 'OVERDUE'
+        ? l10n.translate('overdue')
         : c.status == 'DUE_SOON'
-            ? 'DUE SOON'
-            : 'DUE';
+            ? l10n.translate('due_soon')
+            : l10n.translate('due');
     return Card(
       margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
@@ -215,8 +218,8 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                 const SizedBox(width: 4),
                 Text(
                   c.dueDate != null
-                      ? 'Due ${_formatDate(c.dueDate!)}'
-                      : 'No credit sale date',
+                      ? '${AppLocalizations.of(context).translate('due_date')}: ${_formatDate(c.dueDate!)}'
+                      : '-',
                   style: const TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
                 ),
               ],
@@ -249,7 +252,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                               });
                             }),
                     icon: const Icon(Icons.chat_rounded, size: 18),
-                    label: const Text('WhatsApp'),
+                    label: Text(AppLocalizations.of(context).translate('whatsapp')),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -263,7 +266,7 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
                               });
                             }),
                     icon: const Icon(Icons.sms_rounded, size: 18),
-                    label: const Text('SMS'),
+                    label: Text(AppLocalizations.of(context).translate('sms')),
                   ),
                 ),
               ],
@@ -336,7 +339,7 @@ class _Centered extends StatelessWidget {
         Center(child: Text(message, textAlign: TextAlign.center,
             style: const TextStyle(color: AppColors.textSecondary))),
         const SizedBox(height: 16),
-        Center(child: OutlinedButton(onPressed: onRetry, child: const Text('Refresh'))),
+        Center(child: OutlinedButton(onPressed: onRetry, child: Text(AppLocalizations.of(context).translate('retry')))),
       ],
     );
   }
