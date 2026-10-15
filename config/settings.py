@@ -9,9 +9,20 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dukaanflow-super-secret-key-change-in-prod')
-DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
+# Secure defaults: DEBUG is off unless a developer opts in explicitly
+# (DEBUG=True on production leaked the URL table in the 404 page — never
+# again). Local dev: run with DEBUG=True in .env / environment.
+DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,*').split(',') if h.strip()]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
+
+# Hard stop if the insecure dev fallback key is ever used in a production
+# deployment (missing SECRET_KEY env var).
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise RuntimeError(
+        'Refusing to start in production with an insecure SECRET_KEY. '
+        'Set the SECRET_KEY environment variable.'
+    )
 
 csrf_origins = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:8000,http://127.0.0.1:8000')
 CSRF_TRUSTED_ORIGINS = [o.strip() for o in csrf_origins.split(',') if o.strip()]
@@ -44,6 +55,7 @@ INSTALLED_APPS = [
     'payments',
     'subscriptions',
     'updates',
+    'reminders',
     'invoices',
     'reports',
     'dashboard',

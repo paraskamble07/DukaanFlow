@@ -6,6 +6,7 @@ import '../../features/customers/customer_list_screen.dart';
 import '../../features/expenses/expense_list_screen.dart';
 import '../../features/suppliers/supplier_list_screen.dart';
 import '../../features/purchases/purchase_form_screen.dart';
+import '../../features/reminders/reminders_screen.dart';
 import '../../features/inventory/imei_lookup_screen.dart';
 import '../../features/inventory/imei_scanner_screen.dart';
 import '../../features/inventory/product_list_screen.dart';
@@ -84,6 +85,13 @@ class MoreScreen extends ConsumerWidget {
           ),
 
           _SectionHeader('MONEY & REPORTS'),
+          _NavTile(
+            icon: Icons.notifications_active_rounded,
+            color: AppColors.danger,
+            title: 'Payment Reminders',
+            subtitle: 'Overdue Khata balances, WhatsApp / SMS reminders',
+            onTap: () => _push(context, const RemindersScreen()),
+          ),
           _NavTile(
             icon: Icons.receipt_long_rounded,
             color: AppColors.danger,

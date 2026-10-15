@@ -71,6 +71,11 @@ class ApiConstants {
   // Health (public)
   static const String health = '/api/health/';
 
+  // Payment Reminders (Phase 4 — composer-driven, balances recomputed server-side)
+  static const String remindersDueList = '/api/reminders/due-list/';
+  static const String remindersLog = '/api/reminders/log/';
+  static const String remindersHistory = '/api/reminders/history/';
+
   // App Updates (public check; admin publishing is gated by SHOPZEN_ADMIN)
   static const String appUpdateCheck = '/api/app-updates/check/';
   static const String adminAppReleases = '/api/admin/app-releases/';

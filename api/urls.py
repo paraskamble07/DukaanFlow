@@ -6,6 +6,7 @@ from api.views import (
     payment_views, report_views, subscription_views, health_views
 )
 from updates import views as update_views
+from reminders import views as reminder_views
 from subscriptions import views as subscription_admin_views
 
 app_name = 'api'
@@ -36,6 +37,11 @@ urlpatterns = [
     path('app-updates/check/', update_views.AppUpdateCheckAPIView.as_view(), name='app_update_check'),
     path('admin/app-releases/', update_views.AppReleaseListCreateAPIView.as_view(), name='admin_app_release_list_create'),
     path('admin/app-releases/<int:pk>/', update_views.AppReleaseDetailAPIView.as_view(), name='admin_app_release_detail'),
+
+    # Payment Reminders (composer-driven; server recalculates balances)
+    path('reminders/due-list/', reminder_views.DueListAPIView.as_view(), name='reminder_due_list'),
+    path('reminders/log/', reminder_views.ReminderLogCreateAPIView.as_view(), name='reminder_log_create'),
+    path('reminders/history/', reminder_views.ReminderHistoryAPIView.as_view(), name='reminder_history'),
 
     # Dashboard
     path('dashboard/', dashboard_views.DashboardAPIView.as_view(), name='dashboard'),

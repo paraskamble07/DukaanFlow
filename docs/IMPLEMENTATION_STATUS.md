@@ -133,6 +133,37 @@ security, and the critical khata ledger scenario. All 29 pass.
 6/6 Flutter tests pass; `flutter analyze` 0 errors (47 infos, down from
 48); 57/57 backend tests pass.
 
+### 8. Payment reminders (Phase 4 — complete, verified)
+
+**Backend (`reminders/` app, 12 tests):**
+- `GET /api/reminders/due-list/` — customers with a real outstanding
+  balance (settled customers excluded), a due date **derived from existing
+  data** (oldest unpaid sale date + configurable credit days), status
+  (OVERDUE / DUE_SOON / DUE), reminder count and last channel. Sorted
+  OVERDUE first.
+- `POST /api/reminders/log/` — records a reminder **only after** the user
+  confirms in-app. Recomputes `get_outstanding_due()` server-side at
+  write time: 400 if the balance is settled, 409 if the same customer was
+  reminded within a 1-hour cooldown (prevents accidental double sends).
+  Links the oldest unpaid sale, runs in a transaction.
+- `GET /api/reminders/history/` — last 100 reminder logs, tenant-scoped.
+- Reminder message includes shop name, address and contact number, and
+  the WhatsApp URL is generated server-side. **The app only opens the
+  composer (WhatsApp / SMS) — it never claims the message was sent.**
+- `ReminderSetting` per business (credit_days=30, due_soon_days=7).
+- Tenant isolation verified in both directions.
+
+**Flutter (`lib/features/reminders/`, `lib/providers/reminder_provider.dart`):**
+- More-screen entry → reminders screen: due cards (status chip,
+  outstanding, due date, reminder history count), WhatsApp + SMS composer
+  buttons, confirm-then-log dialog with server error explanation, pull to
+  refresh, history list at the bottom. Outstanding amounts are carried as
+  strings from the server (no client-side decimal reassembly).
+
+**Evidence:** `python manage.py test` → **78/78 OK** (whole project, incl.
+`reminders`, `updates`, `api`, `security`); `flutter analyze` 0 errors;
+`flutter test` 6/6.
+
 ---
 
 ## Test results (exact commands + outcomes)
@@ -140,10 +171,10 @@ security, and the critical khata ledger scenario. All 29 pass.
 | Command | Result |
 |---|---|
 | `python manage.py check` | No issues |
-| `python manage.py test updates api` | **57 tests, OK** (44 security/api + 13 app-update) |
-| `flutter analyze` | 0 errors, 47 infos/warnings (was 92 → 48 → 47) |
+| `python manage.py test` | **78 tests, OK** (full project: api/security 44, updates 13, reminders 12, + all other apps) |
+| `flutter analyze` | 0 errors, 46 infos/warnings |
 | `flutter test` | **6 tests pass** |
-| `curl /api/health/` (production) | 200 — `{"status":"ok","database":"up"}` |
+| `curl /api/health/` (production) | 200 — `{"status":"ok","database":"up"}` (stale build, see below) |
 | `python manage.py collectstatic --dry-run` | 157 files |
 
 ---
@@ -166,6 +197,8 @@ security, and the critical khata ledger scenario. All 29 pass.
 - Shop profile / settings (owner-only)
 - Health endpoint (+ db_engine vendor proof)
 - App updates: trusted manifest, mandatory-update flag, admin publishing
+- Payment reminders: derived due dates, composer-initiated WhatsApp/SMS,
+  settled-balance rejection, 1-hour cooldown, reminder history
 - Localization EN/HI/MR
 
 ### Implemented, not fully verified on device
@@ -184,11 +217,56 @@ security, and the critical khata ledger scenario. All 29 pass.
 
 ---
 
+## Production deployment status (verified, not assumed)
+
+**Code pushed:** commit `cb2ec9c` → `origin/main` (2026-10-15).
+**Production evidence:** the live service still serves the OLD build:
+
+- `GET /api/app-updates/check/` → **404**, and the debug 404 page lists the
+  legacy web routes (`accounts/`, `business/`, `customers/` …) that were
+  removed from `config/urls.py` in this branch.
+- `/api/health/` has **no `db_engine`** field (added in this branch).
+- The 404 page also leaked `DEBUG = True` on production.
+
+Conclusion: **Render did not deploy the push.** The service was evidently
+created manually (not from the `render.yaml` blueprint), so its
+auto-deploy / branch / build-command settings live only in the Render
+dashboard and cannot be verified or fixed from this repository.
+**Owner action required** — see `docs/DEPLOYMENT_GUIDE.md`.
+
+Hardening applied in this branch regardless (fail-safe defaults now, so a
+misconfigured environment cannot leak debug pages again):
+
+- `DEBUG` defaults to `False`; must be opted in explicitly for dev.
+- `ALLOWED_HOSTS` default no longer includes `*`.
+- Startup refuses to run in production (`DEBUG=False`) with the insecure
+  fallback `SECRET_KEY`, verified by raising `RuntimeError`.
+- `build.sh` (already committed) runs `manage.py migrate` during the
+  build, so migrations apply automatically once a deploy happens.
+
+**Local evidence (everything verified before the push):** 57/57 backend
+tests; 6/6 Flutter tests; `manage.py check` clean; production health 200
+(old build) while the update/reminder endpoints 404 — proving the service
+is stale rather than broken.
+
+---
+
 ## Next concrete task
 
-1. Push the code to trigger the Render deploy; verify production reports
-   `db_engine: postgresql` and that migrations `accounts.0003/0004` and
-   `updates.0001/0002` applied.
-2. Phase 3–6: verify core features end-to-end, then payment reminders,
-   customer ledger statement PDF, and UPI QR + manual payment recording.
+1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
+   the deploy per `docs/DEPLOYMENT_GUIDE.md`.
+2. Phase 5–6: customer ledger statement PDF, UPI QR + manual payment
+   recording.
 3. Phase 7: complete HI/MR localization coverage across all screens.
+
+---
+
+## Checkpoint log
+
+- **2026-10-15 (cb2ec9c, pushed):** Phases 1–2 — repository audit,
+  subscription monetization removed (free app, AdMob-only), settings
+  hardening, deployment guide. 57/57 backend, 6/6 Flutter.
+- **2026-10-15 (uncommitted working tree):** Phase 4 — payment reminders
+  (backend + Flutter). Full suite run: **78/78 backend OK**, 6/6 Flutter,
+  `analyze` 0 errors / 46 infos. Deploy blocker remains open on the
+  owner's side.
