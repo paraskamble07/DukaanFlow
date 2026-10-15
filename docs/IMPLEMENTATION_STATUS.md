@@ -164,6 +164,64 @@ security, and the critical khata ledger scenario. All 29 pass.
 `reminders`, `updates`, `api`, `security`); `flutter analyze` 0 errors;
 `flutter test` 6/6.
 
+### 9. Customer ledger statement PDF (Phase 5 — complete, verified)
+
+**Backend (`invoices/pdf_service.py` + `api/views/customer_views.py`):**
+- `generate_ledger_pdf(customer, from_date, to_date)` — reportlab A4
+  statement: shop header (name/address/phone/email/GSTIN), customer block,
+  chronological ledger table (Date / Particulars / Debit / Credit /
+  running Balance Due), opening-balance carry-forward row, totals row,
+  closing balance payable.
+- All arithmetic is server-side **Decimal** (paise-exact). With no date
+  filters the closing balance is provably equal to
+  `customer.get_outstanding_due()` — asserted by test.
+- Transactions **after** `to_date` are excluded entirely (they have not
+  happened "as of" the statement date); transactions **before**
+  `from_date` collapse into the opening balance.
+- `GET /api/customers/<id>/ledger-pdf/?from_date=&to_date=` — JWT-auth,
+  tenant-scoped, validates `YYYY-MM-DD` and `from_date <= to_date`,
+  returns `application/pdf`.
+
+**Flutter:** `Share Ledger Statement (PDF)` on the customer detail screen
+→ optional period picker → server PDF → OS share sheet (print / WhatsApp /
+save). Client validates the `%PDF` magic bytes before saving.
+
+**Evidence:** `python manage.py test api.tests_ledger_pdf` → **12/12 OK**
+(5 data-layer numeric tests incl. paise precision, opening carry-forward,
+to_date exclusion, supplier-payment exclusion; 7 endpoint tests incl.
+tenant isolation, unauthenticated rejection, date validation, settled
+account). Full-suite re-run: **90/90 OK**.
+
+### 10. UPI QR + manual payment confirmation (Phase 6 — complete, verified)
+
+**Backend (`payments/upi_service.py`, `businesses` migration 0003, views):**
+- `Business.upi_id` field (settable by the owner through the existing
+  owner-only shop-settings endpoint).
+- `GET /api/customers/<id>/upi-qr/` — builds an NPCI `upi://pay?...`
+  collect URI with the **server-recomputed** outstanding as the default
+  amount (optional `?amount=` override, validated strictly), and returns
+  the QR as a PNG (base64, `qrcode==8.2`).
+- **A scan is never a confirmation** — the response carries
+  `confirmed: false` and the UI says so explicitly.
+- `POST /api/payments/customer/` now **rejects overpayments** (amount >
+  outstanding → 400 with both figures) and therefore also payments on
+  settled accounts. Previously an overpayment was silently swallowed by
+  `get_outstanding_due()`'s floor at zero — the money would have vanished
+  from the books.
+
+**Flutter:** `Collect via UPI QR` button (customer detail, when due > 0)
+→ dialog with the QR, amount, UPI ID, and an explicit "scanning only
+requests the payment" notice → `Record Received Payment` opens the
+existing payment modal with UPI pre-selected and its UTR field.
+Settings → Shop Profile gained a UPI ID field.
+
+**Evidence:** `python manage.py test api.tests_upi` → **15/15 OK** (URI
+format, money parser strictness, PNG validity, server-side amount
+recomputation after a partial payment, custom-amount override + invalid
+rejection, missing-UPI guidance, tenant isolation, unauthenticated
+rejection, staff-with-permission allowed, overpayment/settled-account
+rejection, cross-shop payment rejection).
+
 ---
 
 ## Test results (exact commands + outcomes)
@@ -171,11 +229,17 @@ security, and the critical khata ledger scenario. All 29 pass.
 | Command | Result |
 |---|---|
 | `python manage.py check` | No issues |
-| `python manage.py test` | **78 tests, OK** (full project: api/security 44, updates 13, reminders 12, + all other apps) |
+| `python manage.py test` | **90 tests, OK** (api/security 44, updates 13, reminders 12, core apps 9, + others — run before the UPI suite existed) |
+| `python manage.py test api.tests_ledger_pdf` | **12 tests, OK** (ledger PDF data layer + endpoint) |
+| `python manage.py test api.tests_upi` | **15 tests, OK** (UPI QR + manual confirmation) |
 | `flutter analyze` | 0 errors, 46 infos/warnings |
 | `flutter test` | **6 tests pass** |
 | `curl /api/health/` (production) | 200 — `{"status":"ok","database":"up"}` (stale build, see below) |
 | `python manage.py collectstatic --dry-run` | 157 files |
+
+> Combined suite total: the 90-test run preceded the UPI work; the
+> ledger-PDF (12) and UPI (15) suites are additive and pass standalone.
+> A final full-suite re-run happens at the next checkpoint.
 
 ---
 
@@ -199,6 +263,12 @@ security, and the critical khata ledger scenario. All 29 pass.
 - App updates: trusted manifest, mandatory-update flag, admin publishing
 - Payment reminders: derived due dates, composer-initiated WhatsApp/SMS,
   settled-balance rejection, 1-hour cooldown, reminder history
+- Customer ledger statement PDF: server-generated (reportlab), Decimal
+  running balance with opening-balance carry-forward for date ranges,
+  shareable from the app
+- UPI collect QR: server-computed `upi://pay` URI + QR PNG, UPI ID in shop
+  settings; **manual confirmation required** — overpayments and payments on
+  settled accounts are rejected server-side
 - Localization EN/HI/MR
 
 ### Implemented, not fully verified on device
@@ -254,10 +324,10 @@ is stale rather than broken.
 ## Next concrete task
 
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
-   the deploy per `docs/DEPLOYMENT_GUIDE.md`.
-2. Phase 5–6: customer ledger statement PDF, UPI QR + manual payment
-   recording.
-3. Phase 7: complete HI/MR localization coverage across all screens.
+   the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
+   `businesses` 0003 migration).
+2. Phase 7: complete HI/MR localization coverage across all screens.
+3. Phase 8–9: backup/restore, offline mode + sync indicator.
 
 ---
 
@@ -266,7 +336,12 @@ is stale rather than broken.
 - **2026-10-15 (cb2ec9c, pushed):** Phases 1–2 — repository audit,
   subscription monetization removed (free app, AdMob-only), settings
   hardening, deployment guide. 57/57 backend, 6/6 Flutter.
-- **2026-10-15 (uncommitted working tree):** Phase 4 — payment reminders
+- **2026-10-15 (5c59eeb, pushed):** Phase 4 — payment reminders
   (backend + Flutter). Full suite run: **78/78 backend OK**, 6/6 Flutter,
   `analyze` 0 errors / 46 infos. Deploy blocker remains open on the
   owner's side.
+- **2026-10-15 (Phases 5–6):** ledger statement PDF + UPI collect QR with
+  manual-only payment confirmation and server-side overpayment rejection.
+  Backend: 90/90 full suite (pre-UPI) + 12/12 ledger + 15/15 UPI;
+  Flutter: `analyze` 0 errors, 6/6 tests. New dependency `qrcode==8.2`
+  pinned in `requirements.txt` — Render installs it on next deploy.

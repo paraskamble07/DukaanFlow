@@ -9,6 +9,7 @@ class BusinessModel {
   final String? state;
   final String? pincode;
   final String? gstin;
+  final String? upiId;
   final String? logoUrl;
   final String invoicePrefix;
   final String invoiceFooter;
@@ -26,6 +27,7 @@ class BusinessModel {
     this.state,
     this.pincode,
     this.gstin,
+    this.upiId,
     this.logoUrl,
     required this.invoicePrefix,
     required this.invoiceFooter,
@@ -45,6 +47,7 @@ class BusinessModel {
       state: json['state'],
       pincode: json['pincode'],
       gstin: json['gstin'],
+      upiId: json['upi_id'],
       logoUrl: json['logo_url'],
       invoicePrefix: json['invoice_prefix'] ?? 'INV-',
       invoiceFooter: json['invoice_footer'] ?? '',
@@ -63,8 +66,9 @@ class BusinessModel {
     'city': city,
     'state': state,
     'pincode': pincode,
-    'gstin': gstin,
-    'logo_url': logoUrl,
+        'gstin': gstin,
+        'upi_id': upiId,
+        'logo_url': logoUrl,
     'invoice_prefix': invoicePrefix,
     'invoice_footer': invoiceFooter,
     'plan_tier': planTier,

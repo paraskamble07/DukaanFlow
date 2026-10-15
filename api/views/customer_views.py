@@ -2,11 +2,18 @@ from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.db.models import Q
+from django.http import HttpResponse
+from datetime import datetime
+from decimal import Decimal
 from customers.models import Customer
 from sales.models import Sale
 from payments.models import Payment
 from api.serializers import CustomerSerializer, SaleSerializer, PaymentSerializer
 from api.permissions import HasActiveBusiness, CustomersPermission
+from invoices.pdf_service import generate_ledger_pdf
+from payments.upi_service import (
+    build_upi_uri, clean_upi_id, parse_money, upi_qr_png_base64,
+)
 
 class CustomerListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CustomerSerializer
@@ -74,4 +81,106 @@ class CustomerLedgerAPIView(APIView):
             },
             'sales': SaleSerializer(sales, many=True).data,
             'payments': PaymentSerializer(payments, many=True).data,
+        })
+
+
+class CustomerLedgerPdfAPIView(APIView):
+    """Returns the customer's ledger (Khata) statement as a PDF.
+
+    All amounts are recalculated server-side from recorded invoices and
+    payments; the PDF is generated on the server so the client can never
+    author its own financial totals. Supports optional ?from_date= and
+    ?to_date= (YYYY-MM-DD) filters with an opening-balance carry-forward.
+    """
+
+    permission_classes = [HasActiveBusiness, CustomersPermission]
+
+    def get(self, request, pk):
+        try:
+            customer = Customer.objects.get(pk=pk, business=request.business)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        def _parse_date(raw, field):
+            if raw is None or str(raw).strip() == '':
+                return None
+            try:
+                return datetime.strptime(str(raw).strip(), '%Y-%m-%d').date()
+            except ValueError:
+                return 'INVALID'
+
+        from_date = _parse_date(request.query_params.get('from_date'), 'from_date')
+        to_date = _parse_date(request.query_params.get('to_date'), 'to_date')
+        if from_date == 'INVALID' or to_date == 'INVALID':
+            return Response({
+                'error': 'Invalid date format. Use YYYY-MM-DD.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        if from_date and to_date and from_date > to_date:
+            return Response({
+                'error': 'from_date cannot be after to_date.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        pdf_buffer = generate_ledger_pdf(customer, from_date, to_date)
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        response['Content-Disposition'] = \
+            'inline; filename="Ledger_%s.pdf"' % customer.name.replace(' ', '_')
+        return response
+
+
+class CustomerUpiQrAPIView(APIView):
+    """Server-computed UPI collect QR for a customer's khata outstanding.
+
+    Scanning this QR only opens the customer's UPI app with a pre-filled
+    collect request — it is **never** treated as a payment. A payment enters
+    the books only when an authorized shop user records it manually via
+    POST /api/payments/customer/, which re-validates the amount server-side.
+    """
+
+    permission_classes = [HasActiveBusiness, CustomersPermission]
+
+    def get(self, request, pk):
+        try:
+            customer = Customer.objects.get(pk=pk, business=request.business)
+        except Customer.DoesNotExist:
+            return Response({'error': 'Customer not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        business = request.business
+        upi_id = clean_upi_id(business.upi_id)
+        if not upi_id:
+            return Response({
+                'error': 'No UPI ID configured for this shop. The owner can set one '
+                         'from Profile / Shop Settings (upi_id field).'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Default collect amount: the current outstanding, recomputed now.
+        outstanding = customer.get_outstanding_due()
+
+        custom_amount = request.query_params.get('amount')
+        if custom_amount is not None and str(custom_amount).strip() != '':
+            override = parse_money(custom_amount)
+            if override is None:
+                return Response({
+                    'error': 'Invalid amount. Use a positive number with up to two decimals.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            amount = override
+            amount_source = 'custom'
+        else:
+            amount = outstanding
+            amount_source = 'outstanding'
+
+        note = 'Khata payment - %s - %s' % (customer.name, business.name)
+        uri = build_upi_uri(upi_id, business.name, amount, note)
+
+        return Response({
+            'upi_id': upi_id,
+            'payee_name': business.name,
+            'customer_id': customer.id,
+            'customer_name': customer.name,
+            'amount': str(amount.quantize(Decimal('0.00'))),
+            'amount_source': amount_source,
+            'currency': 'INR',
+            'note': note,
+            'upi_uri': uri,
+            'qr_png_base64': upi_qr_png_base64(uri),
+            'confirmed': False,  # a scan is never a confirmation
         })

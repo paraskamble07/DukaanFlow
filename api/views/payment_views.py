@@ -38,6 +38,19 @@ class CustomerPaymentCreateAPIView(APIView):
 
         try:
             customer = Customer.objects.get(pk=customer_id, business=business)
+
+            # Financial integrity: never let the books drift. An overpayment
+            # would be swallowed by get_outstanding_due()'s floor at zero and
+            # the extra money would vanish from the customer's ledger. The
+            # shop must record the actual amount received, within the due.
+            outstanding = customer.get_outstanding_due()
+            if amount > outstanding:
+                return Response({
+                    'error': f'Amount ({format_inr(amount)}) exceeds this customer\'s '
+                             f'outstanding due ({format_inr(outstanding)}). Record the exact '
+                             f'amount received, up to the outstanding balance.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
             payment = Payment.objects.create(
                 business=business,
                 payment_type='CUSTOMER_PAYMENT',

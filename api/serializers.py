@@ -38,7 +38,7 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             'id', 'name', 'owner_name', 'phone', 'email', 'address',
-            'city', 'state', 'pincode', 'gstin', 'logo', 'logo_url',
+            'city', 'state', 'pincode', 'gstin', 'upi_id', 'logo', 'logo_url',
             'invoice_prefix', 'invoice_footer', 'plan_tier', 'plan_info',
             'created_at', 'updated_at'
         ]

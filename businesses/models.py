@@ -34,6 +34,10 @@ class Business(models.Model):
     state = models.CharField(max_length=100, blank=True, null=True, default="Maharashtra")
     pincode = models.CharField(max_length=10, blank=True, null=True)
     gstin = models.CharField(max_length=25, blank=True, null=True, verbose_name="GSTIN Number (Optional)")
+    upi_id = models.CharField(
+        max_length=100, blank=True, null=True, db_index=True,
+        verbose_name="UPI ID for payment collection (e.g. shop@upi)"
+    )
     logo = models.ImageField(upload_to='logos/', blank=True, null=True)
     invoice_prefix = models.CharField(max_length=10, default="SZ-", verbose_name="Invoice Prefix")
     next_invoice_number = models.PositiveIntegerField(default=1001)

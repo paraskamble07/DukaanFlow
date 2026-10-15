@@ -3,18 +3,68 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
+import '../../core/utils/pdf_share.dart';
 import '../../models/customer_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/customer_provider.dart';
 import '../../shared_widgets/whatsapp_button.dart';
 import 'widgets/receive_payment_modal.dart';
+import 'widgets/upi_qr_dialog.dart';
 
-class CustomerDetailScreen extends ConsumerWidget {
+class CustomerDetailScreen extends ConsumerStatefulWidget {
   final CustomerModel customer;
 
   const CustomerDetailScreen({super.key, required this.customer});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CustomerDetailScreen> createState() => _CustomerDetailScreenState();
+}
+
+class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
+  bool _statementBusy = false;
+
+  CustomerModel get customer => widget.customer;
+
+  Future<void> _shareStatement() async {
+    DateTime? fromDate;
+    DateTime? toDate;
+
+    final picked = await showDialog<Map<String, DateTime?>>(
+      context: context,
+      builder: (ctx) => _StatementPeriodDialog(customerName: customer.name),
+    );
+    if (picked == null) return;
+    fromDate = picked['from'];
+    toDate = picked['to'];
+    if (!mounted) return;
+    if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Start date cannot be after end date.')),
+      );
+      return;
+    }
+
+    setState(() => _statementBusy = true);
+    try {
+      final client = ref.read(apiClientProvider);
+      final file = await downloadLedgerPdf(
+        client, customer.id,
+        name: customer.name, fromDate: fromDate, toDate: toDate,
+      );
+      if (!mounted) return;
+      await shareLedgerPdf(file, subject: 'Ledger statement — ${customer.name}');
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not generate statement: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _statementBusy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ledgerAsync = ref.watch(customerLedgerProvider(customer.id));
 
     return Scaffold(
@@ -96,6 +146,22 @@ class CustomerDetailScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+
+                  // Ledger statement (PDF) — generated entirely server-side.
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: _statementBusy ? null : _shareStatement,
+                      icon: _statementBusy
+                          ? const SizedBox(
+                              width: 16, height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                      label: Text(_statementBusy ? 'Generating statement…' : 'Share Ledger Statement (PDF)'),
+                    ),
+                  ),
                   const SizedBox(height: 16),
 
                   if (due > 0) ...[
@@ -105,6 +171,21 @@ class CustomerDetailScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 20),
                   ],
+                  if (due > 0)
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.tonalIcon(
+                        onPressed: _statementBusy ? null : () => showDialog(
+                          context: context,
+                          builder: (_) => UpiQrDialog(
+                            customer: customer,
+                            outstandingDue: due,
+                          ),
+                        ),
+                        icon: const Icon(Icons.qr_code_2_rounded, size: 20),
+                        label: const Text('Collect via UPI QR'),
+                      ),
+                    ),
 
                   // Transaction History Tabs / Section
                   const Text('Sales Orders', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -140,6 +221,83 @@ class CustomerDetailScreen extends ConsumerWidget {
           },
         ),
       ),
+    );
+  }
+}
+
+/// Picks an optional statement period. "All time" (both null) is the
+/// default — the server then reports the full account history with its
+/// current outstanding balance.
+class _StatementPeriodDialog extends StatefulWidget {
+  final String customerName;
+  const _StatementPeriodDialog({required this.customerName});
+
+  @override
+  State<_StatementPeriodDialog> createState() => _StatementPeriodDialogState();
+}
+
+class _StatementPeriodDialogState extends State<_StatementPeriodDialog> {
+  DateTime? _from;
+  DateTime? _to;
+
+  Future<void> _pick(bool isFrom) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: DateTime(2020),
+      lastDate: now,
+      helpText: isFrom ? 'Statement start date' : 'Statement end date',
+    );
+    if (picked != null) {
+      setState(() {
+        if (isFrom) {
+          _from = picked;
+        } else {
+          _to = picked;
+        }
+      });
+    }
+  }
+
+  String _fmt(DateTime? d) => d == null ? 'Any date' : AppDateFormatter.formatDate(d.toIso8601String());
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Statement period — ${widget.customerName}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('Leave both dates unset for the full account history.',
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+          const SizedBox(height: 12),
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.event_outlined),
+            title: const Text('From'),
+            subtitle: Text(_fmt(_from)),
+            onTap: () => _pick(true),
+          ),
+          ListTile(
+            dense: true,
+            leading: const Icon(Icons.event_available_outlined),
+            title: const Text('To'),
+            subtitle: Text(_fmt(_to)),
+            onTap: () => _pick(false),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, {'from': _from, 'to': _to}),
+          child: const Text('Generate PDF'),
+        ),
+      ],
     );
   }
 }

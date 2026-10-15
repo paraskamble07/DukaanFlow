@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
@@ -10,12 +11,14 @@ class ReceivePaymentModal extends ConsumerStatefulWidget {
   final int customerId;
   final String customerName;
   final double outstandingDue;
+  final bool defaultMethodUpi;
 
   const ReceivePaymentModal({
     super.key,
     required this.customerId,
     required this.customerName,
     required this.outstandingDue,
+    this.defaultMethodUpi = false,
   });
 
   @override
@@ -25,12 +28,13 @@ class ReceivePaymentModal extends ConsumerStatefulWidget {
 class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
   late final TextEditingController _amountController;
   final _refController = TextEditingController();
-  String _paymentMethod = 'CASH';
+  late String _paymentMethod;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
+    _paymentMethod = widget.defaultMethodUpi ? 'UPI' : 'CASH';
     _amountController = TextEditingController(text: widget.outstandingDue.toStringAsFixed(0));
   }
 
@@ -81,9 +85,20 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
           );
         }
       }
+    } on DioException catch (e) {
+      if (mounted) {
+        // Surface the backend's own reason (e.g. overpayment rejection)
+        // instead of a raw status blob.
+        final serverError = e.response?.data;
+        final msg = (serverError is Map && serverError['error'] is String)
+            ? serverError['error'] as String
+            : 'Could not record payment. Check the amount and try again.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not record payment: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);

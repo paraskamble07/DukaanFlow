@@ -19,6 +19,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _gstinController = TextEditingController();
+  final _upiController = TextEditingController();
   final _prefixController = TextEditingController();
   bool _isEditingShop = false;
   bool _isSaving = false;
@@ -29,6 +30,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _gstinController.dispose();
+    _upiController.dispose();
     _prefixController.dispose();
     super.dispose();
   }
@@ -40,6 +42,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _phoneController.text = biz.phone;
     _addressController.text = biz.address ?? '';
     _gstinController.text = biz.gstin ?? '';
+    _upiController.text = biz.upiId ?? '';
     _prefixController.text = biz.invoicePrefix;
     setState(() => _isEditingShop = true);
   }
@@ -55,6 +58,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           'phone': _phoneController.text.trim(),
           'address': _addressController.text.trim(),
           'gstin': _gstinController.text.trim(),
+          'upi_id': _upiController.text.trim(),
           'invoice_prefix': _prefixController.text.trim(),
         },
       );
@@ -146,6 +150,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
+                      controller: _upiController,
+                      decoration: const InputDecoration(
+                        labelText: 'UPI ID',
+                        hintText: 'e.g. myshop@okaxis',
+                        helperText: 'Shown as a collect QR on a customer\'s ledger.',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
                       controller: _prefixController,
                       decoration: const InputDecoration(labelText: 'Invoice Prefix', hintText: 'SZ-'),
                     ),
@@ -174,6 +187,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _profileRow('Owner', business?.ownerName ?? auth.user?.firstName ?? '-'),
                     _profileRow('Phone', business?.phone ?? '-'),
                     _profileRow('GSTIN', (business?.gstin ?? '').isEmpty ? 'Not set' : business!.gstin!),
+                    _profileRow('UPI ID', (business?.upiId ?? '').isEmpty ? 'Not set' : business!.upiId!),
                     _profileRow('Invoice Prefix', business?.invoicePrefix ?? '-'),
                     const SizedBox(height: 8),
                     Align(

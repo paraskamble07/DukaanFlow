@@ -66,6 +66,8 @@ urlpatterns = [
     path('customers/', customer_views.CustomerListCreateAPIView.as_view(), name='customer_list_create'),
     path('customers/<int:pk>/', customer_views.CustomerDetailAPIView.as_view(), name='customer_detail'),
     path('customers/<int:pk>/ledger/', customer_views.CustomerLedgerAPIView.as_view(), name='customer_ledger'),
+    path('customers/<int:pk>/ledger-pdf/', customer_views.CustomerLedgerPdfAPIView.as_view(), name='customer_ledger_pdf'),
+    path('customers/<int:pk>/upi-qr/', customer_views.CustomerUpiQrAPIView.as_view(), name='customer_upi_qr'),
 
     # Suppliers & Purchases
     path('suppliers/', supplier_views.SupplierListCreateAPIView.as_view(), name='supplier_list_create'),

@@ -37,6 +37,8 @@ class ApiConstants {
   // Customers & Khata
   static const String customers = '/api/customers/';
   static String customerLedger(int id) => '/api/customers/$id/ledger/';
+  static String customerLedgerPdf(int id) => '/api/customers/$id/ledger-pdf/';
+  static String customerUpiQr(int id) => '/api/customers/$id/upi-qr/';
   
   // Suppliers & Purchases
   static const String suppliers = '/api/suppliers/';

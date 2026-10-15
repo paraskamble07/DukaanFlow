@@ -78,10 +78,15 @@ branch:
 - `accounts.0004` — reset-password token + expiry columns
 - `updates.0001`, `updates.0002` — AppRelease model + v1.0.0 seed
 - `reminders.0001` — ReminderLog + ReminderSetting
+- `businesses.0003` — `Business.upi_id` (nullable column)
 
 All are purely additive (new tables / new nullable columns). No production
 data is modified or deleted; a backup before deploying is still good
 practice — see `docs/BACKUP_AND_RECOVERY.md`.
+
+> The deploy also installs the new pinned dependency `qrcode==8.2`
+> (QR code rendering for UPI collect); `build.sh` already runs
+> `pip install -r requirements.txt` before the migrations.
 
 ## Using the blueprint (alternative, resets Render-managed config)
 
