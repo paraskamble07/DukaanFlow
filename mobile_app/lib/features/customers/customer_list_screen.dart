@@ -102,7 +102,7 @@ class CustomerListScreen extends ConsumerWidget {
                             MaterialPageRoute(builder: (_) => CustomerDetailScreen(customer: c)),
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: AppColors.primary.withOpacity(0.1),
+                            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                             child: Text(
                               c.name.isNotEmpty ? c.name[0].toUpperCase() : 'C',
                               style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),

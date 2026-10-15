@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/constants/api_constants.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/sync/offline_sync_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/splash_screen.dart';
+import 'features/settings/app_update_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/pos/pos_screen.dart';
 import 'features/inventory/product_list_screen.dart';
 import 'features/customers/customer_list_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/sales/sales_history_screen.dart';
-import 'features/subscription/subscription_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/settings_provider.dart';
+import 'providers/update_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -77,16 +77,53 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
     MoreScreen(),
   ];
 
-  /// Subscription expiry banner state — refreshed when tab changes.
-  bool _checkedSubscription = false;
-
   @override
   void initState() {
     super.initState();
     // User is authenticated when this scaffold mounts — start offline sync.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       OfflineSyncService.start(ref.read(apiClientProvider));
+      _checkForMandatoryUpdate();
     });
+  }
+
+  /// Silent update check on startup. A non-mandatory newer build is
+  /// surfaced later from Settings; a mandatory one blocks the session
+  /// because builds below the server's minimum are unsupported.
+  Future<void> _checkForMandatoryUpdate() async {
+    try {
+      final info = await ref.read(appUpdateProvider.notifier).checkForUpdates();
+      if (info != null && info.mandatoryUpdate && mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => PopScope(
+            canPop: false,
+            child: AlertDialog(
+              title: const Text('Update required'),
+              content: Text(
+                'ShopZen v${info.latestVersion} is available and your current '
+                'build (v${info.minimumSupportedVersion} minimum) is no longer '
+                'supported. Please update to continue using your shop data safely.',
+              ),
+              actions: [
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AppUpdateScreen()),
+                    );
+                  },
+                  child: const Text('Update now'),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      // Update checks must never block the app — offline is fine.
+    }
   }
 
   @override
@@ -111,13 +148,12 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: NavigationBarTheme(
         data: NavigationBarThemeData(
-          indicatorColor: AppColors.primary.withOpacity(0.12),
+          indicatorColor: AppColors.primary.withValues(alpha: 0.12),
         ),
         child: NavigationBar(
           selectedIndex: _currentIndex,
           onDestinationSelected: (i) {
             setState(() => _currentIndex = i);
-            _checkSubscriptionBanner();
           },
           height: 68,
           destinations: [
@@ -152,37 +188,5 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
       _currentIndex == index ? filled : outline,
       color: _currentIndex == index ? AppColors.primary : AppColors.textSecondary,
     );
-  }
-
-  /// One-time check: if subscription expired, show renewal banner once per session.
-  void _checkSubscriptionBanner() {
-    if (_checkedSubscription || _currentIndex != 4) return;
-    _checkedSubscription = true;
-    Future(() async {
-      try {
-        final client = ref.read(apiClientProvider);
-        final res = await client.dio.get(ApiConstants.subscriptionStatus);
-        if (res.statusCode == 200 &&
-            res.data['is_active'] == false &&
-            mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Your ShopZen Premium subscription has expired. Data is safe — renew to continue.',
-              ),
-              duration: const Duration(seconds: 6),
-              action: SnackBarAction(
-                label: 'Renew Premium',
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
-                ),
-              ),
-            ),
-          );
-        }
-      } catch (_) {
-        // Offline or unauthenticated: banner suppressed, app stays usable.
-      }
-    });
   }
 }

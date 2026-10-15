@@ -43,7 +43,7 @@ class DashboardScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'This account manages payments and shops. Open the Admin Dashboard to verify ₹30 subscriptions.',
+                  'This account manages app releases and registered shops. Open the Admin Dashboard to publish an update or review shops.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
@@ -180,7 +180,7 @@ class DashboardScreen extends ConsumerWidget {
                   // 4. Low Stock Alerts Banner (if any)
                   if (data.lowStockCount > 0) ...[
                     Card(
-                      color: AppColors.danger.withOpacity(0.06),
+                      color: AppColors.danger.withValues(alpha: 0.06),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: const BorderSide(color: AppColors.danger, width: 1),
@@ -245,7 +245,7 @@ class DashboardScreen extends ConsumerWidget {
                           return ListTile(
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             leading: CircleAvatar(
-                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                               child: Text(
                                 (item['name'] as String? ?? 'C')[0].toUpperCase(),
                                 style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary),

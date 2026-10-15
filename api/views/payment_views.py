@@ -8,11 +8,11 @@ from customers.models import Customer
 from suppliers.models import Supplier
 from core.utils import build_whatsapp_url, format_inr
 from api.serializers import PaymentSerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, PaymentsPermission, SuppliersPermission
 
 class PaymentListAPIView(generics.ListAPIView):
     serializer_class = PaymentSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, PaymentsPermission]
 
     def get_queryset(self):
         qs = Payment.objects.filter(business=self.request.business).select_related('customer', 'supplier')
@@ -22,7 +22,7 @@ class PaymentListAPIView(generics.ListAPIView):
         return qs
 
 class CustomerPaymentCreateAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, PaymentsPermission]
 
     def post(self, request):
         business = request.business
@@ -64,7 +64,9 @@ class CustomerPaymentCreateAPIView(APIView):
             return Response({'error': 'Customer not found.'}, status=status.HTTP_404_NOT_FOUND)
 
 class SupplierPaymentCreateAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    # Supplier payments reveal supplier cost/ledger details — owner (or a
+    # staff member explicitly granted both payments AND suppliers) only.
+    permission_classes = [HasActiveBusiness, PaymentsPermission, SuppliersPermission]
 
     def post(self, request):
         business = request.business

@@ -107,7 +107,7 @@ class SalesChartCard extends StatelessWidget {
                         ),
                         BarChartRodData(
                           toY: index < expenses.length ? expenses[index] : 0.0,
-                          color: AppColors.danger.withOpacity(0.8),
+                          color: AppColors.danger.withValues(alpha: 0.8),
                           width: 10,
                           borderRadius: BorderRadius.circular(4),
                         ),

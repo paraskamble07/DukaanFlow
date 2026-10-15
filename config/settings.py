@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'expenses',
     'payments',
     'subscriptions',
+    'updates',
     'invoices',
     'reports',
     'dashboard',
@@ -128,7 +129,9 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
+# Legacy web-UI assets were removed (ShopZen is Android-first). Keep
+# STATICFILES_DIRS empty so collectstatic only harvests admin assets.
+STATICFILES_DIRS = []
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
@@ -137,7 +140,9 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-LOGIN_URL = 'accounts:login'
+# Legacy web login no longer exists; the API rejects unauthenticated
+# requests with 401 and the Flutter app handles its own auth flow.
+LOGIN_URL = None
 LOGIN_REDIRECT_URL = 'dashboard:index'
 LOGOUT_REDIRECT_URL = 'landing:home'
 

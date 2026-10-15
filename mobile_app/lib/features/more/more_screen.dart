@@ -10,7 +10,6 @@ import '../../features/inventory/imei_lookup_screen.dart';
 import '../../features/inventory/imei_scanner_screen.dart';
 import '../../features/inventory/product_list_screen.dart';
 import '../../features/reports/reports_screen.dart';
-import '../../features/subscription/subscription_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/admin/admin_dashboard_screen.dart';
 
@@ -29,7 +28,7 @@ class MoreScreen extends ConsumerWidget {
           children: [
             Text(business?.name ?? 'ShopZen', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
             Text(
-              '${auth.user?.firstName ?? 'Owner'} • ${business?.planTier == 'SHOPZEN_PREMIUM' ? 'Premium' : 'Premium'}',
+              '${auth.user?.firstName ?? 'Owner'} • Free ShopZen Account',
               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ],
@@ -106,16 +105,9 @@ class MoreScreen extends ConsumerWidget {
               icon: Icons.admin_panel_settings_rounded,
               color: const Color(0xFF7C3AED),
               title: 'ShopZen Admin',
-              subtitle: 'Verify ₹30 payments, shops & revenue',
+              subtitle: 'Manage app releases & registered shops',
               onTap: () => _push(context, const AdminDashboardScreen()),
             ),
-          _NavTile(
-            icon: Icons.workspace_premium_rounded,
-            color: const Color(0xFFF59E0B),
-            title: 'ShopZen Premium',
-            subtitle: '₹30/month — subscription status',
-            onTap: () => _push(context, const SubscriptionScreen()),
-          ),
           _NavTile(
             icon: Icons.settings_rounded,
             color: AppColors.textSecondary,
@@ -180,7 +172,7 @@ class _NavTile extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.12),
+            color: color.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(icon, color: color, size: 22),

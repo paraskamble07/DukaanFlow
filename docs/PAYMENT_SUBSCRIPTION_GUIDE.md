@@ -1,5 +1,12 @@
 # ShopZen ₹30 Subscription & Payment Guide
 
+> **RETIRED (2026-10-15).** ShopZen is now free for all authorized users;
+> monetization is Google AdMob banner ads only. This document is kept for
+> historical reference and for existing payment records. The subscription
+> screens and paywalls were removed from the app; customer/supplier payment
+> features are unaffected. Do not follow these steps for new shops.
+
+
 **English** | मराठी खाली
 
 How the ₹30/month ShopZen Premium subscription works, how a shop owner pays, and how YOU (the only ShopZen Admin) verify payments and activate Premium.

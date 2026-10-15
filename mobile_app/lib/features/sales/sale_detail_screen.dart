@@ -68,7 +68,7 @@ class SaleDetailScreen extends ConsumerWidget {
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                   decoration: BoxDecoration(
-                                    color: sale.dueAmount > 0 ? AppColors.warning.withOpacity(0.12) : AppColors.success.withOpacity(0.12),
+                                    color: sale.dueAmount > 0 ? AppColors.warning.withValues(alpha: 0.12) : AppColors.success.withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(20),
                                   ),
                                   child: Text(

@@ -129,7 +129,7 @@ class ProductListScreen extends ConsumerWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 22,
-                                  backgroundColor: AppColors.primary.withOpacity(0.08),
+                                  backgroundColor: AppColors.primary.withValues(alpha: 0.08),
                                   child: Icon(
                                     p.isImeiTracked ? Icons.phone_android_rounded : Icons.headphones_rounded,
                                     color: AppColors.primary,
@@ -163,7 +163,7 @@ class ProductListScreen extends ConsumerWidget {
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                               decoration: BoxDecoration(
-                                                color: AppColors.primary.withOpacity(0.1),
+                                                color: AppColors.primary.withValues(alpha: 0.1),
                                                 borderRadius: BorderRadius.circular(4),
                                               ),
                                               child: const Text('IMEI Tracked', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
@@ -180,8 +180,8 @@ class ProductListScreen extends ConsumerWidget {
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
                                         color: p.isOutOfStock
-                                            ? AppColors.danger.withOpacity(0.12)
-                                            : (p.isLowStock ? AppColors.warning.withOpacity(0.12) : AppColors.success.withOpacity(0.12)),
+                                            ? AppColors.danger.withValues(alpha: 0.12)
+                                            : (p.isLowStock ? AppColors.warning.withValues(alpha: 0.12) : AppColors.success.withValues(alpha: 0.12)),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(

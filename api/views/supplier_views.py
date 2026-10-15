@@ -10,11 +10,11 @@ from products.models import Product
 from inventory.models import StockMovement
 from payments.models import Payment
 from api.serializers import SupplierSerializer, PurchaseSerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, SuppliersPermission, PurchasesPermission
 
 class SupplierListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = SupplierSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, SuppliersPermission]
 
     def get_queryset(self):
         return Supplier.objects.filter(business=self.request.business)
@@ -24,14 +24,14 @@ class SupplierListCreateAPIView(generics.ListCreateAPIView):
 
 class SupplierDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = SupplierSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, SuppliersPermission]
 
     def get_queryset(self):
         return Supplier.objects.filter(business=self.request.business)
 
 class PurchaseListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = PurchaseSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, PurchasesPermission]
 
     def get_queryset(self):
         return Purchase.objects.filter(business=self.request.business).select_related('supplier').prefetch_related('items__product')

@@ -1,5 +1,12 @@
 # ShopZen — ₹30 Payment Setup (Owner/Admin)
 
+> **RETIRED (2026-10-15).** ShopZen is now free for all authorized users;
+> monetization is Google AdMob banner ads only. This document is kept for
+> historical reference and for existing payment records. The subscription
+> screens and paywalls were removed from the app; customer/supplier payment
+> features are unaffected. Do not follow these steps for new shops.
+
+
 How to configure the ShopZen Premium ₹30/month payment so real shop owners can pay you
 and you can verify their payments. Full user-facing flow: [PAYMENT_SUBSCRIPTION_GUIDE.md](PAYMENT_SUBSCRIPTION_GUIDE.md).
 

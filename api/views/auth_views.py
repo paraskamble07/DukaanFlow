@@ -1,3 +1,7 @@
+import logging
+import secrets
+from datetime import timedelta
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -5,10 +9,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from accounts.models import UserProfile
 from businesses.models import Business, PLAN_LIMITS
 from api.serializers import UserSerializer, BusinessSerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, OwnerOnly
+
+logger = logging.getLogger(__name__)
 
 class RegisterAPIView(APIView):
     permission_classes = [AllowAny]
@@ -132,7 +139,8 @@ class ProfileAPIView(APIView):
         })
 
 class BusinessSettingsAPIView(APIView):
-    permission_classes = [IsAuthenticated, HasActiveBusiness]
+    # Shop settings (GST, UPI, invoice preferences) are owner-sensitive.
+    permission_classes = [IsAuthenticated, HasActiveBusiness, OwnerOnly]
 
     def get(self, request):
         return Response(BusinessSerializer(request.business, context={'request': request}).data)
@@ -172,3 +180,78 @@ class SubscriptionPlansAPIView(APIView):
                 'business': BusinessSerializer(business, context={'request': request}).data
             })
         return Response({'error': 'Invalid subscription plan.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ForgotPasswordAPIView(APIView):
+    """Step 1 of the reset flow.
+
+    Accepts an email, issues a single-use 60-minute reset token, and
+    always returns the same generic response so callers cannot probe
+    for registered accounts.
+    """
+    permission_classes = [AllowAny]
+    RESET_TOKEN_TTL = 60 * 60  # seconds
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        if not email:
+            return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email__iexact=email).first()
+        if user is not None:
+            token = secrets.token_urlsafe(32)
+            user.userprofile.reset_password_token = token
+            user.userprofile.reset_password_expires = timezone.now() + timedelta(seconds=self.RESET_TOKEN_TTL)
+            user.userprofile.save(update_fields=['reset_password_token', 'reset_password_expires'])
+            logger.info('Password reset token issued for user %s', user.id)
+
+        return Response({
+            'message': 'If an account with that email exists, a reset link has been sent.',
+        })
+
+
+class ResetPasswordAPIView(APIView):
+    """Step 2 of the reset flow — consumes the token issued above."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        token = request.data.get('token', '').strip()
+        new_password = request.data.get('new_password', '')
+
+        if not token or not new_password:
+            return Response({'error': 'Token and new password are required.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 8:
+            return Response({'error': 'Password must be at least 8 characters.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        profile = UserProfile.objects.filter(
+            reset_password_token=token,
+            reset_password_expires__gt=timezone.now()
+        ).first()
+        if profile is None:
+            return Response({'error': 'Invalid or expired reset token.'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        user = profile.user
+        user.set_password(new_password)
+        user.userprofile.reset_password_token = ''
+        user.userprofile.reset_password_expires = None
+        user.save(update_fields=['password'])
+        user.userprofile.save(update_fields=['reset_password_token', 'reset_password_expires'])
+
+        # Invalidate outstanding refresh tokens so other sessions must
+        # re-authenticate with the new password. Token rotation is only
+        # available when the blacklist app is installed.
+        try:
+            from rest_framework_simplejwt.token_blacklist.models import (
+                OutstandingToken, BlacklistedToken)
+            for outstanding in OutstandingToken.objects.filter(user=user):
+                BlacklistedToken.objects.get_or_create(token=outstanding)
+        except Exception:
+            # Blacklist app not installed — refresh tokens still expire on
+            # their own and the password changed, so this is best-effort.
+            pass
+
+        return Response({'message': 'Password has been reset. Please login with your new password.'})

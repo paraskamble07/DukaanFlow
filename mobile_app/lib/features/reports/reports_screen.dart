@@ -158,9 +158,9 @@ class _KpiGrid extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: item.color.withOpacity(0.06),
+        color: item.color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: item.color.withOpacity(0.25)),
+        border: Border.all(color: item.color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +351,7 @@ class _TrendChart extends StatelessWidget {
                 color: AppColors.primary,
                 barWidth: 2.5,
                 dotData: const FlDotData(show: false),
-                belowBarData: BarAreaData(show: true, color: AppColors.primary.withOpacity(0.08)),
+                belowBarData: BarAreaData(show: true, color: AppColors.primary.withValues(alpha: 0.08)),
               ),
             ],
           ),
@@ -468,7 +468,7 @@ class _KhataReportTab extends ConsumerWidget {
                 (k) => ListTile(
                   dense: true,
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.danger.withOpacity(0.1),
+                    backgroundColor: AppColors.danger.withValues(alpha: 0.1),
                     child: Text(
                       (k['name'] as String)[0].toUpperCase(),
                       style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold, fontSize: 13),
@@ -642,7 +642,7 @@ class _TopProductsTab extends ConsumerWidget {
                             dense: true,
                             leading: CircleAvatar(
                               radius: 14,
-                              backgroundColor: AppColors.primary.withOpacity(0.1),
+                              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
                               child: Text(
                                 '${e.key + 1}',
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -712,7 +712,7 @@ class _TopCustomersTab extends ConsumerWidget {
                             dense: true,
                             leading: CircleAvatar(
                               radius: 14,
-                              backgroundColor: AppColors.success.withOpacity(0.1),
+                              backgroundColor: AppColors.success.withValues(alpha: 0.1),
                               child: Text(
                                 '${e.key + 1}',
                                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.success),

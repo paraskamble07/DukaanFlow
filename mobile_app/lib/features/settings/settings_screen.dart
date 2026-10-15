@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../auth/splash_screen.dart';
+import 'app_update_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -193,6 +194,25 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             children: [
               _profileRow('Logged in as', auth.user?.email ?? '-'),
               _profileRow('Role', auth.user?.role ?? 'OWNER'),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // App Updates (Phase 21)
+          _sectionCard(
+            title: 'Application',
+            children: [
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.system_update_rounded, color: AppColors.primary),
+                title: const Text('App Updates', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: const Text('Check for newer ShopZen builds & release notes',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const AppUpdateScreen()),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 24),

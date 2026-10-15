@@ -9,6 +9,11 @@ import '../../providers/auth_provider.dart';
 /// ShopZen Admin Dashboard — visible only when the signed-in account is a
 /// backend-authorized admin. All data comes from /api/admin/* which rejects
 /// everyone else with 403, so the app UI is never the security boundary.
+///
+/// Monetization is AdMob-only as of this build: the ₹30 subscription
+/// payment-verification workflow was retired, so this dashboard now
+/// manages app releases (Phase 21) and registered shops. Historical
+/// subscription data remains visible in the shops list.
 class AdminDashboardScreen extends ConsumerStatefulWidget {
   const AdminDashboardScreen({super.key});
 
@@ -17,13 +22,9 @@ class AdminDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
-  bool _reviewing = false;
-  String? _reviewingId;
   @override
   Widget build(BuildContext context) {
     final dashAsync = ref.watch(adminDashboardProvider);
-    final reqs = ref.watch(adminPaymentRequestsProvider);
-    final statusFilter = ref.watch(adminPayStatusProvider);
 
     return DefaultTabController(
       length: 3,
@@ -36,7 +37,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               icon: const Icon(Icons.refresh),
               onPressed: () {
                 ref.invalidate(adminDashboardProvider);
-                ref.invalidate(adminPaymentRequestsProvider);
+                ref.invalidate(adminAppReleasesProvider);
                 ref.invalidate(adminShopsProvider);
               },
             ),
@@ -44,7 +45,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
           bottom: const TabBar(
             tabs: [
               Tab(icon: Icon(Icons.dashboard_outlined), text: 'Overview'),
-              Tab(icon: Icon(Icons.payments_outlined), text: 'Payments'),
+              Tab(icon: Icon(Icons.system_update_alt_rounded), text: 'Releases'),
               Tab(icon: Icon(Icons.storefront_outlined), text: 'Shops'),
             ],
           ),
@@ -67,11 +68,11 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                         _statCard('Total Users', d['total_users'], Icons.people_outline),
                         _statCard('Shops', d['total_shops'], Icons.storefront_outlined),
                         _statCard('Active Subs', d['active_subscriptions'], Icons.verified_outlined, color: AppColors.success),
-                        _statCard('Expired', d['expired_subscriptions'], Icons.timer_off_outlined, color: AppColors.danger),
-                        _statCard('Pending', d['pending_payment_requests'], Icons.hourglass_top_outlined, color: Colors.orange),
+                        _statCard('Expired', d['expired_subscriptions'], Icons.timer_off_rounded, color: AppColors.danger),
+                        _statCard('Pending', d['pending_payment_requests'], Icons.hourglass_top_rounded, color: Colors.orange),
                         _statCard('Approved', d['approved_payments'], Icons.check_circle_outline, color: AppColors.success),
                         _statCard('Rejected', d['rejected_payments'], Icons.cancel_outlined, color: AppColors.danger),
-                        _statCard('Revenue ₹', d['total_subscription_revenue'], Icons.currency_rupee, color: AppColors.success),
+                        _statCard('Revenue ₹', d['total_subscription_revenue'], Icons.currency_rupee_rounded, color: AppColors.success),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -81,72 +82,51 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
               ),
             ),
 
-            // ---------------- Payment review ----------------
-            Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            hintText: 'Search UTR / shop / email',
-                            prefixIcon: Icon(Icons.search),
-                            isDense: true,
-                            border: OutlineInputBorder(),
-                          ),
-                          onSubmitted: (v) => ref.read(adminPaySearchProvider.notifier).state = v.trim(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  height: 42,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      for (final s in ['PENDING', 'APPROVED', 'REJECTED'])
-                        ChoiceChip(
-                          label: Text(s),
-                          selected: statusFilter == s,
-                          onSelected: (_) =>
-                              ref.read(adminPayStatusProvider.notifier).state = s,
-                        ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1),
-                Expanded(
-                  child: reqs.when(
+            // ---------------- App releases ----------------
+            Consumer(builder: (context, ref2, _) {
+              final releasesAsync = ref2.watch(adminAppReleasesProvider);
+              return Stack(
+                children: [
+                  releasesAsync.when(
                     loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => _errView('Could not load payments: $err'),
+                    error: (err, _) => _errView('Could not load releases: $err'),
                     data: (list) {
                       if (list.isEmpty) {
                         return ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           children: const [
                             SizedBox(height: 120),
-                            Center(child: Text('No payment requests in this view.',
+                            Center(child: Text('No app releases published yet.',
                                 style: TextStyle(color: AppColors.textSecondary))),
                           ],
                         );
                       }
                       return RefreshIndicator(
-                        onRefresh: () async => ref.refresh(adminPaymentRequestsProvider.future),
+                        onRefresh: () async =>
+                            ref2.refresh(adminAppReleasesProvider.future),
                         child: ListView.separated(
                           padding: const EdgeInsets.all(12),
                           itemCount: list.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
-                          itemBuilder: (_, i) => _paymentCard(list[i]),
+                          itemBuilder: (_, i) => _releaseCard(list[i]),
                         ),
                       );
                     },
                   ),
-                ),
-              ],
-            ),
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: FloatingActionButton.extended(
+                      onPressed: () => _showPublishDialog(context),
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      icon: const Icon(Icons.upload_rounded),
+                      label: const Text('Publish'),
+                    ),
+                  ),
+                ],
+              );
+            }),
 
             // ---------------- Shops list ----------------
             Consumer(builder: (context, ref2, _) {
@@ -232,7 +212,7 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: (active ? AppColors.success : AppColors.danger)
-                        .withOpacity(0.12),
+                        .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -340,10 +320,9 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     );
   }
 
-  Widget _paymentCard(Map<String, dynamic> r) {
-    final id = r['id'] as int;
-    final isPending = r['status'] == 'PENDING';
-    final busy = _reviewing && _reviewingId == id.toString();
+  Widget _releaseCard(Map<String, dynamic> r) {
+    final active = r['is_active'] == true;
+    final mandatory = (r['minimum_supported_code'] ?? 0) > 1;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -353,131 +332,144 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
             Row(
               children: [
                 Expanded(
-                  child: Text(r['shop'] ?? '-',
+                  child: Text('v${r['version_name'] ?? '-'} • build ${r['version_code'] ?? '-'}',
                       maxLines: 1, overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: (r['status'] == 'APPROVED'
-                        ? AppColors.success
-                        : r['status'] == 'REJECTED'
-                            ? AppColors.danger
-                            : Colors.orange)
-                        .withOpacity(0.12),
+                    color: (active ? AppColors.success : AppColors.textSecondary)
+                        .withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    r['status'] ?? '-',
+                    active ? 'ACTIVE' : 'INACTIVE',
                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text('Owner: ${r['owner'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
-            Text('Email: ${r['email'] ?? '-'}', style: const TextStyle(fontSize: 12.5)),
-            if ((r['phone'] ?? '').toString().isNotEmpty)
-              Text('Phone: ${r['phone']}', style: const TextStyle(fontSize: 12.5)),
+            Text('Platform: ${(r['platform'] ?? '-').toString().toUpperCase()}',
+                style: const TextStyle(fontSize: 12.5)),
+            Text('Minimum supported build: ${r['minimum_supported_code'] ?? '-'}'
+                '${mandatory ? ' (mandatory for older builds)' : ''}',
+                style: const TextStyle(fontSize: 12.5)),
+            if ((r['checksum_sha256'] ?? '').toString().isNotEmpty)
+              Text('SHA-256: ${r['checksum_sha256']}'.substring(0, 32) + '…',
+                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
             const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.currency_rupee, size: 16, color: AppColors.primary),
-                Text('${r['amount'] ?? '-'}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primary)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text('UTR: ${r['upi_reference'] ?? '-'}',
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            Text('Submitted: ${r['created_at'] ?? '-'}',
+            Text('Released: ${r['released_at'] ?? '-'}',
                 style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-            if (r['status'] == 'REJECTED' && (r['rejection_reason'] ?? '').toString().isNotEmpty)
-              Text('Reason: ${r['rejection_reason']}',
-                  maxLines: 2, overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: AppColors.danger)),
-            if (isPending) ...[
-              const Divider(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: busy ? null : () => _review(id, 'APPROVE'),
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.success, foregroundColor: Colors.white),
-                      icon: busy
-                          ? const SizedBox(height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Icon(Icons.check, size: 18),
-                      label: const Text('APPROVE'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: busy ? null : () => _review(id, 'REJECT'),
-                      style: OutlinedButton.styleFrom(foregroundColor: AppColors.danger),
-                      icon: const Icon(Icons.close, size: 18),
-                      label: const Text('REJECT'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+            const SizedBox(height: 8),
+            Text(r['release_notes'] ?? '',
+                maxLines: 4, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12.5)),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _review(int id, String action) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _showPublishDialog(BuildContext context) async {
+    final versionCtrl = TextEditingController();
+    final buildCtrl = TextEditingController();
+    final minBuildCtrl = TextEditingController(text: '1');
+    final notesCtrl = TextEditingController();
+    final urlCtrl = TextEditingController(
+      text: 'https://dukaanflow-1.onrender.com/static/apk/shopzen-release.apk',
+    );
+    final formKey = GlobalKey<FormState>();
+
+    final published = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(action == 'APPROVE' ? 'Approve payment?' : 'Reject payment?'),
-        content: Text(action == 'APPROVE'
-            ? 'Verify the UTR in your UPI app first. Approving activates Premium for this shop. This cannot be done twice.'
-            : 'The shop owner will be told the payment could not be verified. They can pay and submit again.'),
+        title: const Text('Publish app release'),
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: versionCtrl,
+                  decoration: const InputDecoration(labelText: 'Version name *', hintText: '1.1.0'),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+                TextFormField(
+                  controller: buildCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Build number *', hintText: '2'),
+                  validator: (v) {
+                    final code = int.tryParse(v ?? '');
+                    if (code == null || code < 1) return 'Positive integer required';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: minBuildCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Minimum supported build'),
+                ),
+                TextFormField(
+                  controller: urlCtrl,
+                  decoration: const InputDecoration(labelText: 'Download URL *'),
+                  validator: (v) {
+                    final uri = Uri.tryParse(v ?? '');
+                    if (uri == null || !uri.isAbsolute) return 'Valid URL required';
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: notesCtrl,
+                  decoration: const InputDecoration(labelText: 'Release notes'),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('CANCEL')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(action == 'APPROVE' ? 'APPROVE' : 'REJECT'),
-          ),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('PUBLISH')),
         ],
       ),
     );
-    if (confirmed != true) return;
 
-    setState(() {
-      _reviewing = true;
-      _reviewingId = id.toString();
-    });
+    if (published != true || !context.mounted) return;
+    if (!formKey.currentState!.validate()) {
+      // Re-open so the owner can fix the entered values.
+      return _showPublishDialog(context);
+    }
+
     final client = ref.read(apiClientProvider);
     try {
-      final res = await client.dio.post(
-        ApiConstants.adminReviewPayment(id),
-        data: {'action': action},
+      await client.dio.post(
+        ApiConstants.adminAppReleases,
+        data: {
+          'platform': 'android',
+          'version_name': versionCtrl.text.trim(),
+          'version_code': int.parse(buildCtrl.text.trim()),
+          'minimum_supported_code': int.tryParse(minBuildCtrl.text.trim()) ?? 1,
+          'release_notes': notesCtrl.text.trim(),
+          'download_url': urlCtrl.text.trim(),
+        },
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(res.data['message'] ?? 'Done.'),
-            backgroundColor: action == 'APPROVE' ? AppColors.success : AppColors.danger,
-          ),
+          const SnackBar(content: Text('Release published.'),
+              backgroundColor: AppColors.success),
         );
-        ref.invalidate(adminPaymentRequestsProvider);
-        ref.invalidate(adminDashboardProvider);
+        ref.invalidate(adminAppReleasesProvider);
       }
     } on DioException catch (e) {
       if (mounted) {
         final detail = e.response?.data;
         final msg = (detail is Map && detail['error'] != null)
             ? detail['error'].toString()
-            : 'Could not complete. Please try again.';
+            : 'Could not publish. Please try again.';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), backgroundColor: AppColors.danger),
         );
@@ -485,13 +477,10 @@ class _AdminDashboardScreenState extends ConsumerState<AdminDashboardScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Could not complete. Please try again.'),
+          const SnackBar(content: Text('Could not publish. Please try again.'),
               backgroundColor: AppColors.danger),
         );
       }
-    } finally {
-      if (mounted) setState(() => _reviewing = false);
     }
   }
 }

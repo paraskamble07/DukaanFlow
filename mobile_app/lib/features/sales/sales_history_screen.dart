@@ -161,7 +161,7 @@ class _SaleTile extends StatelessWidget {
           MaterialPageRoute(builder: (_) => SaleDetailScreen(saleId: sale.id)),
         ),
         leading: CircleAvatar(
-          backgroundColor: _statusColor(sale.paymentStatus).withOpacity(0.12),
+          backgroundColor: _statusColor(sale.paymentStatus).withValues(alpha: 0.12),
           child: Icon(
             sale.paymentStatus == 'PAID' ? Icons.check_circle : Icons.schedule,
             color: _statusColor(sale.paymentStatus),

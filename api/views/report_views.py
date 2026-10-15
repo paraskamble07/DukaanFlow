@@ -10,7 +10,7 @@ from customers.models import Customer
 from suppliers.models import Supplier
 from products.models import Product
 from purchases.models import Purchase
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, ReportsPermission, ExpensesPermission
 
 
 def parse_report_dates(request):
@@ -65,7 +65,7 @@ def local_dt_range(start, end):
 
 
 class SalesReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -121,7 +121,7 @@ class SalesReportAPIView(APIView):
 
 
 class StockReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -181,7 +181,7 @@ class StockReportAPIView(APIView):
 
 
 class KhataReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -234,7 +234,7 @@ class KhataReportAPIView(APIView):
 
 
 class ExpenseReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ExpensesPermission]
 
     def get(self, request):
         business = request.business
@@ -272,7 +272,7 @@ class ExpenseReportAPIView(APIView):
         })
 
 class GSTReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -318,7 +318,7 @@ class GSTReportAPIView(APIView):
 
 
 class TopProductsReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -374,7 +374,7 @@ class TopProductsReportAPIView(APIView):
 
 
 class TopCustomersReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business
@@ -410,7 +410,7 @@ class TopCustomersReportAPIView(APIView):
         })
 
 class ProfitLossReportAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ReportsPermission]
 
     def get(self, request):
         business = request.business

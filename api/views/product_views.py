@@ -5,7 +5,7 @@ from django.db.models import Q
 from products.models import Product, Category, DEFAULT_CATEGORIES
 from inventory.models import StockMovement
 from api.serializers import ProductSerializer, CategorySerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, ProductsPermission
 
 def ensure_default_categories(business):
     for cat_name in DEFAULT_CATEGORIES:
@@ -13,7 +13,7 @@ def ensure_default_categories(business):
 
 class CategoryListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ProductsPermission]
 
     def get_queryset(self):
         ensure_default_categories(self.request.business)
@@ -24,7 +24,7 @@ class CategoryListCreateAPIView(generics.ListCreateAPIView):
 
 class ProductListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ProductsPermission]
 
     def get_queryset(self):
         business = self.request.business
@@ -82,7 +82,7 @@ class ProductListCreateAPIView(generics.ListCreateAPIView):
 
 class ProductDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ProductSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ProductsPermission]
 
     def get_queryset(self):
         return Product.objects.filter(business=self.request.business).select_related('category', 'supplier')

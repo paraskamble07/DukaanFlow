@@ -81,7 +81,7 @@ class SupplierListScreen extends ConsumerWidget {
                             MaterialPageRoute(builder: (_) => SupplierDetailScreen(supplier: s)),
                           ),
                           leading: CircleAvatar(
-                            backgroundColor: AppColors.warning.withOpacity(0.12),
+                            backgroundColor: AppColors.warning.withValues(alpha: 0.12),
                             child: Icon(Icons.local_shipping, color: AppColors.warning, size: 22),
                           ),
                           title: Text(s.companyName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),

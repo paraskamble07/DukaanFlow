@@ -4,7 +4,6 @@ import '../core/constants/api_constants.dart';
 import '../core/network/api_client.dart';
 import '../core/storage/local_storage.dart';
 import '../models/product_model.dart';
-import '../models/sale_model.dart';
 import 'auth_provider.dart';
 
 class CartItem {

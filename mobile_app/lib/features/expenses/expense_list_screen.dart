@@ -57,7 +57,7 @@ class ExpenseListScreen extends ConsumerWidget {
               itemBuilder: (context, index) {
                 if (index == 0) {
                   return Card(
-                    color: AppColors.primary.withOpacity(0.06),
+                    color: AppColors.primary.withValues(alpha: 0.06),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                       side: const BorderSide(color: AppColors.primary, width: 1),
@@ -109,7 +109,7 @@ class _ExpenseTile extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppColors.warning.withOpacity(0.12),
+            color: AppColors.warning.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(_categoryIcon, color: AppColors.warning, size: 22),

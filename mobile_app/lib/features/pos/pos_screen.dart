@@ -250,7 +250,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.shopping_cart_outlined, size: 64, color: AppColors.textSecondary.withOpacity(0.4)),
+                        Icon(Icons.shopping_cart_outlined, size: 64, color: AppColors.textSecondary.withValues(alpha: 0.4)),
                         const SizedBox(height: 12),
                         const Text('Cart is empty', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                         const Text('Select products from catalog below to add.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),

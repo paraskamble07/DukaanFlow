@@ -71,6 +71,7 @@ class ProductSerializer(serializers.ModelSerializer):
     is_low_stock = serializers.BooleanField(read_only=True)
     is_out_of_stock = serializers.BooleanField(read_only=True)
     profit_margin = serializers.SerializerMethodField()
+    purchase_price = serializers.SerializerMethodField()
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -84,8 +85,20 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'is_low_stock', 'is_out_of_stock', 'profit_margin', 'image_url']
 
+    def _user(self):
+        return self.context.get('request').user if self.context.get('request') else None
+
     def get_profit_margin(self, obj):
+        from api.permissions import is_field_sensitive
+        if is_field_sensitive('profit_margin', self._user()):
+            return None
         return round(obj.get_profit_margin(), 1)
+
+    def get_purchase_price(self, obj):
+        from api.permissions import is_field_sensitive
+        if is_field_sensitive('purchase_price', self._user()):
+            return None
+        return float(obj.purchase_price)
 
     def get_image_url(self, obj):
         if obj.image and hasattr(obj.image, 'url'):
@@ -186,7 +199,13 @@ class SaleSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'invoice_number', 'due_amount', 'payment_status', 'gross_profit', 'created_at']
 
+    def _user(self):
+        return self.context.get('request').user if self.context.get('request') else None
+
     def get_gross_profit(self, obj):
+        from api.permissions import is_field_sensitive
+        if is_field_sensitive('gross_profit', self._user()):
+            return None
         return float(obj.get_gross_profit())
 
 class PurchaseItemSerializer(serializers.ModelSerializer):

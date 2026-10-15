@@ -1,7 +1,7 @@
 from rest_framework import generics
 from expenses.models import Expense, ExpenseCategory, DEFAULT_EXPENSE_CATEGORIES
 from api.serializers import ExpenseSerializer, ExpenseCategorySerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, ExpensesPermission
 
 def ensure_expense_categories(business):
     for name in DEFAULT_EXPENSE_CATEGORIES:
@@ -9,7 +9,7 @@ def ensure_expense_categories(business):
 
 class ExpenseCategoryListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ExpenseCategorySerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ExpensesPermission]
 
     def get_queryset(self):
         ensure_expense_categories(self.request.business)
@@ -20,7 +20,7 @@ class ExpenseCategoryListCreateAPIView(generics.ListCreateAPIView):
 
 class ExpenseListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ExpensesPermission]
 
     def get_queryset(self):
         ensure_expense_categories(self.request.business)
@@ -41,7 +41,7 @@ class ExpenseListCreateAPIView(generics.ListCreateAPIView):
 
 class ExpenseDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = ExpenseSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, ExpensesPermission]
 
     def get_queryset(self):
         return Expense.objects.filter(business=self.request.business)

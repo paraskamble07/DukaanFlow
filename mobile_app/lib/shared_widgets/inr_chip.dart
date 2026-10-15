@@ -18,14 +18,14 @@ class InrChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg = AppColors.primary.withOpacity(0.08);
+    Color bg = AppColors.primary.withValues(alpha: 0.08);
     Color textColor = AppColors.primary;
 
     if (isDue) {
-      bg = AppColors.danger.withOpacity(0.12);
+      bg = AppColors.danger.withValues(alpha: 0.12);
       textColor = AppColors.danger;
     } else if (isProfit) {
-      bg = AppColors.success.withOpacity(0.12);
+      bg = AppColors.success.withValues(alpha: 0.12);
       textColor = AppColors.success;
     }
 

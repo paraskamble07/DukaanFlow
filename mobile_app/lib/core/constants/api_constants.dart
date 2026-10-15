@@ -1,15 +1,15 @@
 class ApiConstants {
   // Backend base URL — override at build/run time without editing code:
   //   flutter run --dart-define=API_BASE_URL=http://192.168.1.5:8000
-  //   flutter build apk --release --dart-define=API_BASE_URL=https://dukaanflow.onrender.com
+  //   flutter build apk --release --dart-define=API_BASE_URL=https://dukaanflow-1.onrender.com
   //
   // Options (NEVER use localhost/127.0.0.1 on a real phone — that is the phone itself):
-  //   Production (Render):  https://dukaanflow.onrender.com   ← default
+  //   Production (Render):  https://dukaanflow-1.onrender.com   ← default
   //   Android emulator:      http://10.0.2.2:8000            (emulator alias for host PC)
   //   Real phone on Wi-Fi:   http://<PC-LAN-IP>:8000         (e.g. http://192.168.1.5:8000)
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://dukaanflow.onrender.com',
+    defaultValue: 'https://dukaanflow-1.onrender.com',
   );
   
   // Auth
@@ -59,11 +59,8 @@ class ApiConstants {
   static const String reportTopProducts = '/api/reports/top-products/';
   static const String reportTopCustomers = '/api/reports/top-customers/';
 
-  // Subscription (ShopZen Premium ₹30/month — manual admin-verified payments)
-  static const String subscriptionStatus = '/api/subscription/status/';
-  static const String subscriptionPaymentConfig = '/api/subscription/payment-config/';
-  static const String subscriptionMyRequests = '/api/subscription/requests/';
-  static const String subscriptionSubmitPayment = '/api/subscription/payment-request/';
+  // Subscription endpoints — RETIRED from the app (AdMob-only monetization).
+  // The backend routes remain for historical data; not called by this build.
 
   // ShopZen Admin (backend-enforced role; the APIs reject non-admins)
   static const String adminDashboard = '/api/admin/dashboard/';
@@ -73,6 +70,10 @@ class ApiConstants {
 
   // Health (public)
   static const String health = '/api/health/';
+
+  // App Updates (public check; admin publishing is gated by SHOPZEN_ADMIN)
+  static const String appUpdateCheck = '/api/app-updates/check/';
+  static const String adminAppReleases = '/api/admin/app-releases/';
 
   // Sales detail
   static String saleDetail(int id) => '/api/sales/$id/';

@@ -65,7 +65,7 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                 data: (device) {
                   if (device == null) {
                     return Card(
-                      color: AppColors.danger.withOpacity(0.06),
+                      color: AppColors.danger.withValues(alpha: 0.06),
                       child: Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Center(

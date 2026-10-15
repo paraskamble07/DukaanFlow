@@ -91,36 +91,11 @@ final saleDetailProvider = FutureProvider.autoDispose.family<SaleModel, int>((re
 });
 
 // ---------------------------------------------------------------
-// Subscription (ShopZen Premium ₹30/month)
+// Subscription (ShopZen Premium ₹30/month) — REMOVED: the app is free
+// for all authorized users; monetization is AdMob banner ads only.
+// The backend endpoints and historical subscription payment data are
+// intentionally preserved (no destructive migration).
 // ---------------------------------------------------------------
-final subscriptionProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final client = ref.watch(apiClientProvider);
-  final res = await client.dio.get(ApiConstants.subscriptionStatus);
-  if (res.statusCode == 200) {
-    return res.data as Map<String, dynamic>;
-  }
-  throw Exception('Failed to load subscription status');
-});
-
-// Payment config (QR image URL, UPI id, price) for the Premium screen.
-final paymentConfigProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final client = ref.watch(apiClientProvider);
-  final res = await client.dio.get(ApiConstants.subscriptionPaymentConfig);
-  if (res.statusCode == 200) {
-    return res.data as Map<String, dynamic>;
-  }
-  throw Exception('Failed to load payment config');
-});
-
-// Owner's own payment requests (pending history + rejection reasons).
-final myPaymentRequestsProvider = FutureProvider.autoDispose<Map<String, dynamic>>((ref) async {
-  final client = ref.watch(apiClientProvider);
-  final res = await client.dio.get(ApiConstants.subscriptionMyRequests);
-  if (res.statusCode == 200) {
-    return res.data as Map<String, dynamic>;
-  }
-  throw Exception('Failed to load payment requests');
-});
 
 // ---------------------------------------------------------------
 // Reports (all tenant-scoped, server-calculated)

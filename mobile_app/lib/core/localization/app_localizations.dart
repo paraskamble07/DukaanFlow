@@ -12,7 +12,7 @@ class AppLocalizations {
 
   static const _localizedValues = <String, Map<String, String>>{
     'en': {
-      'app_name': 'DukaanFlow',
+      'app_name': 'ShopZen',
       'tagline': 'Run your mobile shop smarter',
       'dashboard': 'Dashboard',
       'pos_billing': 'POS Billing',
@@ -39,7 +39,7 @@ class AppLocalizations {
       'logout': 'Logout',
     },
     'hi': {
-      'app_name': 'दुकानफ्लो',
+      'app_name': 'शॉपज़ेन',
       'tagline': 'अपनी मोबाइल दुकान को स्मार्ट तरीके से चलाएं',
       'dashboard': 'डैशबोर्ड',
       'pos_billing': 'पीओएस बिलिंग',
@@ -66,7 +66,7 @@ class AppLocalizations {
       'logout': 'लॉग आउट',
     },
     'mr': {
-      'app_name': 'दुकानफ्लो',
+      'app_name': 'शॉपज़ेन',
       'tagline': 'आपले मोबाईल दुकान स्मार्टपणे चालवा',
       'dashboard': 'डॅशबोर्ड',
       'pos_billing': 'पीओएस बिलिंग',

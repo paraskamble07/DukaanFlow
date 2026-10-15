@@ -5,6 +5,7 @@ from api.views import (
     pos_views, customer_views, supplier_views, expense_views,
     payment_views, report_views, subscription_views, health_views
 )
+from updates import views as update_views
 from subscriptions import views as subscription_admin_views
 
 app_name = 'api'
@@ -13,6 +14,8 @@ urlpatterns = [
     # Auth & Business
     path('auth/register/', auth_views.RegisterAPIView.as_view(), name='register'),
     path('auth/login/', auth_views.LoginAPIView.as_view(), name='login'),
+    path('auth/forgot-password/', auth_views.ForgotPasswordAPIView.as_view(), name='forgot_password'),
+    path('auth/reset-password/', auth_views.ResetPasswordAPIView.as_view(), name='reset_password'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/profile/', auth_views.ProfileAPIView.as_view(), name='profile'),
     path('business/settings/', auth_views.BusinessSettingsAPIView.as_view(), name='business_settings'),
@@ -28,6 +31,11 @@ urlpatterns = [
     path('admin/shops/', subscription_admin_views.AdminShopsAPIView.as_view(), name='admin_shops'),
     path('admin/payment-requests/', subscription_admin_views.AdminPaymentRequestsAPIView.as_view(), name='admin_payment_requests'),
     path('admin/payment-requests/<int:request_id>/review/', subscription_admin_views.AdminReviewPaymentAPIView.as_view(), name='admin_review_payment'),
+
+    # App Updates (public check + ShopZen admin publishing)
+    path('app-updates/check/', update_views.AppUpdateCheckAPIView.as_view(), name='app_update_check'),
+    path('admin/app-releases/', update_views.AppReleaseListCreateAPIView.as_view(), name='admin_app_release_list_create'),
+    path('admin/app-releases/<int:pk>/', update_views.AppReleaseDetailAPIView.as_view(), name='admin_app_release_detail'),
 
     # Dashboard
     path('dashboard/', dashboard_views.DashboardAPIView.as_view(), name='dashboard'),

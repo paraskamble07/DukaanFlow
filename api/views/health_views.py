@@ -28,6 +28,9 @@ class HealthAPIView(APIView):
             'app': APP_NAME,
             'version': APP_VERSION,
             'database': 'up' if db_ok else 'down',
+            # Vendor only (postgres / sqlite) — proves prod runs PostgreSQL
+            # without leaking hostnames or credentials.
+            'db_engine': connection.vendor if db_ok else 'unknown',
             'time': timezone.now().isoformat(),
         }
         # 200 when fully healthy, 503 lets monitors flag a broken database

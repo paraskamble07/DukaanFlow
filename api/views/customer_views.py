@@ -6,11 +6,11 @@ from customers.models import Customer
 from sales.models import Sale
 from payments.models import Payment
 from api.serializers import CustomerSerializer, SaleSerializer, PaymentSerializer
-from api.permissions import HasActiveBusiness
+from api.permissions import HasActiveBusiness, CustomersPermission
 
 class CustomerListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CustomerSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, CustomersPermission]
 
     def get_queryset(self):
         business = self.request.business
@@ -47,13 +47,13 @@ class CustomerListCreateAPIView(generics.ListCreateAPIView):
 
 class CustomerDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = CustomerSerializer
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, CustomersPermission]
 
     def get_queryset(self):
         return Customer.objects.filter(business=self.request.business)
 
 class CustomerLedgerAPIView(APIView):
-    permission_classes = [HasActiveBusiness]
+    permission_classes = [HasActiveBusiness, CustomersPermission]
 
     def get(self, request, pk):
         try:
