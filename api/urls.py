@@ -8,6 +8,7 @@ from api.views import (
 from updates import views as update_views
 from reminders import views as reminder_views
 from subscriptions import views as subscription_admin_views
+from api import backup_views
 
 app_name = 'api'
 
@@ -96,4 +97,8 @@ urlpatterns = [
 
     # Health (public — Render/uptime monitors and the mobile app)
     path('health/', health_views.HealthAPIView.as_view(), name='health'),
+
+    # Backup & Restore (owner-only; full shop dataset export / validated import)
+    path('backup/', backup_views.BackupExportAPIView.as_view(), name='backup_export'),
+    path('backup/restore/', backup_views.BackupRestoreAPIView.as_view(), name='backup_restore'),
 ]

@@ -326,7 +326,7 @@ is stale rather than broken.
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
    the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
    `businesses` 0003 migration).
-2. Phase 8–9: backup/restore, offline mode + sync indicator.
+2. Phase 9: offline mode + sync status indicator.
 3. Phase 11–12: IMEI history/warranty/low+dead stock/purchase history;
    AdMob banner SDK + UMP consent flow.
 
@@ -376,3 +376,60 @@ is stale rather than broken.
   `prefer_const`/`use_build_context` style hints). Test assertions were
   not weakened — the failing parity test was fixed by genuinely
   translating values and eliminating one punctuation-only key.
+
+- **2026-10-15 (Phase 8, complete):** Backup & restore, owner-only.
+
+  Backend (`api/backup_views.py`, routed at `/api/backup/` and
+  `/api/backup/restore/`):
+
+  - **Export** serializes the shop's complete dataset — business
+    settings, categories, expense categories, suppliers, customers,
+    products, purchases + items, sales + items, expenses, payments,
+    IMEI device register, stock movements, reminder logs and reminder
+    settings — as a downloadable JSON file with a version header
+    (`backup_version: 1`). Owner-only; 403 for staff, 401 anonymous.
+  - **Restore** is `transaction.atomic` all-or-nothing and:
+    recomputes every sale subtotal/total/due/payment-status and every
+    purchase total from the line items (a tampered file total is
+    detected and reported as `adjusted`, the server value is used);
+    **rejects overpayment** (`paid > recomputed total` → 400, nothing
+    written); is **idempotent** (natural-key match → skipped, never
+    duplicated); preserves historical `created_at` exactly; always
+    attaches rows to `request.business` (tenant spoofing from the file
+    is impossible); supports `dry_run` for a write-free preview.
+    Unresolvable sales/payments are skipped with named warnings, never
+    faked.
+  - Never exports credentials, tokens, passwords, plan tier or
+    subscription lifecycle state.
+
+  Evidence: new `api/tests_backup.py` — **14 tests** covering
+  owner-only access, tenant isolation of the export, full round-trip
+  restore into an empty shop, idempotent re-restore, dry-run
+  no-writes, overpayment rejection, tampered-total recomputation,
+  version rejection and cross-shop safety. **Full backend suite:
+  119/119 OK** (includes the 14 new). Live smoke on the local dev
+  server with real seeded data: export HTTP 200 with all 14 sections
+  (11 categories, 6 products, 5 sales, 5 devices …) and a dry-run
+  restore that correctly reported every record as already present,
+  **0 warnings / 0 errors** — i.e. the shop's real financial totals
+  pass server-side recomputation.
+
+  Flutter (`lib/features/settings/backup_restore_screen.dart`, entry in
+  Settings):
+
+  - Download backs up to the app's documents folder and opens the OS
+    share sheet (payload validated as backup JSON before it is ever
+    saved or shared).
+  - Restore picks a file, validates the version header, POSTs a
+    **dry run first**, shows an itemized preview (imported / skipped /
+    adjusted counts + warnings), and only commits on explicit
+    confirmation; then invalidates the cached dashboard/customer/
+    product providers. 403 maps to an "owner only" message.
+  - 29 new localization keys per locale (en/hi/mr, now **558 keys per
+    locale with exact parity**); `file_picker: ^8.0.7` added.
+
+  Verification: `flutter test` **12/12 passed**; `flutter analyze`
+  **0 errors / 0 warnings** (35 infos, all pre-existing style hints).
+  Dev database brought up to date locally (added `businesses.0003`
+  `upi_id` and `reminders.0001`); these migrations run automatically
+  on Render via `build.sh` on the next deploy.

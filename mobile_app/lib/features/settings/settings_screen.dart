@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../auth/splash_screen.dart';
 import 'app_update_screen.dart';
+import 'backup_restore_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -228,6 +229,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AppUpdateScreen()),
+                ),
+              ),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.backup_outlined, color: AppColors.primary),
+                title: Text(l10n.translate('backup_restore_title'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                subtitle: Text(l10n.translate('backup_restore_sub'),
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const BackupRestoreScreen()),
                 ),
               ),
             ],

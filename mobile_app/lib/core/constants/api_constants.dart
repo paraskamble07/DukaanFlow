@@ -82,6 +82,10 @@ class ApiConstants {
   static const String appUpdateCheck = '/api/app-updates/check/';
   static const String adminAppReleases = '/api/admin/app-releases/';
 
+  // Backup & Restore (Phase 8 — owner-only full shop dataset export/import)
+  static const String backupExport = '/api/backup/';
+  static const String backupRestore = '/api/backup/restore/';
+
   // Sales detail
   static String saleDetail(int id) => '/api/sales/$id/';
 }
