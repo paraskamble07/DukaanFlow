@@ -55,15 +55,60 @@ class POSCheckoutAPIView(APIView):
                         status=status.HTTP_400_BAD_REQUEST,
                     )
 
+                if qty < 1:
+                    return Response(
+                        {'error': 'Each bill line needs a quantity of at least 1.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if price < 0:
+                    return Response(
+                        {'error': f"'{item.get('product_id')}' has a negative price. Verify the bill and try again."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                if item_disc < 0:
+                    return Response(
+                        {'error': 'A line discount cannot be negative.'},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
                 product = Product.objects.get(pk=p_id, business=business)
                 if product.stock_quantity < qty:
                     return Response({
                         'error': f"Insufficient stock for '{product.name}'. Available: {product.stock_quantity}, Requested: {qty}"
                     }, status=status.HTTP_400_BAD_REQUEST)
 
+                # An IMEI unit can only be sold once: resolve and validate the
+                # device BEFORE writing anything. Selling an already-sold unit
+                # again would overwrite its customer, sale and warranty record
+                # and corrupt the device ledger (Phase 13 stock-once rule).
+                device = None
+                if device_id:
+                    try:
+                        device = MobileDevice.objects.get(pk=device_id, business=business)
+                    except (MobileDevice.DoesNotExist, ValueError):
+                        return Response(
+                            {'error': 'The selected IMEI unit does not exist in this shop.'},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    if device.product_id != product.pk:
+                        return Response({
+                            'error': f"IMEI unit {device.imei_1} does not belong to '{product.name}'."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+                    if device.status == 'SOLD':
+                        return Response({
+                            'error': f"IMEI unit {device.imei_1} was already sold on "
+                                     f"{device.sale_date.strftime('%d-%m-%Y') if device.sale_date else 'a previous bill'}. "
+                                     f"A unit can only be sold once."
+                        }, status=status.HTTP_400_BAD_REQUEST)
+
                 line_total = (price * Decimal(str(qty))) - item_disc
+                if line_total < 0:
+                    return Response({
+                        'error': 'A line discount cannot exceed the line total. '
+                                 'Verify the bill and try again.'
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 subtotal += line_total
-                processed_items.append((product, qty, price, item_disc, line_total, device_id))
+                processed_items.append((product, qty, price, item_disc, line_total, device))
 
             with transaction.atomic():
                 if customer_id:
@@ -102,12 +147,10 @@ class POSCheckoutAPIView(APIView):
                     notes=notes
                 )
 
-                for product, qty, price, item_disc, line_total, device_id in processed_items:
+                for product, qty, price, item_disc, line_total, device in processed_items:
                     imei_str = ""
-                    if device_id:
-                        dev = MobileDevice.objects.filter(pk=device_id, business=business).first()
-                        if dev:
-                            imei_str = f"IMEI: {dev.imei_1}" + (f", {dev.imei_2}" if dev.imei_2 else "")
+                    if device:
+                        imei_str = f"IMEI: {device.imei_1}" + (f", {device.imei_2}" if device.imei_2 else "")
 
                     sale_item = SaleItem.objects.create(
                         sale=sale,
@@ -119,16 +162,14 @@ class POSCheckoutAPIView(APIView):
                         imei_numbers=imei_str
                     )
 
-                    if device_id:
-                        dev = MobileDevice.objects.filter(pk=device_id, business=business).first()
-                        if dev:
-                            dev.status = 'SOLD'
-                            dev.customer = customer
-                            dev.sale_item = sale_item
-                            dev.sale_date = timezone.now()
-                            if product.warranty_months > 0:
-                                dev.warranty_expiry_date = timezone.now().date() + timedelta(days=product.warranty_months * 30)
-                            dev.save()
+                    if device:
+                        device.status = 'SOLD'
+                        device.customer = customer
+                        device.sale_item = sale_item
+                        device.sale_date = timezone.now()
+                        if product.warranty_months > 0:
+                            device.warranty_expiry_date = timezone.now().date() + timedelta(days=product.warranty_months * 30)
+                        device.save()
 
                     old_stk = product.stock_quantity
                     product.stock_quantity -= qty
@@ -137,12 +178,12 @@ class POSCheckoutAPIView(APIView):
                     StockMovement.objects.create(
                         business=business,
                         product=product,
-                        device=dev if device_id else None,
+                        device=device,
                         movement_type='SALE',
                         quantity=qty,
                         previous_stock=old_stk,
                         new_stock=product.stock_quantity,
-                        notes=f"Sold to {customer.name} (Bill #{sale.invoice_number})" + (f" — IMEI: {dev.imei_1}" if device_id else ""),
+                        notes=f"Sold to {customer.name} (Bill #{sale.invoice_number})" + (f" — IMEI: {device.imei_1}" if device else ""),
                         reference_id=sale.invoice_number
                     )
 

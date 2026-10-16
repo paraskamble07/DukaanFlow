@@ -331,11 +331,9 @@ is stale rather than broken.
    set the live `com.google.android.gms.ads.APPLICATION_ID` in
    `AndroidManifest.xml` (full steps land in `docs/ADMOB_SETUP.md` in
    Phase 17).
-3. Phases 13–15: financial-integrity hardening + acceptance tests
-   (`docs/END_TO_END_ACCEPTANCE.md`).
-4. Phase 16: release APK rebuild + verification (exit code, size,
+3. Phase 16: release APK rebuild + verification (exit code, size,
    SHA-256, package id, version, API URL).
-5. Phases 17–18: AdMob + privacy/security/test/release docs and the
+4. Phases 17–18: AdMob + privacy/security/test/release docs and the
    final report.
 
 ---
@@ -589,7 +587,47 @@ is stale rather than broken.
   applied to the dev DB; it runs on Render via `build.sh` on the next
   deploy.
 
-- **2026-10-16 (Phase 12, pushed):** Google AdMob banner ads + Google UMP
+- **2026-10-16 (Phases 13–15, integrity + acceptance, pushed):**
+  Financial-integrity hardening, regression suite and the acceptance
+  document.
+  - **Bug fixed (stock-once rule):** POS checkout never validated the IMEI
+    unit before selling it — an already-SOLD device could be billed again,
+    overwriting its customer, sale link and warranty. Checkout now resolves
+    the device *before* any write and rejects with a specific 400 when the
+    unit was already sold, belongs to a different product, belongs to
+    another shop, or does not exist. Also added: quantity >= 1,
+    non-negative unit price, non-negative discount, and line discount not
+    exceeding the line total (previously a negative line price could be
+    silently clamped to a zero-value bill).
+  - **New regression suite** `api/tests_phase13.py` — 13 tests: IMEI
+    double-sell rejected (device record untouched), device product/shop
+    mismatch, nonexistent device, rejected checkout writes zero rows,
+    server-side Decimal totals recomputed to the paisa, padded
+    `paid_amount` clamped to the bill total, negative line rejected,
+    khata balances derived from history, overpayment rejected, payment
+    closes the due without mutating the original bill row, credit sale
+    records no payment row, and money columns stay exact through DRF
+    (subtotals like 449.97 / 457.53, not float-rounded).
+  - **Decimal-safety re-verification:** all money columns are
+    `DecimalField`; every `float(` call sits at the JSON serialization
+    boundary only, never inside ledger math (audited pos, payments,
+    dashboard, reports, serializers).
+  - **Migration check:** `makemigrations --check --dry-run` → "No changes
+    detected" (model state == migrations). Production stays PostgreSQL by
+    configuration (`render.yaml` wires `DATABASE_URL` to the managed
+    `dukaanflow-db`; sqlite only when no `DATABASE_URL` locally).
+  - **Acceptance doc:** `docs/END_TO_END_ACCEPTANCE.md` — the 21-step
+    acceptance scenario with evidence pointers and an explicit
+    not-performed list (device steps 15–21 pending the release APK;
+    live ad impressions pending the owner's AdMob account).
+  - Verification: backend **151/155** across all apps — `api` 116/116,
+    `updates` 13/13, `reminders` + `subscriptions` 21/21, legacy `tests/`
+    1/5. The 4 legacy failures are **pre-existing** (verified identical on
+    the pre-change tree: they use the removed pre-API endpoints and the
+    removed subscription plan cap); they are documented, not deleted,
+    weakened or faked green. `manage.py check` clean.
+
+- **2026-10-16 (Phase 12, pushed):**- **2026-10-16 (Phase 12, pushed):** Google AdMob banner ads + Google UMP
   consent flow. Free app, monetization banners ONLY (all subscription
   paywalls stayed removed; no business payment feature touched).
   - New `lib/core/ads/`: `ad_config.dart` (build-time overrides
