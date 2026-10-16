@@ -7,6 +7,7 @@ import '../../features/customers/customer_list_screen.dart';
 import '../../features/expenses/expense_list_screen.dart';
 import '../../features/suppliers/supplier_list_screen.dart';
 import '../../features/purchases/purchase_form_screen.dart';
+import '../../features/purchases/purchase_history_screen.dart';
 import '../../features/reminders/reminders_screen.dart';
 import '../../features/inventory/imei_lookup_screen.dart';
 import '../../features/inventory/imei_scanner_screen.dart';
@@ -84,6 +85,13 @@ class MoreScreen extends ConsumerWidget {
             title: l10n.translate('purchases'),
             subtitle: l10n.translate('stock'),
             onTap: () => _push(context, const PurchaseFormScreen()),
+          ),
+          _NavTile(
+            icon: Icons.history_rounded,
+            color: AppColors.primary,
+            title: l10n.translate('purchase_history'),
+            subtitle: l10n.translate('suppliers'),
+            onTap: () => _push(context, const PurchaseHistoryScreen()),
           ),
 
           _SectionHeader('${l10n.translate('reports')} & ${l10n.translate('expenses')}'),

@@ -283,6 +283,7 @@ def _serialize_business(business):
             {
                 'product_sku': m.product.sku if m.product else None,
                 'product_name': m.product.name if m.product else None,
+                'device_imei': m.device.imei_1 if m.device else None,
                 'movement_type': m.movement_type, 'quantity': m.quantity,
                 'previous_stock': m.previous_stock, 'new_stock': m.new_stock,
                 'notes': m.notes, 'reference_id': m.reference_id,
@@ -336,6 +337,7 @@ class _ImportPlan:
         self._products = {}             # ('sku', sku) | ('name', name, brand)
         self._sales = {}                # invoice_number -> Sale
         self._purchases = {}            # (invoice_number, supplier_pk) -> Purchase
+        self._devices_by_imei = {}      # imei_1 -> MobileDevice (Phase 11 movements)
 
     # ------------------------------------------------------------------ #
     # Orchestration
@@ -820,6 +822,7 @@ class _ImportPlan:
             return None
         existing = MobileDevice.objects.filter(business=b, imei_1=imei_1).first()
         if existing is not None:
+            self._devices_by_imei[imei_1] = existing
             self.skipped['mobile_devices'] += 1
             return existing
         if product is None:
@@ -845,6 +848,7 @@ class _ImportPlan:
             notes=raw.get('notes'),
         )
         self._finish('mobile_devices', instance, raw.get('created_at'), existed=False)
+        self._devices_by_imei[imei_1] = instance
         return instance
 
     def _payment(self, b, raw):
@@ -933,6 +937,8 @@ class _ImportPlan:
             business=b, product=product, movement_type=movement_type,
             quantity=quantity, previous_stock=previous_stock, new_stock=new_stock,
             notes=raw.get('notes'), reference_id=raw.get('reference_id'),
+            device=self._device_by_imei.get((raw.get('device_imei') or '').strip())
+            if raw.get('device_imei') else None,
         )
         self._finish('stock_movements', instance, created, existed=False)
         return instance

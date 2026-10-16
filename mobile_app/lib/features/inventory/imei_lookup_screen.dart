@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
+import '../../models/device_model.dart';
 import '../../providers/inventory_provider.dart';
+import 'device_history_screen.dart';
 
 class ImeiLookupScreen extends ConsumerStatefulWidget {
   final String? initialImei;
@@ -24,6 +26,33 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
     super.initState();
     _searchQuery = widget.initialImei ?? '';
     _imeiController = TextEditingController(text: _searchQuery);
+  }
+
+  String _warrantyLabel(AppLocalizations l10n, DeviceModel device) {
+    final days = device.warrantyDaysRemaining;
+    switch (device.warrantyStatus) {
+      case 'ACTIVE':
+        return days != null
+            ? '${l10n.translate('warranty_active')} — $days${l10n.translate('warranty_days_remaining_suffix')}'
+            : l10n.translate('warranty_active');
+      case 'EXPIRED':
+        return days != null
+            ? '${l10n.translate('warranty_expired')} — ${days.abs()}${l10n.translate('warranty_days_ago_suffix')}'
+            : l10n.translate('warranty_expired');
+      default:
+        return l10n.translate('warranty_no_cover');
+    }
+  }
+
+  Color _warrantyColor(String status) {
+    switch (status) {
+      case 'ACTIVE':
+        return AppColors.success;
+      case 'EXPIRED':
+        return AppColors.danger;
+      default:
+        return AppColors.textSecondary;
+    }
   }
 
   @override
@@ -46,7 +75,7 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       hintText: l10n.translate('imei_search_hint'),
-                      prefixIcon: Icon(Icons.search),
+                      prefixIcon: const Icon(Icons.search),
                     ),
                   ),
                 ),
@@ -129,6 +158,46 @@ class _ImeiLookupScreenState extends ConsumerState<ImeiLookupScreen> {
                               ),
                             ),
                           ],
+
+                          // Warranty state is server-derived (Phase 11).
+                          const Divider(height: 24),
+                          Row(
+                            children: [
+                              const Icon(Icons.shield_outlined, size: 18, color: AppColors.primary),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _warrantyLabel(l10n, device),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: _warrantyColor(device.warrantyStatus),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (device.warrantyExpiryDate != null)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 26, top: 2),
+                              child: Text(
+                                '${l10n.translate('warranty_expiry_label')}${AppDateFormatter.formatDate(device.warrantyExpiryDate)}',
+                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.history_rounded, size: 18),
+                              label: Text(l10n.translate('view_device_history')),
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => DeviceHistoryScreen(deviceId: device.id),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),

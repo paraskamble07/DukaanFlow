@@ -57,6 +57,7 @@ urlpatterns = [
     path('inventory/adjust/', inventory_views.StockAdjustmentAPIView.as_view(), name='stock_adjust'),
     path('inventory/imei/', inventory_views.MobileDeviceListCreateAPIView.as_view(), name='imei_list_create'),
     path('inventory/imei/lookup/', inventory_views.IMEILookupAPIView.as_view(), name='imei_lookup'),
+    path('inventory/imei/<int:pk>/history/', inventory_views.IMEIDeviceHistoryAPIView.as_view(), name='imei_device_history'),
 
     # POS Billing & Sales
     path('pos/checkout/', pos_views.POSCheckoutAPIView.as_view(), name='pos_checkout'),

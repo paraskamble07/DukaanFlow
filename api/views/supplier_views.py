@@ -34,7 +34,12 @@ class PurchaseListCreateAPIView(generics.ListCreateAPIView):
     permission_classes = [HasActiveBusiness, PurchasesPermission]
 
     def get_queryset(self):
-        return Purchase.objects.filter(business=self.request.business).select_related('supplier').prefetch_related('items__product')
+        qs = Purchase.objects.filter(business=self.request.business).select_related('supplier').prefetch_related('items__product')
+        # Phase 11: purchase history of a single product.
+        product_id = self.request.query_params.get('product')
+        if product_id:
+            qs = qs.filter(items__product_id=product_id).distinct()
+        return qs
 
     def create(self, request, *args, **kwargs):
         business = request.business

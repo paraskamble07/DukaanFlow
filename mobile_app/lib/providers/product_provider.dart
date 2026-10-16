@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/api_constants.dart';
+import '../models/product_detail_model.dart';
 import '../models/product_model.dart';
 import 'auth_provider.dart';
 
@@ -50,4 +51,18 @@ final categoriesProvider = FutureProvider.autoDispose<List<Map<String, dynamic>>
     return list.map((i) => i as Map<String, dynamic>).toList();
   }
   return [];
+});
+
+/// Full product detail with the Phase 11 history sections (movements,
+/// purchase history, registered IMEI units, dead-stock verdict).
+final productDetailProvider =
+    FutureProvider.autoDispose.family<ProductDetailData?, int>((ref, productId) async {
+  final client = ref.watch(apiClientProvider);
+  try {
+    final res = await client.dio.get(ApiConstants.productDetail(productId));
+    if (res.statusCode == 200 && res.data is Map<String, dynamic>) {
+      return ProductDetailData.fromJson(res.data as Map<String, dynamic>);
+    }
+  } catch (_) {}
+  return null;
 });

@@ -18,6 +18,10 @@ class DeviceModel {
   final String? warrantyExpiryDate;
   final String? invoiceNumber;
   final String? notes;
+  // Server-derived warranty state (Phase 11): 'ACTIVE' / 'EXPIRED' /
+  // 'NO_WARRANTY', plus the days left (negative once expired).
+  final String warrantyStatus;
+  final int? warrantyDaysRemaining;
 
   DeviceModel({
     required this.id,
@@ -39,6 +43,8 @@ class DeviceModel {
     this.warrantyExpiryDate,
     this.invoiceNumber,
     this.notes,
+    this.warrantyStatus = 'NO_WARRANTY',
+    this.warrantyDaysRemaining,
   });
 
   factory DeviceModel.fromJson(Map<String, dynamic> json) {
@@ -62,6 +68,8 @@ class DeviceModel {
       warrantyExpiryDate: json['warranty_expiry_date'],
       invoiceNumber: json['invoice_number'],
       notes: json['notes'],
+      warrantyStatus: json['warranty_status'] ?? 'NO_WARRANTY',
+      warrantyDaysRemaining: json['warranty_days_remaining'] as int?,
     );
   }
 }

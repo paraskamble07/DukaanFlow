@@ -6,7 +6,6 @@ from inventory.models import StockMovement, MobileDevice
 from products.models import Product
 from api.serializers import StockMovementSerializer, MobileDeviceSerializer
 from api.permissions import HasActiveBusiness
-
 class StockMovementListAPIView(generics.ListAPIView):
     serializer_class = StockMovementSerializer
     permission_classes = [HasActiveBusiness]
@@ -87,6 +86,10 @@ class MobileDeviceListCreateAPIView(generics.ListCreateAPIView):
         if status_filter:
             qs = qs.filter(status=status_filter)
 
+        product_filter = self.request.query_params.get('product')
+        if product_filter:
+            qs = qs.filter(product_id=product_filter)
+
         return qs
 
     def perform_create(self, serializer):
@@ -99,6 +102,7 @@ class MobileDeviceListCreateAPIView(generics.ListCreateAPIView):
             StockMovement.objects.create(
                 business=self.request.business,
                 product=prod,
+                device=device,
                 movement_type='PURCHASE',
                 quantity=1,
                 previous_stock=old_stk,
@@ -126,4 +130,64 @@ class IMEILookupAPIView(APIView):
         return Response({
             'found': True,
             'device': MobileDeviceSerializer(device).data
+        })
+
+
+class IMEIDeviceHistoryAPIView(APIView):
+    """Full history of one IMEI-tracked unit (Phase 11).
+
+    The timeline is assembled from real records — the device's
+    registration, its stock movements and (if sold) the invoice it was
+    sold on — never from a guessed or client-supplied narrative.
+    """
+    permission_classes = [HasActiveBusiness]
+
+    def get(self, request, pk):
+        device = MobileDevice.objects.filter(
+            business=request.business, pk=pk
+        ).select_related('product', 'customer', 'sale_item__sale').first()
+
+        if not device:
+            return Response(
+                {'error': 'Device not found.'},
+                status=status.HTTP_404_NOT_FOUND)
+
+        timeline = [{
+            'type': 'REGISTERED',
+            'type_display': 'Added to device register',
+            'date': device.created_at,
+            'reference': None,
+            'note': None,
+        }]
+
+        for mov in device.movements.select_related('product').order_by('-created_at'):
+            timeline.append({
+                'type': mov.movement_type,
+                'type_display': mov.get_movement_type_display(),
+                'date': mov.created_at,
+                'reference': mov.reference_id,
+                'note': mov.notes,
+            })
+
+        # A sale recorded directly on the device (older rows, or a sale made
+        # before device-linked movements existed) still has to show up — but
+        # only once, so skip it when the device already carries a SALE
+        # movement pointing at the same invoice.
+        already_has_sale_movement = device.movements.filter(
+            movement_type='SALE').exists()
+        if device.sale_item and device.sale_item.sale and not already_has_sale_movement:
+            sale = device.sale_item.sale
+            timeline.append({
+                'type': 'SALE',
+                'type_display': 'Sold',
+                'date': sale.sale_date,
+                'reference': sale.invoice_number,
+                'note': f"Sold to {device.customer.name}" if device.customer else None,
+            })
+
+        timeline.sort(key=lambda e: e['date'] or device.created_at, reverse=True)
+
+        return Response({
+            'device': MobileDeviceSerializer(device).data,
+            'timeline': timeline,
         })

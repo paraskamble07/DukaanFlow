@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.utils import timezone
 from decimal import Decimal
 from accounts.models import UserProfile
 from businesses.models import Business, PLAN_LIMITS
@@ -114,6 +115,10 @@ class MobileDeviceSerializer(serializers.ModelSerializer):
     customer_phone = serializers.CharField(source='customer.phone', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     invoice_number = serializers.SerializerMethodField()
+    # Warranty state is always derived on the server from warranty_expiry_date
+    # (Phase 11) so the client can never claim cover the server did not grant.
+    warranty_status = serializers.SerializerMethodField()
+    warranty_days_remaining = serializers.SerializerMethodField()
 
     class Meta:
         model = MobileDevice
@@ -121,25 +126,37 @@ class MobileDeviceSerializer(serializers.ModelSerializer):
             'id', 'product', 'product_name', 'imei_1', 'imei_2', 'serial_number',
             'model_name', 'brand', 'purchase_price', 'selling_price', 'status',
             'status_display', 'customer', 'customer_name', 'customer_phone',
-            'sale_date', 'warranty_expiry_date', 'invoice_number', 'notes',
-            'created_at', 'updated_at'
+            'sale_date', 'warranty_expiry_date', 'invoice_number', 'warranty_status',
+            'warranty_days_remaining', 'notes', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'product_name', 'customer_name', 'customer_phone', 'status_display', 'invoice_number']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'product_name', 'customer_name', 'customer_phone', 'status_display', 'invoice_number', 'warranty_status', 'warranty_days_remaining']
 
     def get_invoice_number(self, obj):
         if obj.sale_item and obj.sale_item.sale:
             return obj.sale_item.sale.invoice_number
         return None
 
+    def get_warranty_status(self, obj):
+        if not obj.warranty_expiry_date:
+            return 'NO_WARRANTY'
+        return 'ACTIVE' if obj.warranty_expiry_date >= timezone.now().date() else 'EXPIRED'
+
+    def get_warranty_days_remaining(self, obj):
+        if not obj.warranty_expiry_date:
+            return None
+        return (obj.warranty_expiry_date - timezone.now().date()).days
+
 class StockMovementSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     movement_type_display = serializers.CharField(source='get_movement_type_display', read_only=True)
+    device_imei = serializers.CharField(source='device.imei_1', read_only=True)
 
     class Meta:
         model = StockMovement
         fields = [
-            'id', 'product', 'product_name', 'movement_type', 'movement_type_display',
-            'quantity', 'previous_stock', 'new_stock', 'notes', 'reference_id', 'created_at'
+            'id', 'product', 'product_name', 'device', 'device_imei', 'movement_type',
+            'movement_type_display', 'quantity', 'previous_stock', 'new_stock', 'notes',
+            'reference_id', 'created_at'
         ]
 
 class CustomerSerializer(serializers.ModelSerializer):

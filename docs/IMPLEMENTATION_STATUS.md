@@ -326,9 +326,10 @@ is stale rather than broken.
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
    the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
    `businesses` 0003 migration).
-2. Phase 11: IMEI history/warranty, low + dead stock, purchase history.
-3. Phase 12: AdMob banner SDK + UMP consent flow (banners only on
+2. Phase 12: AdMob banner SDK + UMP consent flow (banners only on
    dashboard, product list, customer list, settings).
+3. Phases 13–18: financial-integrity hardening + acceptance tests,
+   release APK rebuild/verification, AdMob + final docs.
 
 ---
 
@@ -493,3 +494,90 @@ is stale rather than broken.
   in ~8s (free-tier wake), the exact endpoint the monitor pings.
   Backend untouched this phase; last full backend suite remains
   **119/119**.
+
+---
+
+- **2026-10-16 (Phase 11, complete):** IMEI history, warranty status,
+  low + dead stock, purchase history.
+
+  Backend (all server-computed; the client never derives money, dates
+  or stock verdicts):
+
+  - **Warranty status is derived by the server** in
+    `MobileDeviceSerializer`: `warranty_status`
+    (`ACTIVE`/`EXPIRED`/`NO_WARRANTY`) and `warranty_days_remaining`
+    (negative once expired). The only writer of
+    `warranty_expiry_date` remains the POS sale path
+    (`sale_date + warranty_months * 30 days`).
+  - **`StockMovement.device`** (nullable FK, migration
+    `inventory/0002`, purely additive) links a movement to the specific
+    IMEI unit it concerns; written on device registration and at POS
+    checkout (sale notes now carry the IMEI). Backup/restore carries
+    the link by IMEI natural key (files stay `backup_version: 1`;
+    older files simply restore without the link).
+  - **`GET /api/inventory/imei/<id>/history/`** returns the device plus
+    a timeline built **only from real rows**: its registration, its
+    movements, and (for legacy sales made before movement links
+    existed) the invoice it was sold on — derived once, never
+    duplicated. 404 for another shop's device; staff can read their
+    own shop's history.
+  - **`GET /api/products/<id>/`** is enriched with `movements` (last
+    15, IMEI-bearing), `purchase_history` (last 10 with invoice,
+    supplier, quantity and the server's unit/total cost),
+    `devices` (IMEI-tracked products), `last_sale_date` and
+    `is_dead_stock`.
+  - **Dead stock** has exactly one definition (`DEAD_STOCK_DAYS = 60`,
+    `is_dead_stock()` in `product_views`), shared by the product
+    detail, the new `?stock=dead` list filter and the stock report
+    (the report now calls the shared helper so they cannot drift).
+  - **`GET /api/purchases/?product=<id>`** scopes purchase history to
+    one product, tenant-scoped.
+
+  Evidence: new `api/tests_phase11.py` — **18 tests**: warranty
+  ACTIVE/EXPIRED/none + set-at-checkout, timeline with registration +
+  single SALE entry carrying the real invoice, legacy sale derived
+  without duplication, tenant isolation 404, staff read access,
+  product-detail sections incl. server-supplied amounts, dead-stock
+  verdict matching the report, `?stock=dead` filter, purchase
+  `?product=` filter (incl. cross-tenant leak check), device
+  `?product=` filter. **Full backend suite: 137/137 OK.**
+
+  Flutter:
+
+  - New **`ProductDetailScreen`** (product list rows now open it): stock
+    chips incl. a dead-stock verdict, cost/selling/inventory value,
+    warranty months, last-sold/never-sold, purchase history, stock
+    movements (with IMEI when the movement is unit-specific), and
+    registered IMEI units that link into… (edit still reachable from
+    the app bar).
+  - New **`DeviceHistoryScreen`**: device header, status chip, the
+    server's warranty verdict with days remaining/elapsed, and the
+    full timeline.
+  - New **`PurchaseHistoryScreen`** (More screen): every supplier bill
+    with expandable lines, paid/due and notes.
+  - **IMEI lookup** now shows the warranty verdict (verdict + expiry
+    date) and a "View history" action — it parsed the expiry before
+    but never rendered it.
+  - Product list gained a **Dead Stock filter chip** (and the
+    out-of-stock chip was fixed to say "Out of Stock" instead of
+    "Stock").
+  - New models: `StockMovementModel`/`DeviceHistoryEntry`,
+    `ProductPurchaseModel`/`PurchaseModel` (parses DRF string decimals),
+    `ProductDetailData`; new providers `productDetailProvider`,
+    `imeiDeviceHistoryProvider`, `purchasesListProvider`.
+  - **31 new localization keys per locale** (on top of Phase 9) — now
+    **597 keys per locale, exact parity**, verified by direct map
+    count + the parity test.
+
+  Verification: `flutter test` **27/27 passed** (19 + 8 new
+  Phase 11 model-contract tests); `flutter analyze lib` **0 errors /
+  0 warnings** (34 infos, all pre-existing style hints). Live smoke
+  on the local dev server with the real seeded shop: `?stock=dead`
+  returned the 2 genuinely unsold stocked products; the enriched
+  product detail returned its registered device with
+  `warranty_status NO_WARRANTY` and `last_sale_date: None` (never
+  sold — reported as-is, never faked); `imei/<id>/history/` returned
+  the device + REGISTERED timeline; `purchases/?product=` returned 0
+  for a product with no recorded POs. Migration `inventory.0002`
+  applied to the dev DB; it runs on Render via `build.sh` on the next
+  deploy.

@@ -10,6 +10,10 @@ class StockMovement(TenantModel):
         ('ADJUSTMENT', 'Stock Adjustment / Audit'),
     ]
     product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='stock_movements')
+    # Optional link to the specific IMEI-tracked unit this movement is about
+    # (sale of a device, device registration). Blank for bulk product
+    # movements such as purchase receipts — Phase 11 IMEI history.
+    device = models.ForeignKey('MobileDevice', on_delete=models.SET_NULL, null=True, blank=True, related_name='movements')
     movement_type = models.CharField(max_length=20, choices=MOVEMENT_TYPES)
     quantity = models.IntegerField()
     previous_stock = models.IntegerField(default=0)

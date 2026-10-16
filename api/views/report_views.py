@@ -10,6 +10,7 @@ from customers.models import Customer
 from suppliers.models import Supplier
 from products.models import Product
 from purchases.models import Purchase
+from api.views.product_views import DEAD_STOCK_DAYS, is_dead_stock
 from api.permissions import HasActiveBusiness, ReportsPermission, ExpensesPermission
 
 
@@ -134,7 +135,7 @@ class StockReportAPIView(APIView):
         out_of_stock = []
         dead_stock = []
 
-        cutoff = timezone.now().date() - timedelta(days=60)
+        cutoff = timezone.now().date() - timedelta(days=DEAD_STOCK_DAYS)
         for p in products:
             units = p.stock_quantity
             total_units += units
@@ -150,7 +151,7 @@ class StockReportAPIView(APIView):
                 product=p, sale__business=business
             ).order_by('-sale__sale_date').first()
             last_sale_date = last_sale.sale.sale_date if last_sale else None
-            if units > 0 and (last_sale_date is None or last_sale_date.date() <= cutoff):
+            if is_dead_stock(p, last_sale_date):
                 dead_stock.append({
                     'id': p.id,
                     'name': p.name,

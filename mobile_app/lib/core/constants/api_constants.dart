@@ -29,6 +29,9 @@ class ApiConstants {
   static const String stockMovements = '/api/inventory/movements/';
   static const String imeiDevices = '/api/inventory/imei/';
   static const String imeiLookup = '/api/inventory/imei/lookup/';
+  static String imeiDeviceHistory(int id) => '/api/inventory/imei/\$id/history/';
+  static String productDetail(int id) => '/api/products/\$id/';
+  static String productDetailMovements(int id) => '/api/inventory/movements/?product=\$id';
   
   // POS Billing & Sales
   static const String posCheckout = '/api/pos/checkout/';

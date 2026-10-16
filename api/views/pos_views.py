@@ -137,11 +137,12 @@ class POSCheckoutAPIView(APIView):
                     StockMovement.objects.create(
                         business=business,
                         product=product,
+                        device=dev if device_id else None,
                         movement_type='SALE',
                         quantity=qty,
                         previous_stock=old_stk,
                         new_stock=product.stock_quantity,
-                        notes=f"Sold to {customer.name} (Bill #{sale.invoice_number})",
+                        notes=f"Sold to {customer.name} (Bill #{sale.invoice_number})" + (f" — IMEI: {dev.imei_1}" if device_id else ""),
                         reference_id=sale.invoice_number
                     )
 

@@ -5,6 +5,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/product_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
+import 'product_detail_screen.dart';
 import 'product_form_screen.dart';
 import 'widgets/stock_adjustment_dialog.dart';
 import 'imei_scanner_screen.dart';
@@ -83,10 +84,17 @@ class ProductListScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: Text(l10n.translate('stock')),
+                  label: Text(l10n.translate('out_of_stock')),
                   selected: filter.stockStatus == 'out',
                   onSelected: (_) => ref.read(productFilterProvider.notifier).state =
                       ref.read(productFilterProvider).copyWith(stockStatus: 'out'),
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  label: Text(l10n.translate('dead_stock')),
+                  selected: filter.stockStatus == 'dead',
+                  onSelected: (_) => ref.read(productFilterProvider.notifier).state =
+                      ref.read(productFilterProvider).copyWith(stockStatus: 'dead'),
                 ),
               ],
             ),
@@ -123,7 +131,8 @@ class ProductListScreen extends ConsumerWidget {
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => ProductFormScreen(product: p)),
+                            MaterialPageRoute(
+                                builder: (_) => ProductDetailScreen(productId: p.id)),
                           ),
                           child: Padding(
                             padding: const EdgeInsets.all(12.0),
