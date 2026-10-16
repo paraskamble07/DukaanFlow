@@ -7,9 +7,31 @@ allprojects {
 
 rootProject.buildDir = '../build'
 
+// The AdMob plugin's flutter_plugin_android_lifecycle dependency requires
+// compileSdk 36, but several plugins still ship with 34 in their own build
+// files. Compile every library module against 36. This is the documented AGP
+// workaround and only raises the API modules compile against — it does not
+// change any plugin's runtime behavior, min/target SDK or behavior on older
+// Android versions.
+def nudgeCompileSdk = { sub ->
+    sub.plugins.withId('com.android.library') {
+        if (sub.android.hasProperty('compileSdk') &&
+            sub.android.compileSdk != null &&
+            !(sub.android.compileSdk instanceof String) &&
+            sub.android.compileSdk < 36) {
+            sub.android.compileSdk = 36
+        }
+    }
+}
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
     project.evaluationDependsOn(':app')
+    if (project.state.executed) {
+        nudgeCompileSdk(project)
+    } else {
+        project.afterEvaluate { nudgeCompileSdk(project) }
+    }
 }
 
 tasks.register("clean", Delete) {

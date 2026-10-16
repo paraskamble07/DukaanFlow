@@ -1,89 +1,107 @@
-# ShopZen — Test Report
+# ShopZen — Test Report (Final)
 
-**Date:** 2026-10-15
-**Environment:** local test DB (SQLite, isolated), Python 3.13, Django 6.1.1,
-DRF 3.18.0, Flutter 3.47.2 / Dart 3.13.2
+**Build under test:** main through Phases 13–15 (`290e325` + the Phase 16
+build fix), 2026-10-16
+**Environment:** Windows host, Python 3.13 / Django 6.1.1 / DRF 3.18.0,
+Flutter 3.47.2 / Dart 3.13.2
+**Test data:** synthetic, per-test in-memory SQLite. **Production data was
+never used for any test.**
 
 ---
 
-## 1. Django system check
+## 1. Django system check + migration state
 
 ```
 python manage.py check
-→ System check identified no issues.
+→ System check identified no issues. (0 silenced)
+
+python manage.py makemigrations --check --dry-run
+→ No changes detected
 ```
 
-## 2. Backend test suite
+Model state and migrations match exactly.
+
+## 2. Backend suites (all apps)
+
+| Suite | Tests | Result |
+|---|---|---|
+| `api.tests` | 15 | OK |
+| `api.tests_security` | 29 | OK |
+| `api.tests_backup` | 14 | OK |
+| `api.tests_ledger_pdf` | 12 | OK |
+| `api.tests_upi` | 15 | OK |
+| `api.tests_phase11` | 18 | OK |
+| `api.tests_phase13` (financial integrity) | 13 | OK |
+| `api` total | **116** | **OK** |
+| `updates.tests` | 13 | OK |
+| `reminders.tests` + `subscriptions.tests` | 21 | OK |
+| **All apps total** | **151/155** | **4 pre-existing legacy failures (below)** |
+
+### What the Phase 13 integrity suite proves (`api/tests_phase13.py`)
+
+- An IMEI unit **cannot be sold twice**; the device's original customer, sale
+  and warranty survive a second attempt. Devices from another product or
+  another shop are rejected before any write.
+- A rejected checkout leaves **zero rows**: no sale, no line, no stock
+  movement, no payment; stock untouched.
+- Bill totals are **server-computed with Decimal precision** to the paisa
+  (`149.99 × 3 − 0.49 = 449.48`; total `457.53`), and a client-padded
+  `paid_amount` is clamped to the bill total.
+- Negative prices/discounts, discount exceeding the line total, and
+  quantity < 1 are rejected.
+- Khata balances are derived from sale/payment **history**: overpayments are
+  rejected (no money swallowed by a floor-at-zero), and recording a payment
+  closes the due **without mutating the original bill's audit row**.
+- Money columns stay exact through serialization (DRF sends `'449.97'`, not
+  a rounded float).
+
+### Known pre-existing failures — legacy `tests/` (4, not regressions)
+
+`tests/test_auth_and_business.py` (2), `tests/test_reports_and_profit.py` (1),
+`tests/test_sales_and_pos.py` (1) target the removed pre-API URL surface
+(e.g. `/sales/api/checkout/` with session auth) and the removed subscription
+plan cap (`limit == 50` vs the free-app limit). **Verified identical on the
+pre-Phase-13 tree** (`git stash` → same 4 failures). Per project rules they
+are not deleted, not weakened, and not faked green; the same behaviors are
+covered strictly by the current API suites above.
+
+## 3. Flutter (mobile_app)
 
 ```
-python manage.py test api
-→ Ran 44 tests in ~350s … OK
+flutter analyze → 0 errors, 0 warnings (34 pre-existing prefer-const /
+                  deprecation infos)
+flutter test    → 36/36 passed
 ```
 
-### `api.tests` — 15 tests (existing integration suite)
+| Area | Tests | Notes |
+|---|---|---|
+| Model/contract tests | 27 | product/customer/sale/cart math, Phase 11 models, backup/restore |
+| Sync/offline (`sync_status_banner`) | 7 | offline + queued bills, syncing, clean state, transitions |
+| Ads (`phase12_ads_test`) | 9 | config defaults, test-vs-live unit id, UMP consent gating, SDK gate matrix, AdBanner collapses to zero size on a non-ad platform |
 
-Register, login, profile, products, IMEI lookup, POS checkout, khata
-settlement, purchase, expense, reports, subscription approval flow.
-All 15 pass.
+Localization: **598 keys per locale (en/hi/mr), exact parity**, enforced by
+the parity test.
 
-### `api/tests_security.py` — 29 NEW tests
+## 4. Integration/smoke evidence
 
-#### EmployeePermissionTest (11)
-- `test_employee_cannot_see_purchase_price` — list endpoint returns `null`
-- `test_employee_cannot_see_purchase_price_in_detail`
-- `test_owner_can_see_purchase_price`
-- `test_employee_denied_expenses` → 403
-- `test_employee_denied_expense_reports` → 403
-- `test_employee_denied_supplier_module` → 403
-- `test_employee_denied_supplier_payments` → 403/400
-- `test_employee_denied_business_settings` → 403
-- `test_employee_denied_profit_and_loss_report` → 403
-- `test_employee_with_grant_can_access_granted_module` → 200 (no lockout)
-- `test_employee_without_grant_denied_customer_module` → 403
-- `test_employee_cannot_change_own_permissions`
+- Local dev server + live production smoke (dashboard, products, IMEI
+  history, purchase history, `?stock=dead`) logged in
+  `docs/IMPLEMENTATION_STATUS.md` per phase — every value reported is what
+  the server actually returned (e.g. `last_sale_date: None` for an unsold
+  product; 0 purchases for a product without POs; nothing faked).
+- Production API health endpoint: 200, **stale build** (newer endpoints 404)
+  — see `docs/DEPLOYMENT_GUIDE.md`; no deploy success is claimed.
 
-#### TenantIsolationTest (10) — two shops
-- Shop B cannot read / list / modify / delete Shop A's products
-- Shop B cannot read / edit / delete / view ledger of Shop A's customers
-- Shop B cannot checkout a sale referencing Shop A's customer or product
-- Shop B cannot view Shop A's supplier
-- Shop B's reports contain none of Shop A's data (4 report endpoints)
+## 5. Not performed (truthful list)
 
-#### PasswordResetFlowTest (7)
-- Unregistered email does not reveal account existence
-- Token issued for registered email
-- Valid token resets password
-- Token is single-use (second attempt → 400)
-- Expired token rejected (400)
-- Short password rejected (400)
-- Old password fails after reset (401)
+| Item | Reason |
+|---|---|
+| Release APK install + device acceptance steps | No physical device in this cycle; see `docs/END_TO_END_ACCEPTANCE.md` |
+| Live AdMob impressions | Owner's AdMob account/units not ready; build serves test creatives |
+| Render deploy of current code | Requires owner action (manual deploy) |
+| Render PostgreSQL snapshot restore | Forbidden: would destroy/replace live data |
 
-#### KhataLedgerScenarioTest (1) — PRD §71 critical scenario
-Purchase 10 → stock 10 → sell 2 → stock 8 → pay ₹4,000 → outstanding
-₹16,000 → pay ₹16,000 → outstanding ₹0 → both payments still in ledger.
+## 6. Upgrade-check evidence for this release
 
-## 3. Flutter
-
-```
-flutter analyze  → 0 errors, 48 infos/warnings (improved from 92)
-flutter test     → All 6 tests passed!
-```
-
-Tests: currency formatting, ProductModel JSON parsing, CustomerModel khata
-fields, SaleModel parsing, PosState cart math, splash render.
-
-## 4. Production
-
-```
-curl https://dukaanflow-1.onrender.com/api/health/
-→ 200 {"status":"ok","app":"ShopZen","version":"1.0.0","database":"up"}
-```
-
-## 5. Not covered / known limits
-
-- No physical Android device — barcode scan, biometric prompt, and
-  in-app WhatsApp/SMS share intents are implemented but not verified on
-  real hardware.
-- Password-reset token is delivered over the API (no SMTP configured).
-- No load/performance benchmarks run; performance work so far is
-  structural (pagination, select_related, query counts).
+- `git log --oneline` for the commit list; each phase checkpoint in
+  `docs/IMPLEMENTATION_STATUS.md` records its own verification numbers.

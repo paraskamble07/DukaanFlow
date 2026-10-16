@@ -21,7 +21,9 @@ android {
     // secure storage, etc.) is pure Dart/Kotlin — no C/C++ sources. Omitting
     // ndkVersion avoids AGP trying to auto-download a ~700MB NDK that this
     // project never uses.
-    compileSdk flutter.compileSdkVersion
+    // compileSdk 36 (not the Flutter default) because the AdMob plugin's
+    // transitive Android dependencies require API level 36 or later.
+    compileSdk 36
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

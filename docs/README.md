@@ -30,9 +30,9 @@ DukaanFlow Website (Django templates) ────┘  (same business logic & da
 - **Suppliers & Purchases**: supplier CRUD, purchase entry (stock auto-increase), supplier payments & payables
 - **Expenses**: 8 pre-seeded categories, list + entry, category breakdown
 - **Reports (server-calculated, Decimal)**: P&L, Sales, Stock + dead stock, Khata, Expenses, GST, Top Products, Top Customers
-- **Subscription**: one plan — **ShopZen Premium ₹30/month**, paid to the owner's UPI QR, **manually verified by the ShopZen Admin** (submit UTR → PENDING → admin approves → active). Duplicate/replay-proof, fully audited
+- **Free app**: no subscriptions, no paywalls and no in-app purchases — every feature is free for shop owners and employees. Monetization is **AdMob banner ads only** (dashboard, product list, customer list, settings) with Google UMP consent (`docs/ADMOB_SETUP.md`)
 - **ShopZen Admin (in-app)**: for the authorized admin account only — totals (users/shops/active/expired), pending/approved/rejected payments, revenue, recent registrations, one-tap APPROVE/REJECT with atomic server guarantees
-- **Offline**: POS queue with auto-sync, safe 201-only dequeue
+- **Offline**: POS queue with auto-sync, safe 201-only dequeue, dashboard shows the last cached snapshot with a stale-data notice (Phase 9)
 - **i18n**: English / हिंदी / मराठी; Light/Dark/System themes; Material 3
 
 ## Multi-tenant security
@@ -44,7 +44,7 @@ Tenant is derived from the JWT on the server — `shop_id` from the client is ig
 ```bash
 # Backend
 ./venv/Scripts/python.exe manage.py runserver 0.0.0.0:8000
-./venv/Scripts/python.exe manage.py test api subscriptions   # 23 tests OK
+./venv/Scripts/python.exe manage.py test api updates reminders subscriptions # see docs/TEST_REPORT.md
 
 # Mobile (see docs/INSTALLATION_GUIDE.md)
 cd mobile_app
@@ -54,7 +54,7 @@ flutter run                                         # live on device
 flutter build apk --release                        # → build/app/outputs/flutter-apk/app-release.apk
 ```
 
-The release APK defaults to the **production URL** `https://dukaanflow.onrender.com` (override only for local debugging: `--dart-define=API_BASE_URL=http://127.0.0.1:8000` with `adb reverse tcp:8000 tcp:8000`).
+The release APK defaults to the **production URL** `https://dukaanflow-1.onrender.com` (override only for local debugging: `--dart-define=API_BASE_URL=http://127.0.0.1:8000` with `adb reverse tcp:8000 tcp:8000`).
 
 ## Documentation index
 
@@ -70,3 +70,11 @@ The release APK defaults to the **production URL** `https://dukaanflow.onrender.
 - [PAYMENT_SUBSCRIPTION_GUIDE.md](docs/PAYMENT_SUBSCRIPTION_GUIDE.md) — the ₹30 flow: owner pays, admin verifies
 - [ADMIN_GUIDE.md](docs/ADMIN_GUIDE.md) — creating and using YOUR admin account
 - [TESTING.md](docs/TESTING.md) — automated suites + manual phone checklist
+- [TEST_REPORT.md](docs/TEST_REPORT.md) — final test results of this build (backend, Flutter, known pre-existing failures)
+- [END_TO_END_ACCEPTANCE.md](docs/END_TO_END_ACCEPTANCE.md) — the 21-step acceptance scenario with evidence and honest not-performed list
+- [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) — security review of the current build
+- [RELEASE_GUIDE.md](docs/RELEASE_GUIDE.md) — release APK build + full artifact verification checklist
+- [ADMOB_SETUP.md](docs/ADMOB_SETUP.md) — owner steps to activate live AdMob banner ads
+- [PRIVACY_AND_ADS.md](docs/PRIVACY_AND_ADS.md) — privacy & ads policy notes
+- [APP_UPDATE_GUIDE.md](docs/APP_UPDATE_GUIDE.md) — how app updates are delivered and published
+- [BACKUP_AND_RECOVERY.md](docs/BACKUP_AND_RECOVERY.md) — database, in-app backups, recovery paths

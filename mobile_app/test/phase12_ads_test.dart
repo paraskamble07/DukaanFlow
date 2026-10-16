@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:user_messaging_platform/user_messaging_platform.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:dukaanflow/core/ads/ad_banner.dart';
 import 'package:dukaanflow/core/ads/ad_config.dart';
 import 'package:dukaanflow/core/ads/ads_service.dart';
@@ -39,23 +39,17 @@ void main() {
       expect(consentAllowsAds(ConsentStatus.unknown), isFalse);
     });
 
-    test('ConsentResult.canRequestAds mirrors the consent verdict', () {
+    test('ConsentResult reports ad permission from the SDK verdict', () {
       expect(
-          const ConsentResult(status: ConsentStatus.obtained, formShown: true)
-              .canRequestAds,
+          const ConsentResult(canRequestAds: true, formShown: true).canRequestAds,
           isTrue);
       expect(
-          const ConsentResult(status: ConsentStatus.notRequired, formShown: false)
-              .canRequestAds,
+          const ConsentResult(canRequestAds: true, formShown: false).canRequestAds,
           isTrue);
       expect(
-          const ConsentResult(status: ConsentStatus.required, formShown: false)
-              .canRequestAds,
-          isFalse);
-      expect(
-          const ConsentResult(status: ConsentStatus.unknown, formShown: false)
-              .canRequestAds,
-          isFalse);
+          const ConsentResult(canRequestAds: false, formShown: false).canRequestAds,
+          isFalse,
+          reason: 'a failed or declined consent check never allows ads');
     });
   });
 

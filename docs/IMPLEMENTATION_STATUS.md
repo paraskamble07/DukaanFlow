@@ -321,20 +321,17 @@ is stale rather than broken.
 
 ---
 
-## Next concrete task
+## Next concrete task (remaining owner-side blockers only)
 
-1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
-   the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
-   `businesses` 0003 migration).
-2. Owner (AdMob): approve the AdMob account / create real banner ad
-   units, then rebuild with `--dart-define=ADMOB_BANNER_UNIT_ID=...` and
-   set the live `com.google.android.gms.ads.APPLICATION_ID` in
-   `AndroidManifest.xml` (full steps land in `docs/ADMOB_SETUP.md` in
-   Phase 17).
-3. Phase 16: release APK rebuild + verification (exit code, size,
-   SHA-256, package id, version, API URL).
-4. Phases 17–18: AdMob + privacy/security/test/release docs and the
-   final report.
+All implementable phases are complete. Three items depend on accounts or
+devices the engineering side does not have — see `docs/FINAL_REPORT.md` §4:
+
+1. Owner: **Render deploy** (Manual Deploy in the dashboard) — production
+   still serves the old build (health 200, new endpoints 404).
+2. Owner: **AdMob activation** (`docs/ADMOB_SETUP.md`).
+3. Anyone: **device acceptance** — install `release/app-release.apk`
+   (SHA-256 in `docs/FINAL_REPORT.md`) and run
+   `docs/END_TO_END_ACCEPTANCE.md` sections A–G.
 
 ---
 
@@ -587,6 +584,45 @@ is stale rather than broken.
   applied to the dev DB; it runs on Render via `build.sh` on the next
   deploy.
 
+- **2026-10-16 (Phase 16 + 17–18, release build + final docs, pushed):**
+  - Release APK rebuilt with `flutter build apk --release` after fixing
+    two build incompatibilities the earlier `analyze`/`test` runs cannot
+    surface (recorded above under "Phase 12 build fix").
+  - **Artifact verification:** exit code 0; `release/app-release.apk`
+    73.8 MB (77,380,596 bytes); SHA-256
+    `ffc5e50c4358977b4d712e0ee0c2fd256eaca3919ae30ef4fc00b1f9ced01e76`
+    (identical for build output and the release copy); package
+    `com.dukaanflow.app`; versionName `1.0.0` / versionCode `1`
+    (aapt2); API base URL `https://dukaanflow-1.onrender.com` and the
+    Google **test** ad unit both confirmed inside `libapp.so`.
+  - **Device testing: NOT PERFORMED** (no physical device this cycle) —
+    never claimed otherwise.
+  - New docs: `ADMOB_SETUP.md`, `PRIVACY_AND_ADS.md`,
+    `SECURITY_AUDIT.md`, `RELEASE_GUIDE.md`, `APP_UPDATE_GUIDE.md`,
+    `BACKUP_AND_RECOVERY.md`, `FINAL_REPORT.md`; `TEST_REPORT.md`
+    rewritten with current numbers; `docs/README.md` index refreshed
+    (and its stale paywall/URL claims corrected).
+  - Final Flutter verification on the shipped tree: 36/36 tests, 0
+    errors/0 warnings on analyze. Production check today: health 200,
+    `/api/updates/check/` and `/api/inventory/imei/<id>/history/` 404 —
+    production still runs the old build; **the deploy is the owner's
+    action, no deploy success is claimed.**
+
+- **2026-10-16 (Phase 12 build fix, during Phase 16 APK build):**- **2026-10-16 (Phase 12 build fix, during Phase 16 APK build):** The release
+  build failed twice and both root causes were fixed honestly:
+  1. `user_messaging_platform` plugin has no AGP-8 namespace in its Android
+     module (`Namespace not specified`) — **replaced** with the UMP API that
+     ships inside `google_mobile_ads` itself (`ConsentInformation`,
+     `ConsentForm`, `canRequestAds()`) and the plugin was removed from
+     pubspec. Same consent semantics; Flutter tests still 36/36, analyze 0
+     errors/0 warnings.
+  2. `flutter_plugin_android_lifecycle` (AdMob transitive dep) requires
+     compileSdk 36, but the project compiled against 34 —
+     `android/app/build.gradle` now pins `compileSdk 36`.
+  These were invisible to `flutter analyze`/`flutter test` (they never run
+  the Android Gradle build) — only the real `flutter build apk --release`
+  surfaced them, which is why every release must be rebuilt and verified
+  rather than assumed (see `docs/RELEASE_GUIDE.md`).
 - **2026-10-16 (Phases 13–15, integrity + acceptance, pushed):**
   Financial-integrity hardening, regression suite and the acceptance
   document.
