@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
+import '../../core/ads/ad_banner.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../providers/customer_provider.dart';
 import '../../shared_widgets/empty_state_view.dart';
@@ -143,6 +144,7 @@ class CustomerListScreen extends ConsumerWidget {
               ),
             ),
           ),
+          const AdBanner(),
         ],
       ),
     );

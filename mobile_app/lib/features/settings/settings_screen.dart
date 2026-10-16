@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/ads/ad_banner.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/localization/app_localizations.dart';
@@ -283,6 +284,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             icon: const Icon(Icons.logout),
             label: Text(l10n.translate('logout'), style: const TextStyle(fontWeight: FontWeight.bold)),
           ),
+          const SizedBox(height: 24),
+
+          // Ads (Phase 12): banner ads keep ShopZen free for every shop.
+          Text(
+            l10n.translate('ads_keep_app_free'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 4),
+          const AdBanner(),
         ],
       ),
     );

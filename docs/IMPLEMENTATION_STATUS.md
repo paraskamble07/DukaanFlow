@@ -326,10 +326,17 @@ is stale rather than broken.
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
    the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
    `businesses` 0003 migration).
-2. Phase 12: AdMob banner SDK + UMP consent flow (banners only on
-   dashboard, product list, customer list, settings).
-3. Phases 13–18: financial-integrity hardening + acceptance tests,
-   release APK rebuild/verification, AdMob + final docs.
+2. Owner (AdMob): approve the AdMob account / create real banner ad
+   units, then rebuild with `--dart-define=ADMOB_BANNER_UNIT_ID=...` and
+   set the live `com.google.android.gms.ads.APPLICATION_ID` in
+   `AndroidManifest.xml` (full steps land in `docs/ADMOB_SETUP.md` in
+   Phase 17).
+3. Phases 13–15: financial-integrity hardening + acceptance tests
+   (`docs/END_TO_END_ACCEPTANCE.md`).
+4. Phase 16: release APK rebuild + verification (exit code, size,
+   SHA-256, package id, version, API URL).
+5. Phases 17–18: AdMob + privacy/security/test/release docs and the
+   final report.
 
 ---
 
@@ -581,3 +588,40 @@ is stale rather than broken.
   for a product with no recorded POs. Migration `inventory.0002`
   applied to the dev DB; it runs on Render via `build.sh` on the next
   deploy.
+
+- **2026-10-16 (Phase 12, pushed):** Google AdMob banner ads + Google UMP
+  consent flow. Free app, monetization banners ONLY (all subscription
+  paywalls stayed removed; no business payment feature touched).
+  - New `lib/core/ads/`: `ad_config.dart` (build-time overrides
+    `ADMOB_BANNER_UNIT_ID` / `ADMOB_ENABLED` via `--dart-define`, falls
+    back to Google's documented test banner unit
+    `ca-app-pub-3940256099942544/6300978111`; `isLiveUnitId` so test
+    impressions are never reported as live traffic),
+    `consent_service.dart` (UMP: request consent info update, show the
+    consent form only when consent is required and a form is available;
+    ads gated on `obtained`/`notRequired`; any SDK failure degrades to
+    ads-off, never blocks the app), `ads_service.dart` (SDK initialized
+    only when ads enabled + Android/iOS + consent granted; inert on
+    desktop/test hosts), `ad_banner.dart` (320x50 `BannerAd` + `AdWidget`,
+    collapses to zero size when ads are off / not loaded / consent
+    missing; banner disposed on failure and on widget dispose).
+  - Banners mounted on exactly the four permitted screens: dashboard,
+    product list, customer list, settings.
+  - `AndroidManifest.xml` carries the AdMob
+    `com.google.android.gms.ads.APPLICATION_ID` meta-data using Google's
+    TEST app id (`ca-app-pub-3940256099942544~3347511713`) until the
+    owner's real publisher id replaces it.
+  - Startup wiring in `main.dart`: `_initAds()` runs the consent flow and
+    SDK init concurrently with the splash screen (fire-and-forget, fully
+    guarded) — never delays or blocks the app.
+  - 1 new localization key per locale (`ads_keep_app_free`) — **598
+    keys per locale, exact parity**, verified by direct map count.
+  - Verification: `flutter test` **36/36 passed** (27 + 9 new Phase 12
+    tests covering config defaults, test-vs-live unit id, UMP consent
+    gating, SDK gate matrix, and the AdBanner zero-size behavior on the
+    desktop test host); `flutter analyze` **0 errors / 0 warnings**
+    (34 infos, all pre-existing). **NOT verified:** real banner
+    impressions on a device — that requires the owner's AdMob account
+    approval and live ad unit ids (see "Next concrete task" #2); the
+    current build serves Google test creatives only and earns no
+    revenue.

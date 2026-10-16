@@ -39,6 +39,8 @@ dependencies:
   path_provider: ^2.1.3
   package_info_plus: ^9.0.1
   file_picker: ^8.0.7
+  google_mobile_ads: ^9.1.0
+  user_messaging_platform: ^1.3.0
 
 dev_dependencies:
   flutter_test:

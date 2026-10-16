@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/ads/ad_banner.dart';
 import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
@@ -288,6 +289,8 @@ class DashboardScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     ..._buildDashboardSections(context, cached),
+                    const SizedBox(height: 16),
+                    const AdBanner(),
                   ],
                 ),
               );
@@ -321,6 +324,8 @@ class DashboardScreen extends ConsumerWidget {
                 const SyncStatusBanner(),
                 const SizedBox(height: 12),
                 ..._buildDashboardSections(context, data),
+                const SizedBox(height: 16),
+                const AdBanner(),
               ],
             ),
           ),

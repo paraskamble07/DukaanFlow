@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/ads/ads_service.dart';
+import 'core/ads/consent_service.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_localizations.dart';
 import 'core/sync/sync_status_provider.dart';
@@ -25,7 +27,22 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+  // Phase 12: Google UMP consent + AdMob SDK. Runs concurrently with the
+  // splash screen and never blocks the app: if consent or the SDK is
+  // unavailable, banners simply stay hidden.
+  _initAds();
   runApp(const ProviderScope(child: ShopZenApp()));
+}
+
+/// Requests UMP consent (showing the form when required) and initializes the
+/// AdMob SDK only when consent permits ad requests.
+Future<void> _initAds() async {
+  try {
+    final result = await ConsentService.instance.requestConsent();
+    await AdsService.instance.initialize(consentGranted: result.canRequestAds);
+  } catch (_) {
+    // Ads are optional; any unexpected failure leaves banners disabled.
+  }
 }
 
 class ShopZenApp extends ConsumerWidget {
