@@ -141,9 +141,11 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
-# Legacy web-UI assets were removed (ShopZen is Android-first). Keep
-# STATICFILES_DIRS empty so collectstatic only harvests admin assets.
-STATICFILES_DIRS = []
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
