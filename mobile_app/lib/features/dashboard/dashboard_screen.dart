@@ -3,12 +3,14 @@ import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../models/dashboard_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../shared_widgets/whatsapp_button.dart';
 import '../inventory/imei_scanner_screen.dart';
 import '../inventory/imei_lookup_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../../shared_widgets/sync_status_banner.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/sales_chart_card.dart';
 import 'widgets/quick_actions_bar.dart';
@@ -16,115 +18,14 @@ import 'widgets/quick_actions_bar.dart';
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  /// The scrollable KPI/alert sections rendered from a successful fetch —
+  /// shared by the online view and the offline "last known data" view so the
+  /// two can never drift apart (Phase 9).
+  List<Widget> _buildDashboardSections(BuildContext context, DashboardModel data) {
     final l10n = AppLocalizations.of(context);
-    final authState = ref.watch(authProvider);
-    final dashboardAsync = ref.watch(dashboardProvider);
-    final business = authState.business;
-
-    // ShopZen Admin accounts have no shop of their own — every /api/dashboard/
-    // call would 403. Give them a clean landing instead of an error screen.
-    if (business == null && authState.user?.isShopZenAdmin == true) {
-      return Scaffold(
-        appBar: AppBar(title: Text(l10n.translate('app_name'))),
-        // (brand name stays Latin across locales)
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.admin_panel_settings_rounded,
-                    size: 64, color: AppColors.primary),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.translate('signed_in_as_admin'),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  l10n.translate('admin_landing_desc'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 24),
-                FilledButton.icon(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
-                  ),
-                  icon: const Icon(Icons.dashboard_outlined),
-                  label: Text(AppLocalizations.of(context).translate('open_admin_dashboard')),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              business?.name ?? 'ShopZen',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
-            ),
-            Text(
-              "${l10n.translate('good_morning')}${authState.user?.firstName ?? l10n.translate('owner_label')} 👋",
-              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            tooltip: l10n.translate('scan_imei'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ImeiScannerScreen()),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.search),
-            tooltip: l10n.translate('search_device'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ImeiLookupScreen()),
-            ),
-          ),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async => ref.refresh(dashboardProvider),
-        child: dashboardAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
-                const SizedBox(height: 12),
-                Text('${l10n.translate('could_not_load_dashboard')}$err', textAlign: TextAlign.center),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.refresh(dashboardProvider),
-                  child: Text(AppLocalizations.of(context).translate('retry')),
-                ),
-              ],
-            ),
-          ),
-          data: (data) {
-            final l10n = AppLocalizations.of(context);
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Top 4 KPI Grid
-                  GridView.count(
+    return [
+      // 1. Top 4 KPI Grid
+      GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -266,10 +167,163 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final authState = ref.watch(authProvider);
+    final dashboardAsync = ref.watch(dashboardProvider);
+    final cached = ref.watch(lastDashboardSnapshotProvider);
+    final business = authState.business;
+
+    // ShopZen Admin accounts have no shop of their own — every /api/dashboard/
+    // call would 403. Give them a clean landing instead of an error screen.
+    if (business == null && authState.user?.isShopZenAdmin == true) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.translate('app_name'))),
+        // (brand name stays Latin across locales)
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.admin_panel_settings_rounded,
+                    size: 64, color: AppColors.primary),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.translate('signed_in_as_admin'),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.translate('admin_landing_desc'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+                  ),
+                  icon: const Icon(Icons.dashboard_outlined),
+                  label: Text(AppLocalizations.of(context).translate('open_admin_dashboard')),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              business?.name ?? 'ShopZen',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+            ),
+            Text(
+              "${l10n.translate('good_morning')}${authState.user?.firstName ?? l10n.translate('owner_label')} 👋",
+              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner_rounded),
+            tooltip: l10n.translate('scan_imei'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ImeiScannerScreen()),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: l10n.translate('search_device'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ImeiLookupScreen()),
+            ),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async => ref.invalidate(dashboardProvider),
+        child: dashboardAsync.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          // Offline (or server unreachable): keep showing the last data that
+          // was successfully loaded instead of a dead error screen (Phase 9).
+          error: (err, _) {
+            if (cached != null) {
+              return SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SyncStatusBanner(),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              l10n.translate('showing_last_data'),
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    ..._buildDashboardSections(context, cached),
+                  ],
+                ),
+              );
+            }
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cloud_off_rounded, size: 48, color: AppColors.textSecondary),
+                  const SizedBox(height: 12),
+                  Text(
+                    l10n.translate('offline_no_data_yet'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => ref.invalidate(dashboardProvider),
+                    child: Text(AppLocalizations.of(context).translate('retry')),
+                  ),
                 ],
               ),
             );
           },
+          data: (data) => SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SyncStatusBanner(),
+                const SizedBox(height: 12),
+                ..._buildDashboardSections(context, data),
+              ],
+            ),
+          ),
         ),
       ),
     );

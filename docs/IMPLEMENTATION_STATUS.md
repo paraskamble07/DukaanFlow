@@ -326,9 +326,9 @@ is stale rather than broken.
 1. Owner: re-link Render auto-deploy (or press Manual Deploy) and verify
    the deploy per `docs/DEPLOYMENT_GUIDE.md` (includes the new
    `businesses` 0003 migration).
-2. Phase 9: offline mode + sync status indicator.
-3. Phase 11–12: IMEI history/warranty/low+dead stock/purchase history;
-   AdMob banner SDK + UMP consent flow.
+2. Phase 11: IMEI history/warranty, low + dead stock, purchase history.
+3. Phase 12: AdMob banner SDK + UMP consent flow (banners only on
+   dashboard, product list, customer list, settings).
 
 ---
 
@@ -433,3 +433,63 @@ is stale rather than broken.
   Dev database brought up to date locally (added `businesses.0003`
   `upi_id` and `reminders.0001`); these migrations run automatically
   on Render via `build.sh` on the next deploy.
+
+---
+
+- **2026-10-16 (Phase 9, complete):** Offline mode + sync status indicator.
+
+  What was already there (kept, not rewritten): queued-sale upload
+  (`OfflineSyncService.syncNow` — POSTs each queued bill, drops
+  server-rejected stale bills, breaks on network errors) and the
+  `offline_pos_queue` in local storage.
+
+  New behavior:
+
+  - **`SyncStatusNotifier`** (`lib/core/sync/sync_status_provider.dart`)
+    is now the single driver: a 15s timer probes the server with a
+    lightweight GET `/api/health/` (5s timeout) — reachability of the
+    *backend*, not just the radio — recounts the on-device queue,
+    starts an upload pass when the server answers, and exposes
+    `SyncStatus(isOnline, isSyncing, pendingCount, lastSyncedAt)`.
+    Started on the authenticated nav scaffold, stopped on dispose so
+    nothing pings or uploads while logged out. (The service's own
+    `start`/`stop` timers were removed so there is exactly one timing
+    source; `syncNow` is unchanged.)
+  - **`SyncStatusBanner`** (`lib/shared_widgets/sync_status_banner.dart`)
+    renders the state wherever it is mounted (dashboard, POS):
+    offline with queued bills → amber "Offline — N bill(s) saved
+    locally" + Retry; offline, none queued → plain amber bar; online
+    while bills are in flight → "Syncing N bill(s)…"; healthy → renders
+    nothing. The banner never claims a bill was delivered: only the
+    server's 201 removes it from the queue.
+  - **Offline checkout UX fix (real, pre-existing bug):** when the
+    network was down at checkout, the checkout path set an error
+    string the POS never rendered and left the cart populated, so the
+    user got no confirmation and a second tap could queue a duplicate.
+    Now the bill is queued, the cart clears exactly like the success
+    path, `PosState.offlineQueued` flags it, and the POS shows a
+    localized "saved locally" SnackBar (with the sync banner visible
+    behind it).
+  - **Offline dashboard:** `lastDashboardSnapshotProvider` (autoDispose)
+    caches every successful `/api/dashboard/` fetch, so a failed
+    refresh offline renders the last real data with a "showing the
+    last data loaded while online" notice; with nothing cached the
+    user gets an explicit "no shop data on this device yet — connect
+    and pull to refresh" empty state instead of a raw exception.
+    autoDispose means the cache drops with the dashboard, so one
+    shop's numbers can never survive into a new session after logout.
+  - 9 new localization keys per locale (now **568 keys per locale,
+    exact parity**, verified by direct map count + the parity test).
+
+  Evidence: new `test/sync_status_banner_test.dart` — **7 tests**:
+  offline+queued message text/count, plain offline bar, syncing row,
+  healthy state renders zero-height, live state-transition rendering,
+  and `SyncStatus.hasPending` / `copyWith` semantics. `flutter test`
+  **19/19 passed** (12 existing + 7 new); `flutter analyze lib test`
+  **0 errors / 0 warnings** (35 infos, the same pre-existing
+  `prefer_const`/`use_build_context` hints as clean HEAD). Live smoke
+  on production: `GET /api/health/` → **HTTP 200**
+  `{"status":"ok","app":"ShopZen","version":"1.0.0","database":"up"}`
+  in ~8s (free-tier wake), the exact endpoint the monitor pings.
+  Backend untouched this phase; last full backend suite remains
+  **119/119**.

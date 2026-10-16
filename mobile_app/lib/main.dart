@@ -4,7 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/app_colors.dart';
 import 'core/localization/app_localizations.dart';
-import 'core/sync/offline_sync_service.dart';
+import 'core/sync/sync_status_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/splash_screen.dart';
 import 'features/settings/app_update_screen.dart';
@@ -14,7 +14,6 @@ import 'features/inventory/product_list_screen.dart';
 import 'features/customers/customer_list_screen.dart';
 import 'features/more/more_screen.dart';
 import 'features/sales/sales_history_screen.dart';
-import 'providers/auth_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/update_provider.dart';
 
@@ -80,9 +79,11 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
   @override
   void initState() {
     super.initState();
-    // User is authenticated when this scaffold mounts — start offline sync.
+    // User is authenticated when this scaffold mounts — start the
+    // connectivity / pending-sync monitor (it also drives the
+    // queued-bill upload).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      OfflineSyncService.start(ref.read(apiClientProvider));
+      ref.read(syncStatusProvider.notifier).start();
       _checkForMandatoryUpdate();
     });
   }
@@ -128,7 +129,8 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
 
   @override
   void dispose() {
-    OfflineSyncService.stop();
+    // Stop pinging / syncing while the user is logged out.
+    ref.read(syncStatusProvider.notifier).stop();
     super.dispose();
   }
 

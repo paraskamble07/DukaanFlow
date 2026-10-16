@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,21 +11,12 @@ import '../constants/api_constants.dart';
 /// (e.g. stock no longer available) drops that item from the queue but
 /// keeps the rest — the user is told which bill failed and why.
 class OfflineSyncService {
-  static Timer? _timer;
   static bool _syncing = false;
 
-  static void start(ApiClient client, {Duration every = const Duration(seconds: 30)}) {
-    _timer?.cancel();
-    _timer = Timer.periodic(every, (_) => syncNow(client));
-    // also try right away in case app relaunched with pending sales
-    syncNow(client);
-  }
-
-  static void stop() {
-    _timer?.cancel();
-    _timer = null;
-  }
-
+  /// Uploads the bills that were queued while the device was offline.
+  ///
+  /// Timing is driven by [SyncStatusNotifier]; this service only performs a
+  /// single pass and is safe to call repeatedly.
   static Future<int> syncNow(ApiClient client) async {
     if (_syncing) return 0;
     _syncing = true;

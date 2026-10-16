@@ -38,6 +38,9 @@ class PosState {
   final String notes;
   final bool isSubmitting;
   final String? error;
+  /// True after a bill was saved to the offline queue instead of posted;
+  /// the UI shows a localized notice (see SyncStatusBanner / SnackBar).
+  final bool offlineQueued;
 
   PosState({
     this.items = const [],
@@ -51,6 +54,7 @@ class PosState {
     this.notes = '',
     this.isSubmitting = false,
     this.error,
+    this.offlineQueued = false,
   });
 
   double get subtotal => items.fold(0.0, (sum, i) => sum + i.total);
@@ -69,6 +73,7 @@ class PosState {
     String? notes,
     bool? isSubmitting,
     String? error,
+    bool? offlineQueued,
   }) {
     return PosState(
       items: items ?? this.items,
@@ -82,6 +87,7 @@ class PosState {
       notes: notes ?? this.notes,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: error,
+      offlineQueued: offlineQueued ?? this.offlineQueued,
     );
   }
 }
@@ -227,10 +233,10 @@ class PosNotifier extends StateNotifier<PosState> {
           e.type == DioExceptionType.receiveTimeout;
       if (networkDown) {
         await LocalStorageService.queueOfflineSale(payload);
-        state = state.copyWith(
-          isSubmitting: false,
-          error: 'Offline Mode: Sale saved locally and will sync when online.',
-        );
+        // The bill IS recorded (locally): clear the cart exactly like the
+        // success path, flagging it so the UI shows the offline notice.
+        // Clearing also prevents a second tap from queueing a duplicate.
+        state = PosState(offlineQueued: true);
         return null;
       }
       // Server responded with an error — surface its message.
@@ -241,11 +247,9 @@ class PosNotifier extends StateNotifier<PosState> {
       state = state.copyWith(isSubmitting: false, error: msg);
       return null;
     } catch (_) {
+      // Indeterminate failure — treat as offline rather than dropping the bill.
       await LocalStorageService.queueOfflineSale(payload);
-      state = state.copyWith(
-        isSubmitting: false,
-        error: 'Offline Mode: Sale saved locally and will sync when online.',
-      );
+      state = PosState(offlineQueued: true);
       return null;
     }
   }

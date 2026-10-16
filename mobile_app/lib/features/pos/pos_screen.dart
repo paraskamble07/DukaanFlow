@@ -6,6 +6,7 @@ import '../../core/utils/currency_formatter.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/customer_provider.dart';
+import '../../shared_widgets/sync_status_banner.dart';
 import '../inventory/imei_scanner_screen.dart';
 import 'widgets/cart_item_tile.dart';
 import 'widgets/sale_success_dialog.dart';
@@ -159,12 +160,31 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       ? null
                       : () async {
                           final res = await ref.read(posProvider.notifier).checkout();
-                          if (res != null && context.mounted) {
+                          if (!context.mounted) return;
+                          if (res != null) {
                             Navigator.of(context).pop(); // Close sheet
                             showDialog(
                               context: context,
                               barrierDismissible: false,
                               builder: (_) => SaleSuccessDialog(saleData: res),
+                            );
+                          } else if (ref.read(posProvider).offlineQueued) {
+                            // Bill saved to the offline queue: same flow as
+                            // success, but with the offline notice.
+                            Navigator.of(context).pop(); // Close sheet
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    const Icon(Icons.wifi_off_rounded,
+                                        color: Colors.white, size: 18),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                        child: Text(l10n.translate('offline_sale_queued'))),
+                                  ],
+                                ),
+                                duration: const Duration(seconds: 6),
+                              ),
                             );
                           }
                         },
@@ -172,6 +192,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                       ? const CircularProgressIndicator(color: Colors.white)
                       : Text(l10n.translate('generate_invoice')),
                 ),
+                if (state.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 10),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.error_outline, size: 16, color: AppColors.danger),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            state.error!,
+                            style: const TextStyle(fontSize: 12, color: AppColors.danger),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           );
@@ -208,6 +244,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       ),
       body: Column(
         children: [
+          // Offline / pending-sync indicator
+          const SyncStatusBanner(),
           // Customer Selection Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
