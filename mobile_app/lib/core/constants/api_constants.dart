@@ -27,11 +27,12 @@ class ApiConstants {
   static const String products = '/api/products/';
   static const String categories = '/api/categories/';
   static const String stockMovements = '/api/inventory/movements/';
+  static const String stockAdjust = '/api/inventory/adjust/';
   static const String imeiDevices = '/api/inventory/imei/';
   static const String imeiLookup = '/api/inventory/imei/lookup/';
-  static String imeiDeviceHistory(int id) => '/api/inventory/imei/\$id/history/';
-  static String productDetail(int id) => '/api/products/\$id/';
-  static String productDetailMovements(int id) => '/api/inventory/movements/?product=\$id';
+  static String imeiDeviceHistory(int id) => '/api/inventory/imei/$id/history/';
+  static String productDetail(int id) => '/api/products/$id/';
+  static String productDetailMovements(int id) => '/api/inventory/movements/?product=$id';
   
   // POS Billing & Sales
   static const String posCheckout = '/api/pos/checkout/';
@@ -88,6 +89,13 @@ class ApiConstants {
   // Backup & Restore (Phase 8 — owner-only full shop dataset export/import)
   static const String backupExport = '/api/backup/';
   static const String backupRestore = '/api/backup/restore/';
+
+  // Staff & Logins (owner-only; per-module grants enforced server-side)
+  static const String staff = '/api/staff/';
+  static String staffDetail(int id) => '/api/staff/$id/';
+
+  // Notifications (derived, read-only: Khata dues, low stock, payables)
+  static const String notifications = '/api/notifications/';
 
   // Sales detail
   static String saleDetail(int id) => '/api/sales/$id/';

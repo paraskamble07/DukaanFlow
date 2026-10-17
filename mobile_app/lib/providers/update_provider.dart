@@ -20,12 +20,17 @@ class AppUpdateState {
   final String installedVersion;
   final int installedBuildNumber;
 
+  /// False when package_info could not report the build number, in which
+  /// case a server "mandatory" verdict is unverifiable and must not block.
+  final bool packageInfoKnown;
+
   AppUpdateState({
     this.isChecking = false,
     this.info,
     this.errorMessage,
     this.installedVersion = '',
     this.installedBuildNumber = 0,
+    this.packageInfoKnown = false,
   });
 
   AppUpdateState copyWith({
@@ -34,6 +39,7 @@ class AppUpdateState {
     String? errorMessage,
     String? installedVersion,
     int? installedBuildNumber,
+    bool? packageInfoKnown,
   }) {
     return AppUpdateState(
       isChecking: isChecking ?? this.isChecking,
@@ -42,6 +48,7 @@ class AppUpdateState {
       installedVersion: installedVersion ?? this.installedVersion,
       installedBuildNumber:
           installedBuildNumber ?? this.installedBuildNumber,
+      packageInfoKnown: packageInfoKnown ?? this.packageInfoKnown,
     );
   }
 
@@ -52,8 +59,17 @@ class AppUpdateState {
 class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
   final ApiClient _client;
 
+  /// Completes when PackageInfo.fromPlatform() has resolved (or failed).
+  /// checkForUpdates awaits it so the request always carries the *real*
+  /// build number — otherwise a slow package_info makes the check race and
+  /// send build 0, which the server cannot distinguish from a genuinely
+  /// ancient build, and the app blocks the user behind a false
+  /// "Update required" popup.
+  Future<void>? _packageInfoReady;
+  bool _packageInfoKnown = false;
+
   AppUpdateNotifier(this._client) : super(AppUpdateState()) {
-    _loadPackageInfo();
+    _packageInfoReady = _loadPackageInfo();
   }
 
   Future<void> _loadPackageInfo() async {
@@ -63,6 +79,7 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
         installedVersion: pkg.version,
         installedBuildNumber: int.tryParse(pkg.buildNumber) ?? 0,
       );
+      _packageInfoKnown = int.tryParse(pkg.buildNumber) != null;
     } catch (_) {
       // Stays at defaults (0) — the check then reports whatever the
       // server says, and the UI shows the version string it has.
@@ -75,6 +92,11 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
   Future<AppUpdateInfo?> checkForUpdates({
     bool failSilently = true,
   }) async {
+    // Never send the build number before package_info has resolved, or the
+    // server sees build 0 and answers "mandatory update" for a client that
+    // may already be the newest build.
+    await _packageInfoReady;
+
     state = state.copyWith(isChecking: true, errorMessage: null);
     try {
       final res = await _client.dio.get(
@@ -87,7 +109,11 @@ class AppUpdateNotifier extends StateNotifier<AppUpdateState> {
       if (res.statusCode == 200 && res.data is Map<String, dynamic>) {
         final info = AppUpdateInfo.fromJson(
             res.data as Map<String, dynamic>);
-        state = state.copyWith(isChecking: false, info: info);
+        state = state.copyWith(
+          isChecking: false,
+          info: info,
+          packageInfoKnown: _packageInfoKnown,
+        );
         return info;
       }
       state = state.copyWith(

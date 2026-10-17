@@ -18,6 +18,7 @@ class SalesChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (sales.isEmpty) {
       return const SizedBox();
     }
@@ -36,9 +37,9 @@ class SalesChartCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  '7-Day Sales & Expense Trend',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                Text(
+                  l10n.translate('sales_trend_7day'),
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                 ),
                 Row(
                   children: [
@@ -64,7 +65,7 @@ class SalesChartCard extends StatelessWidget {
                       getTooltipItem: (group, groupIndex, rod, rodIndex) {
                         final isSales = rodIndex == 0;
                         return BarTooltipItem(
-                          '${isSales ? "Sales" : "Expense"}: ${CurrencyFormatter.format(rod.toY)}',
+                          '${isSales ? l10n.translate('sales_tab') : l10n.translate('expense_label')}: ${CurrencyFormatter.format(rod.toY)}',
                           const TextStyle(color: Colors.white, fontSize: 11),
                         );
                       },

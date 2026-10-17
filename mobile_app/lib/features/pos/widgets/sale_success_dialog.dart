@@ -45,7 +45,9 @@ class SaleSuccessDialog extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.backgroundLight,
+              // Theme surface keeps the summary block correct in the dark
+              // theme too (backgroundLight is fixed light grey).
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(10),
             ),
             child: Column(

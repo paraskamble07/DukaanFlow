@@ -608,7 +608,7 @@ devices the engineering side does not have — see `docs/FINAL_REPORT.md` §4:
     production still runs the old build; **the deploy is the owner's
     action, no deploy success is claimed.**
 
-- **2026-10-16 (Phase 12 build fix, during Phase 16 APK build):**- **2026-10-16 (Phase 12 build fix, during Phase 16 APK build):** The release
+- **2026-10-16 (Phase 12 build fix, during Phase 16 APK build):** The release
   build failed twice and both root causes were fixed honestly:
   1. `user_messaging_platform` plugin has no AGP-8 namespace in its Android
      module (`Namespace not specified`) — **replaced** with the UMP API that
@@ -663,7 +663,7 @@ devices the engineering side does not have — see `docs/FINAL_REPORT.md` §4:
     removed subscription plan cap); they are documented, not deleted,
     weakened or faked green. `manage.py check` clean.
 
-- **2026-10-16 (Phase 12, pushed):**- **2026-10-16 (Phase 12, pushed):** Google AdMob banner ads + Google UMP
+- **2026-10-16 (Phase 12, pushed):** Google AdMob banner ads + Google UMP
   consent flow. Free app, monetization banners ONLY (all subscription
   paywalls stayed removed; no business payment feature touched).
   - New `lib/core/ads/`: `ad_config.dart` (build-time overrides
@@ -699,3 +699,237 @@ devices the engineering side does not have — see `docs/FINAL_REPORT.md` §4:
     approval and live ad unit ids (see "Next concrete task" #2); the
     current build serves Google test creatives only and earns no
     revenue.
+
+- **2026-10-16 (Phase 22, Khata/settlement + dedup + update-popup + staff &
+  notifications, NOT pushed):** Continuation session fixing four reported
+  bugs and delivering the staff/notifications feature. All work is
+  committed only to the working tree; **no publish/deploy/push and no
+  production APK overwrite happened** (`static/apk/shopzen-1.0.0.apk` and
+  the build outputs are untouched).
+  1. **Khata repayment / balance calculation (bugfix):** payments are now
+    the single source of truth and bill rows are derived from them.
+    `payments/services.py` (new) implements deterministic FIFO
+    re-settlement: sale-linked checkout payments stay on their own bill
+    (capped at its total), unlinked manual repayments settle the oldest
+    open bill first and roll the remainder forward. Identical inputs
+    always produce identical bill state and it self-repairs legacy drift.
+    `CustomerPaymentCreateAPIView` and the web `customer_payment_create`
+    both re-settle inside a transaction and return `settled_invoices`;
+    the receive-payment modal now prefills the exact outstanding amount
+    and sends the amount as an exact string (`toStringAsFixed(2)`), never
+    a raw double. `customers/management/commands/resettle_khata.py`
+    (new) is an idempotent repair command — run once on the dev DB it
+    repaired 3 drifted customers. Deliberately preserved: customer-level
+    outstanding derivation (Phase 13) and overpayment rejection.
+  2. **Duplicate customer creation (bugfix):** phones are normalized on
+    save (digits only, 91/0 prefix collapse) and duplicates are blocked
+    at every entry point — API returns 409 with the existing customer,
+    the web Django form shows the existing name + created date, and the
+    Flutter app opens the existing customer instead of creating a twin.
+    A partial unique constraint (`condition=~Q(phone__in=PLACEHOLDER_PHONES)`,
+    portable across SQLite + Postgres) plus migration
+    `customers/0002_merge_duplicates_unique_phone` merges existing twins
+    (canonical = most activity; Sale/Payment/MobileDevice re-pointed
+    before the dup is deleted). Run on the dev DB: "Ramesh Khata Test"
+    twin merged.
+  3. **Repeated "Update Required" popup (bugfix):** the popup could only
+    fire with `version_code=0` (the installed release is 1.0.0+1), which
+    is exactly what the `package_info_plus` race produced at startup.
+    Server-side the manifest serializer now owns `mandatory_update`
+    (`current_code > 0 and current_code < minimum_supported_code`), so an
+    unknown build number is advised-but-never-blocked; client-side
+    `UpdateProvider` awaits `package_info_plus` before the check and
+    `main.dart` shows the dialog only once per process and only when the
+    build number is actually known.
+  4. **Staff logins (new, owner-only):** `/api/staff/` list+create and
+    `/api/staff/<id>/` update/deactivate. Staff users get per-module
+    grants (validated against `MODULE_PERMISSIONS`); deactivation keeps
+    the account and all bill/payment attribution. Flutter: Staff & Logins
+    screen (Settings → Team, owner-only) with add/edit/grant/disable and
+    server error surfacing.
+  5. **Notifications (new):** `/api/notifications/` derives attention
+    items live from the books (top-5 Khata dues, low/out-of-stock,
+    supplier dues) with a count used by the dashboard bell badge.
+  6. **Shop profile / SMS / WhatsApp reminders:** verified as already
+    shipped (Phase 8/9) — no rework; the settings "Edit shop Profile"
+    CTA is now correctly owner-only.
+  - Localization: **634 keys per locale (en/hi/mr), exact parity** (up
+    from 598) with the new staff/notifications/duplicate-dialog keys.
+  - Verification: backend green — `tests_khata_dedup` 15, `tests_staff_notifications` 15,
+    `tests_phase13`, updates+khata 41, `api.tests` + ledger-PDF + UPI +
+    reminders 54, `manage.py check` + `makemigrations --check` clean.
+    Flutter: `flutter test` **36/36 passed**, `flutter analyze`
+    **0 errors / 0 warnings** (34 infos, back to pre-existing baseline).
+  - Not verified: on-device run of the new staff/notifications screens,
+    and a rebuilt release APK (deliberately not rebuilt without owner
+    approval).
+
+- **2026-10-17 (Phase 23, UI audit + release APK 1.1.0+2, NOT pushed):**
+  Screen-by-screen Flutter UI audit of Dashboard, Customers/Khata, Receive
+  Payment, Customer Detail/Form, Shop Profile (Settings), Team/Staff,
+  Notifications, Products and Sales; 10 concrete defects fixed while
+  preserving the existing ShopZen design and every screen's behavior:
+  1. Untranslated strings replaced with real locale keys in all three
+    locales: dashboard chart title + tooltip ("7-Day Sales & Expense Trend",
+    "Sales"/"Expense"), product tile "in stock" text, "Generating
+    statement…", shop-profile "Saving…" (now a spinner, consistent with
+    every other form) and the mandatory-update dialog (title/body/button).
+    Locale maps now 644 keys per locale, exact parity.
+  2. Customer list's third filter chip was labeled "Balance Due" but
+    selects the *cleared* filter — relabeled "Cleared".
+  3. POS hardcoded `Colors.white` customer bar, product-picker sheet,
+    summary and tiles → `Theme.of(context).colorScheme.surface`: the dark
+    theme (Settings → Theme) previously painted glaring white blocks. The
+    sale-success summary got the same fix.
+  4. Add-Staff dialog actions could sit below the soft keyboard on small
+    phones — wrapped in an `AnimatedPadding` with `viewInsets.bottom` so
+    the dialog lifts above the keyboard.
+  5. Overflow guards (ellipsis + maxLines) on the two-line AppBar titles
+    (Dashboard, More) and the customer-detail header row (`Flexible`
+    around the outstanding balance, so a long amount no longer pushes the
+    Add Payment button off-screen).
+  6. Receive Payment: a blank/zero amount used to no-op silently on tap —
+    now shows a snackbar asking for a valid amount (server-side
+    overpayment guard untouched).
+  - Verification: `flutter analyze` **0 errors / 0 warnings** (34 infos,
+    all pre-existing); `flutter test` **36/36 passed** (incl. locale
+    parity). Backend re-verified: `api.tests_khata_dedup`,
+    `api.tests_staff_notifications`, `updates.tests` (56),
+    `api.tests` + `api.tests_phase13` (28) — all OK; `manage.py check` and
+    `makemigrations --check` clean. Dev DB untouched (9 customers /
+    19 payments / 16 sales remain; migration `customers/0002` re-points
+    every Sale/Payment/MobileDevice row to the canonical customer *before*
+    deleting a duplicate, and its reverse is a safe no-op).
+  - **Release APK rebuilt: `build/app/outputs/flutter-apk/app-release.apk`,
+    copied to `release/app-release.apk` — 77,626,732 bytes (74.0 MB),
+    SHA-256 `3f3d764cc74847df98fb872656997816ee4d189dc1122e03ae31524642a8e307`,
+    package `com.dukaanflow.app`, versionName 1.1.0 / versionCode 2,
+    same Android Debug signing cert as the 1.0.0+1 release (digest
+    `7f6cdf…16b` identical), production API URL and Google test ad unit
+    confirmed compiled in. `static/apk/shopzen-1.0.0.apk` untouched.**
+  - Not verified: on-device run — no physical device, emulator or adb in
+    this environment (only web targets). Khata repayment, duplicate
+    prevention, update popup, staff permissions and notifications are
+    covered by automated backend tests but **not** by a device acceptance
+    run; `docs/END_TO_END_ACCEPTANCE.md` sections A–G remain pending a
+    phone. No commit / push / deploy / publish was performed.
+
+- **2026-10-17 (Phase 24, live AdMob IDs wired, NOT pushed):** The owner
+  provided the real AdMob Android App ID
+  `ca-app-pub-8559634762194466~5030925195` and the live banner ad unit
+  `ca-app-pub-8559634762194466/2011019340` (ShopZen_Banner_Home). Changes:
+  1. `AndroidManifest.xml` now declares the real App ID (replacing Google's
+    sandbox App ID) — required for the SDK to initialize against the owner's
+    account.
+  2. `lib/core/ads/ad_config.dart` adds `liveBannerUnitId`; `bannerUnitId`
+    now defaults to `kReleaseMode ? liveBannerUnitId : testBannerUnitId`
+    (compile-time constant, so a release build can never serve test traffic
+    and a debug build can never serve live traffic). The
+    `--dart-define=ADMOB_BANNER_UNIT_ID` override is kept for manual control.
+  3. `lib/core/ads/ad_banner.dart` upgraded to Google's **adaptive anchored
+    banner** (`getLargeAnchoredAdaptiveBannerAdSize`, the non-deprecated
+    API in google_mobile_ads 9.1.0) with a 320x50 fallback, width-guarded
+    reload on rotation/resize (no duplicate ad instances), and disposal on
+    `onAdFailedToLoad`. Banner collapses to zero height when unavailable,
+    so an ad failure never affects the user.
+  4. `test/phase12_ads_test.dart` +2 tests: the live unit is the exact
+    ShopZen_Banner_Home id (and structurally a unit id, not an app id), and
+    a 3x mount/unmount cycle leaks nothing and throws nothing.
+  - Placement policy untouched: banners only on dashboard, product list,
+    customer list and settings — never on login/registration/payment/POS/
+    invoice/khata-repayment/staff screens. No interstitial/rewarded/native
+    ads, no click/inflation mechanisms.
+  - Verification: `flutter analyze` 0 errors/0 warnings (34 pre-existing
+    infos); `flutter test` **38/38 passed**. Release APK rebuilt:
+    77,626,740 bytes, SHA-256
+    `436cf06e12831b01878e47241f79bf37bdc70643c60778e7d5c5a012f380d9d8`,
+    package `com.dukaanflow.app`, versionName 1.1.1 / versionCode 3 (superseded by the 1.1.2+4 build in Phase 25), same
+    debug signing cert (`7f6cdf…16b`), real App ID confirmed in the packaged
+    manifest and the live unit byte-present in all three `libapp.so` arches
+    (test unit tree-shaken out). `static/apk/shopzen-1.0.0.apk` untouched.
+  - Not verified: **live ad serving** — no physical Android device,
+    emulator or adb in this environment. The owner must confirm
+    impressions in the AdMob dashboard after their account verification
+    completes (`docs/ADMOB_SETUP.md`). A successful build is NOT proof of
+    live impressions. No commit / push / deploy / publish performed.
+
+- **2026-10-17 (Phase 25, owner-priority defect pass, NOT pushed):**
+  Verified-and-fix cycle driven by the owner's reported issues:
+  1. **Staff & Logins 404 (root cause found):** the endpoints work perfectly
+    locally (full lifecycle verified: create → list → staff login → RBAC
+    grants enforced 403/200 → disable → reactivate), but production returns
+    404 because `api/views/staff_views.py`, `notification_views.py` and
+    their `api/urls.py` registration are **uncommitted** — Render auto-deploys
+    from GitHub, which has never seen them. Live probes confirmed
+    `/api/staff/` and `/api/notifications/` are the ONLY missing routes;
+    every other app endpoint exists on production (401 = present). The app
+    now shows an honest, translated 404 message ("backend needs updating")
+    instead of a raw Dio dump, on both the staff and notifications screens
+    (`lib/core/network/api_error.dart` + `error_404_backend` key, 3 locales).
+    Deployment steps prepared in `docs/DEPLOYMENT_PREP.md` — NOT executed.
+  2. **Critical URL-interpolation bug fixed:** `ApiConstants.productDetail`
+    and `imeiDeviceHistory` used an escaped `\$id`, which Dart renders as the
+    *literal text* `$id` — so Product Detail and IMEI Device History
+    requested `/api/products/$id/` and 404'd on every phone. Fixed and
+    verified end-to-end against the local server (`/api/products/11/` → 200,
+    the old buggy URL → 404). New `test/api_constants_test.dart` guards every
+    id-substituting helper so this cannot recur. The stock-adjust dialog's
+    hardcoded URL was moved to `ApiConstants.stockAdjust` (the app now has
+    zero raw URL strings).
+  3. **Clear Khata workflow verified:** new `api/tests_khata_flow.py`
+    (5 tests) locks down the owner's exact scenario through the public API —
+    ₹1,000 bill → ₹300 payment (₹700 balance) → ₹700 payment (₹0, "Cleared"
+    filter), plus oldest-bill-first settlement, overpayment rejection
+    (₹1,200 against ₹1,000 → 400), zero/negative rejection, and ledger
+    integrity. All 5 pass.
+  4. **Reminders verified offline:** new `api/tests_reminders.py` (15 tests)
+    covers the WhatsApp URL builder (wa.me/91…, empty for no phone), SMS
+    body, due-list computation (OVERDUE/DUE_SOON/DUE, tenant isolation),
+    log integrity (settled-customer rejection, 1-hour cooldown, invalid
+    channel). **Finding: there is no SMS provider and no credentials to
+    configure — reminders are composer-driven by design:** the backend
+    builds the message and the owner's own WhatsApp/SMS app sends it; the
+    server logs only a user-confirmed initiation and never claims delivery.
+  5. **Feature audit (34 features cross-checked backend↔app):** all core
+    features are wired end-to-end. Reported gaps: password reset is
+    backend-only (no app screen — documented, not promised), IMEI device
+    registration has no app UI, supplier/expense edit screens absent
+    (backend supports them). Details in `docs/DEPLOYMENT_PREP.md`.
+  6. **False alarm cleared:** the update-check endpoint correctly reports
+    `update_available: false` for a 1.1.1+3 client against the 1.0.0 release
+    (build-number comparison) — no downgrade prompt. Verified on both local
+    and production.
+  - Verification: `flutter analyze` **0 errors / 0 warnings** (34 pre-existing
+    infos), `flutter test` **41/41 passed** (up from 38). Django: `check` and
+    `makemigrations --check` clean; khata-flow 5/5, reminders 15/15 passed;
+    full suite running.
+  - Not verified: on-device run (no physical device/emulator/adb in this
+    environment) and live ad impressions. No commit / push / deploy /
+    publish performed.
+
+- **2026-10-17 (Phase 25b, final release APK 1.1.2+4, NOT pushed):**
+  Rebuilt the release APK so the shipped binary carries every fix from this
+  owner-priority pass (the 1.1.1+3 build predates the `$id` URL fix and the
+  honest 404 messages). Version bumped 1.1.1+3 → 1.1.2+4 (pubspec +
+  android/local.properties kept in sync).
+  - Verification: Gradle `assembleRelease` exit 0; package
+    `com.dukaanflow.app`, versionName 1.1.2 / versionCode 4 (aapt2);
+    77,626,744 bytes, SHA-256
+    `df82df2dabe7d873c6eeff810582e24fbd7d9bc516c9c5b756250c5e03ed2414`;
+    V2 signed with the same Android Debug cert as every prior release
+    (`7f6cdf…16b`), so it installs as an in-place update.
+  - Byte-level checks: the literal `$id` URL fragments that 404'd Product
+    Detail and IMEI Device History are **absent from all three `libapp.so`
+    arches**; the live banner unit
+    `ca-app-pub-8559634762194466/2011019340` is present in all three
+    arches; the real App ID `ca-app-pub-8559634762194466~5030925195` is in
+    the packaged manifest; the production API base URL is compiled in.
+  - `static/apk/shopzen-1.0.0.apk` untouched (SHA-256 still `ffc5e50c…e76`);
+    a copy sits at `release/app-release.apk` (gitignored).
+  - Full suite before the build: `flutter analyze` 0 errors / 0 warnings
+    (34 pre-existing infos), `flutter test` **41/41**, Django **213/213**.
+  - Not verified: on-device run and live ad impressions — no physical
+    Android device, emulator or adb in this environment. Staff & Logins and
+    Notifications will keep showing the "backend needs updating" message
+    until the deployment in `docs/DEPLOYMENT_PREP.md` is approved. No
+    commit / push / deploy / publish performed.

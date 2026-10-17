@@ -1,7 +1,7 @@
 name: dukaanflow
 description: "ShopZen — Sell. Stock. Khata. Profit. Simplified. Mobile shop management for Indian retailers."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.2+4
 
 environment:
   sdk: '>=3.2.0 <4.0.0'

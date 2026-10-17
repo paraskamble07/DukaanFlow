@@ -64,7 +64,7 @@ class CustomerListScreen extends ConsumerWidget {
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: Text(l10n.translate('due_amount')),
+                  label: Text(l10n.translate('cleared')),
                   selected: dueFilter == 'cleared',
                   onSelected: (_) => ref.read(customerDueFilterProvider.notifier).state = 'cleared',
                 ),

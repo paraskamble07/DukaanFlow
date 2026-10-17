@@ -3,7 +3,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from api.views import (
     auth_views, dashboard_views, product_views, inventory_views,
     pos_views, customer_views, supplier_views, expense_views,
-    payment_views, report_views, subscription_views, health_views
+    payment_views, report_views, subscription_views, health_views,
+    staff_views, notification_views,
 )
 from updates import views as update_views
 from reminders import views as reminder_views
@@ -102,4 +103,11 @@ urlpatterns = [
     # Backup & Restore (owner-only; full shop dataset export / validated import)
     path('backup/', backup_views.BackupExportAPIView.as_view(), name='backup_export'),
     path('backup/restore/', backup_views.BackupRestoreAPIView.as_view(), name='backup_restore'),
+
+    # Staff & Logins (owner-only; RBAC grants enforced on every other endpoint)
+    path('staff/', staff_views.StaffListCreateAPIView.as_view(), name='staff_list_create'),
+    path('staff/<int:pk>/', staff_views.StaffDetailAPIView.as_view(), name='staff_detail'),
+
+    # Notifications (derived, read-only: Khata dues, low stock, payables)
+    path('notifications/', notification_views.NotificationsAPIView.as_view(), name='notifications'),
 ]

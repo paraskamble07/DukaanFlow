@@ -10,6 +10,7 @@ from sales.models import Sale
 from payments.models import Payment
 from api.serializers import CustomerSerializer, SaleSerializer, PaymentSerializer
 from api.permissions import HasActiveBusiness, CustomersPermission
+from core.utils import find_duplicate_customer
 from invoices.pdf_service import generate_ledger_pdf
 from payments.upi_service import (
     build_upi_uri, clean_upi_id, parse_money, upi_qr_png_base64,
@@ -49,6 +50,19 @@ class CustomerListCreateAPIView(generics.ListCreateAPIView):
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # Duplicate prevention: a customer with the same real mobile number
+        # already exists in this shop -> point the caller at it instead of
+        # forking a second ledger. 409 (not 400) so the app can distinguish
+        # "already exists, offer to open it" from a validation error.
+        existing = find_duplicate_customer(business, request.data.get('phone'))
+        if existing is not None:
+            return Response({
+                'error': 'A customer with this mobile number already exists in your shop.',
+                'code': 'DUPLICATE_CUSTOMER',
+                'existing_customer': CustomerSerializer(existing).data,
+            }, status=status.HTTP_409_CONFLICT)
+
         customer = serializer.save(business=business)
         return Response(CustomerSerializer(customer).data, status=status.HTTP_201_CREATED)
 
@@ -58,6 +72,19 @@ class CustomerDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Customer.objects.filter(business=self.request.business)
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        existing = find_duplicate_customer(
+            request.business, request.data.get('phone', instance.phone),
+            exclude_id=instance.id)
+        if existing is not None:
+            return Response({
+                'error': 'Another customer with this mobile number already exists in your shop.',
+                'code': 'DUPLICATE_CUSTOMER',
+                'existing_customer': CustomerSerializer(existing).data,
+            }, status=status.HTTP_409_CONFLICT)
+        return super().update(request, *args, **kwargs)
 
 class CustomerLedgerAPIView(APIView):
     permission_classes = [HasActiveBusiness, CustomersPermission]

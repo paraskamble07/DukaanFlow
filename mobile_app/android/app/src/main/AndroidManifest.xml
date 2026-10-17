@@ -28,13 +28,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- AdMob application id required by the Google Mobile Ads SDK.
-             This is Google's documented TEST application id; it serves test
-             creatives only and never earns revenue. Replace with the owner's
-             real publisher id (ca-app-pub-XXXX~YYYY) before a monetized
-             release, see docs/ADMOB_SETUP.md. -->
+        <!-- AdMob application id required by the Google Mobile Ads SDK:
+             ShopZen's real AdMob app id (publisher 8559634762194466).
+             The SDK needs this to match the account that owns the live banner
+             unit ShopZen_Banner_Home (see AdConfig.liveBannerUnitId).
+             Google's TEST banner unit ids still serve test creatives with
+             this app id, so debug runs stay safe. For a fully test-sandboxed
+             build use Google's documented test app id instead:
+             ca-app-pub-3940256099942544~3347511713 (docs/ADMOB_SETUP.md). -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-8559634762194466~5030925195" />
     </application>
 </manifest>

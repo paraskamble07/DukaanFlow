@@ -26,6 +26,12 @@ class AppUpdateCheckAPIView(APIView):
         platform = (request.query_params.get('platform') or 'android').strip().lower()
         raw_code = (request.query_params.get('version_code') or request.query_params.get('build_number') or '0').strip()
 
+        if platform not in {c for c, _ in AppRelease.PLATFORMS}:
+            return Response(
+                {'error': 'platform must be one of: android, ios.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         try:
             current_code = int(raw_code)
         except ValueError:
@@ -45,15 +51,26 @@ class AppUpdateCheckAPIView(APIView):
             .first()
         )
         if latest is None:
+            # Same key set as the release-found branch below (values null) so
+            # clients always parse one stable shape.
             return Response({
                 'platform': platform,
+                'current_build_number': current_code,
                 'update_available': False,
                 'mandatory_update': False,
-                'message': 'No published releases yet.',
+                'latest_version': None,
+                'latest_build_number': None,
+                'minimum_supported_version': None,
+                'release_notes': None,
+                'download_url': None,
+                'checksum_sha256': None,
+                'released_at': None,
             })
 
         update_available = latest.version_code > current_code
-        mandatory = current_code < latest.minimum_supported_code
+        # NOTE: `mandatory_update` is provided by the manifest serializer
+        # below (it owns that logic); it is NOT set in this dict, because
+        # `**manifest` would overwrite it after us.
         manifest = AppUpdateManifestSerializer(
             latest, context={'current_code': current_code}
         ).data
@@ -62,7 +79,6 @@ class AppUpdateCheckAPIView(APIView):
             'platform': platform,
             'current_build_number': current_code,
             'update_available': update_available,
-            'mandatory_update': mandatory,
             **manifest,
         })
 

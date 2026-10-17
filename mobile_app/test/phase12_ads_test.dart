@@ -12,14 +12,23 @@ void main() {
       expect(AdConfig.enabled, isTrue);
     });
 
-    test('falls back to the official Google test banner unit id', () {
+    test('debug builds use the official Google test banner unit id', () {
+      // The test host is a debug build (kReleaseMode == false), so the
+      // effective unit is the Google test unit — never live traffic.
       expect(AdConfig.bannerUnitId, AdConfig.testBannerUnitId);
       expect(AdConfig.bannerUnitId, 'ca-app-pub-3940256099942544/6300978111');
     });
 
+    test('the live unit is the ShopZen_Banner_Home unit id', () {
+      expect(AdConfig.liveBannerUnitId, 'ca-app-pub-8559634762194466/2011019340');
+      // Structural guard: an AdMob app id (~) must never be used as a unit id (/).
+      expect(AdConfig.liveBannerUnitId.contains('/'), isTrue);
+      expect(AdConfig.liveBannerUnitId.contains('~'), isFalse);
+    });
+
     test('test unit id is never reported as a live unit id', () {
       expect(AdConfig.isLiveUnitId, isFalse,
-          reason: 'default build must never claim live ad traffic');
+          reason: 'default debug build must never claim live ad traffic');
     });
 
     test('supportsPlatform only allows Android and iOS', () {
@@ -99,6 +108,27 @@ void main() {
       expect(size.width, 0);
       expect(size.height, 0);
       expect(find.byType(SizedBox), findsWidgets);
+    });
+
+    testWidgets(
+        'unmounting and remounting the banner leaks nothing and never throws',
+        (tester) async {
+      // Simulates navigating away from a screen and back: the state disposes
+      // its observer/ad, a fresh instance starts from scratch. No duplicate
+      // instances accumulate, no exceptions escape on the desktop host.
+      for (var i = 0; i < 3; i++) {
+        await tester.pumpWidget(
+          const MaterialApp(
+            home: Scaffold(body: AdBanner()),
+          ),
+        );
+        await tester.pump();
+        expect(find.byType(AdBanner), findsOneWidget);
+        // Replacing the tree disposes the widget between cycles.
+        await tester.pumpWidget(const MaterialApp(home: Scaffold()));
+        await tester.pump();
+      }
+      expect(tester.takeException(), isNull);
     });
   });
 }

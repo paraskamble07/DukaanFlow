@@ -30,10 +30,17 @@ class MoreScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(business?.name ?? 'ShopZen', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)),
+            Text(
+              business?.name ?? 'ShopZen',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
             Text(
               "${auth.user?.firstName ?? l10n.translate('owner_label')} • ${l10n.translate('free_account')}",
               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

@@ -3,7 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.utils import timezone
 from decimal import Decimal
+from django.db import transaction
 from payments.models import Payment
+from payments.services import settle_after_payment
+from payments.upi_service import parse_money
 from customers.models import Customer
 from suppliers.models import Supplier
 from core.utils import build_whatsapp_url, format_inr
@@ -27,13 +30,16 @@ class CustomerPaymentCreateAPIView(APIView):
     def post(self, request):
         business = request.business
         customer_id = request.data.get('customer_id')
-        amount = Decimal(str(request.data.get('amount', '0') or '0'))
+        # parse_money is a strict, float-free money parser: it quantizes to
+        # two decimals, so a client float like 0.30000000000000004 can never
+        # slip past the overpayment guard below.
+        amount = parse_money(request.data.get('amount'))
         method = request.data.get('payment_method', 'CASH')
         date = request.data.get('payment_date')
         ref = request.data.get('reference_number', '')
         notes = request.data.get('notes', '')
 
-        if not customer_id or amount <= 0:
+        if not customer_id or amount is None:
             return Response({'error': 'Valid customer and positive amount are required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -51,17 +57,22 @@ class CustomerPaymentCreateAPIView(APIView):
                              f'amount received, up to the outstanding balance.'
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            payment = Payment.objects.create(
-                business=business,
-                payment_type='CUSTOMER_PAYMENT',
-                customer=customer,
-                amount=amount,
-                payment_method=method,
-                payment_date=date or timezone.now().date(),
-                reference_number=ref,
-                notes=notes
-            )
+            with transaction.atomic():
+                payment = Payment.objects.create(
+                    business=business,
+                    payment_type='CUSTOMER_PAYMENT',
+                    customer=customer,
+                    amount=amount,
+                    payment_method=method,
+                    payment_date=date or timezone.now().date(),
+                    reference_number=ref,
+                    notes=notes
+                )
+                # Recompute the per-invoice settlement (paid / due / status)
+                # so bills never disagree with the books again.
+                settlements = settle_after_payment(customer)
 
+            customer.refresh_from_db()
             rem_due = customer.get_outstanding_due()
             wa_msg = f"Namaste {customer.name},\n\nWe have received your payment of *{format_inr(amount)}*.\nRemaining Khata Balance: *{format_inr(rem_due)}*.\n\nThank you for shopping at *{business.name}*!"
             wa_url = build_whatsapp_url(customer.phone, wa_msg)
@@ -70,6 +81,7 @@ class CustomerPaymentCreateAPIView(APIView):
                 'message': 'Payment recorded successfully.',
                 'payment': PaymentSerializer(payment).data,
                 'remaining_due': float(rem_due),
+                'settled_invoices': settlements,
                 'whatsapp_receipt_url': wa_url,
             }, status=status.HTTP_201_CREATED)
 

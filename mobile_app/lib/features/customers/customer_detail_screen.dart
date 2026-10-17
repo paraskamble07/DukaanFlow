@@ -115,16 +115,23 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(l10n.translate('outstanding_balance'), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-                                  Text(
-                                    CurrencyFormatter.format(due),
-                                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                                  ),
-                                ],
+                              // Flexible keeps a long balance (and the
+                              // 24pt amount) from overflow-pushing the
+                              // Add Payment button off-screen on narrow
+                              // devices.
+                              Flexible(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(l10n.translate('outstanding_balance'), style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      CurrencyFormatter.format(due),
+                                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 12),
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
@@ -161,7 +168,7 @@ class _CustomerDetailScreenState extends ConsumerState<CustomerDetailScreen> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.picture_as_pdf_outlined, size: 18),
-                      label: Text(_statementBusy ? 'Generating statement…' : l10n.translate('share_ledger_pdf')),
+                      label: Text(_statementBusy ? l10n.translate('generating_statement') : l10n.translate('share_ledger_pdf')),
                     ),
                   ),
                   const SizedBox(height: 16),

@@ -123,7 +123,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundLight,
+                    color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Column(
@@ -249,7 +249,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           // Customer Selection Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            color: Colors.white,
+            // Theme surface, not Colors.white: this app has a dark theme
+            // (Settings → Theme), where a hard white bar would be a
+            // glaring mismatch.
+            color: Theme.of(context).colorScheme.surface,
             child: Row(
               children: [
                 const Icon(Icons.person_outline, size: 20, color: AppColors.primary),
@@ -314,9 +317,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           // Product Quick Picker Sheet (Bottom Half)
           Container(
             height: 220,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
+            decoration: BoxDecoration(
+              // Same dark-mode fix as the customer selector above.
+              color: Theme.of(context).colorScheme.surface,
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, -2))],
             ),
             child: Column(
               children: [
@@ -349,9 +353,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             width: 130,
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: AppColors.backgroundLight,
+                              color: Theme.of(context).colorScheme.surface,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: AppColors.borderLight),
+                              border: Border.all(color: Theme.of(context).dividerColor),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,

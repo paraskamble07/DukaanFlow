@@ -17,23 +17,36 @@ ads to live ads, and what the current status is.
 | Google Mobile Ads SDK integrated | ✅ Done (`google_mobile_ads ^9.1.0`, Phase 12) |
 | Google UMP consent flow | ✅ Done (consent form shown where required; ads gated on consent) |
 | Banner placement code | ✅ Done — banners only on dashboard, product list, customer list, settings |
-| Live/production ad unit IDs | ❌ **Not provided yet — owner action required** |
-| AdMob App ID in `AndroidManifest.xml` | ⚠️ Currently Google's **test** App ID |
-| Real ad impressions verified on a device | ❌ Not possible until the steps below are done |
+| Adaptive (responsive) banner size | ✅ Done — Google adaptive anchored banner with a 320x50 fallback |
+| Live/production ad unit IDs | ✅ **Configured** (owner-provided on 2026-10-17; table below) |
+| AdMob App ID in `AndroidManifest.xml` | ✅ Real ShopZen App ID |
+| Real ad impressions verified on a device | ❌ **Still not done** — no physical Android device in the build environment; the owner must verify on a real phone (step 6) |
 
-**The current build serves Google's test creatives only. It earns no revenue
-and must never be shipped to users as a monetized build.**
+**Live configuration in this source tree:**
+
+| Setting | Value | Where it lives |
+|---|---|---|
+| AdMob Android App ID | `ca-app-pub-8559634762194466~5030925195` | `mobile_app/android/app/src/main/AndroidManifest.xml` (`com.google.android.gms.ads.APPLICATION_ID`) |
+| Banner Ad Unit ID (live) — **ShopZen_Banner_Home** | `ca-app-pub-8559634762194466/2011019340` | `mobile_app/lib/core/ads/ad_config.dart` (`AdConfig.liveBannerUnitId`) |
+| Google test banner unit | `ca-app-pub-3940256099942544/6300978111` | same file (`AdConfig.testBannerUnitId`) |
+
+**A release build uses the live unit; every development build (`flutter run`,
+`flutter test`) uses Google's test unit automatically (see "Switching test
+vs. live" below). Nothing has been shipped to users, and live ads only
+actually serve once the AdMob account verification below is complete — a
+successful build is NOT proof of live impressions.**
 
 ---
 
-## Why it is not live yet
+## Why it is not "earning" yet
 
 1. Google requires an **approved AdMob account** (identity + address
    verification, PIN by post, tax/ payment profile) before live ads serve.
    This approval takes days to weeks and depends on Google, not on the code.
-2. Live ads need a real **ad unit ID** and a real **AdMob App ID** tied to the
-   approved account. Inventing IDs is not allowed — invalid IDs crash the SDK
-   on start.
+2. The real **ad unit ID** and **App ID** are now configured in this source
+   tree (owner-provided 2026-10-17), and the release build compiles them in —
+   but no live impression has been observed, because no physical Android
+   device is available in the build environment.
 
 Per the project rules, nothing here is reported as "done" without evidence.
 
@@ -41,51 +54,71 @@ Per the project rules, nothing here is reported as "done" without evidence.
 
 ## Owner activation steps (one-time)
 
+> Steps 2–3 are **already done** — the owner registered the app
+> (`com.dukaanflow.app`) and created the **ShopZen_Banner_Home** ad unit on
+> 2026-10-17, and both IDs are wired into the source tree. They are kept here
+> as a record of where the IDs came from. Only step 1 (account verification)
+> and step 6 (on-device check) may still be open.
+
 ### 1. Finish AdMob account verification
 - Sign in at https://admob.google.com with the Google account that will
   receive payments.
 - Complete **Identity verification**, **Address verification (PIN)** and the
   payment profile. Nothing serves live ads until these pass.
 
-### 2. Register the app
+### 2. Register the app (done)
 - AdMob → **Apps → Add app** → **Android**, package name
   **`com.dukaanflow.app`** (no Play Store listing needed; select
   "No, my app isn't on any app stores yet" and enter the package name).
-- Copy the app's **App ID** (`ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX`).
+- Copy the app's **App ID** (`ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX`) —
+  this produced `ca-app-pub-8559634762194466~5030925195`.
 
-### 3. Create a banner ad unit
+### 3. Create a banner ad unit (done)
 - Inside the app → **Ad units → Add ad unit → Banner**.
-- Name it e.g. "ShopZen dashboard banner".
-- Copy the **ad unit ID** (`ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX`).
-- (Optional but recommended) create a second banner unit for safe targets.
-  The app reads exactly **one** unit id at build time (see below).
+- Named **ShopZen_Banner_Home** → ad unit ID
+  `ca-app-pub-8559634762194466/2011019340`.
+- The app reads exactly **one** unit id at build time (see step 5 below);
+  a second unit can be added later if you want to A/B placements.
 
-### 4. Update the App ID in the manifest
-Edit `mobile_app/android/app/src/main/AndroidManifest.xml`, replacing the
-test value:
+### 4. App ID in the manifest — already done
+`mobile_app/android/app/src/main/AndroidManifest.xml` already carries the real
+ShopZen App ID `ca-app-pub-8559634762194466~5030925195` (owner-provided
+2026-10-17). No edit is needed unless the AdMob account/app changes:
 
 ```xml
 <meta-data
     android:name="com.google.android.gms.ads.APPLICATION_ID"
-    android:value="ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX" />
+    android:value="ca-app-pub-8559634762194466~5030925195" />
 ```
 
 > Google policy note: the App ID in the manifest must be the registered App ID
 > of the app in your AdMob account. A wrong/other-account ID causes the SDK to
 > crash at first ad load.
 
-### 5. Rebuild with the live ad unit ID
-The banner unit ID is injected at build time so it never gets hard-coded into
-source control:
+### 5. Rebuild — the live ad unit is already wired in
+`AdConfig.liveBannerUnitId` holds `ca-app-pub-8559634762194466/2011019340`
+(**ShopZen_Banner_Home**). A plain release build picks it up automatically:
 
 ```bash
 cd mobile_app
-flutter build apk --release \
-  --dart-define=ADMOB_BANNER_UNIT_ID=ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX
+flutter build apk --release
 cp build/app/outputs/flutter-apk/app-release.apk ../release/app-release.apk
 ```
 
-(Add `--dart-define=ADMOB_ENABLED=false` for an ad-free build.)
+The unit is chosen at compile time from `kReleaseMode`, so a release build
+can never accidentally serve test traffic and a debug build can never serve
+live traffic. Optional manual overrides (rarely needed):
+
+```bash
+# Force the test unit in a release build (e.g. for a pre-launch check):
+flutter build apk --release \
+  --dart-define=ADMOB_BANNER_UNIT_ID=ca-app-pub-3940256099942544/6300978111
+# Ad-free build (the banner widget renders nothing):
+flutter build apk --release --dart-define=ADMOB_ENABLED=false
+```
+
+Switching back is just rebuilding without the define — nothing in source has
+to change, so test and live IDs are never confused.
 
 ### 6. Test before shipping to users
 - Add your test device's ID in AdMob → Settings → **Test devices** so your

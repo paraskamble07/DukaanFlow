@@ -36,13 +36,27 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
   void initState() {
     super.initState();
     _paymentMethod = widget.defaultMethodUpi ? 'UPI' : 'CASH';
-    _amountController = TextEditingController(text: widget.outstandingDue.toStringAsFixed(0));
+    // Exact prefill: rounding the due up here (toStringAsFixed(0)) would
+    // hand the user an amount the server then rejects as an overpayment
+    // whenever the due carries paise (e.g. due 6,549.50 -> prefill 6,550).
+    final due = widget.outstandingDue;
+    _amountController = TextEditingController(
+      text: due == due.roundToDouble()
+          ? due.toStringAsFixed(0)
+          : due.toStringAsFixed(2),
+    );
   }
 
   Future<void> _submitPayment() async {
     final l10n = AppLocalizations.of(context);
     final amt = double.tryParse(_amountController.text) ?? 0.0;
-    if (amt <= 0) return;
+    // A blank/cleared field used to no-op silently on tap — tell the user
+    // why nothing is happening instead.
+    if (amt <= 0) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.translate('enter_valid_amount'))));
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     final client = ref.read(apiClientProvider);
@@ -52,7 +66,10 @@ class _ReceivePaymentModalState extends ConsumerState<ReceivePaymentModal> {
         ApiConstants.customerPayment,
         data: {
           'customer_id': widget.customerId,
-          'amount': amt,
+          // Send an exact 2-decimal string, never a raw double: a JSON
+          // float can arrive as 0.30000000000000004 and the server's
+          // overpayment guard would trip on money that is actually correct.
+          'amount': amt.toStringAsFixed(2),
           'payment_method': _paymentMethod,
           'reference_number': _refController.text.trim(),
         },

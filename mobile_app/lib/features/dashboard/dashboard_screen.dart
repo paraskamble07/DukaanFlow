@@ -10,7 +10,9 @@ import '../../providers/dashboard_provider.dart';
 import '../../shared_widgets/whatsapp_button.dart';
 import '../inventory/imei_scanner_screen.dart';
 import '../inventory/imei_lookup_screen.dart';
+import '../notifications/notifications_screen.dart';
 import '../admin/admin_dashboard_screen.dart';
+import '../../providers/notifications_provider.dart';
 import '../../shared_widgets/sync_status_banner.dart';
 import 'widgets/kpi_card.dart';
 import 'widgets/sales_chart_card.dart';
@@ -225,17 +227,27 @@ class DashboardScreen extends ConsumerWidget {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 24px of icon actions leave little room: guard both lines so a
+            // long shop name degrades to ellipsis instead of a pixel
+            // overflow.
             Text(
               business?.name ?? 'ShopZen',
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             Text(
               "${l10n.translate('good_morning')}${authState.user?.firstName ?? l10n.translate('owner_label')} 👋",
               style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
         actions: [
+          // Notifications: derived attention list (Khata dues, low stock,
+          // payables). The badge shows how many groups need action.
+          const _NotificationsBell(),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner_rounded),
             tooltip: l10n.translate('scan_imei'),
@@ -330,6 +342,34 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Bell icon with a live count badge. Errors and empty feeds render a plain
+/// bell — notifications are always advisory, never blocking.
+class _NotificationsBell extends ConsumerWidget {
+  const _NotificationsBell();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    final async = ref.watch(notificationsProvider);
+    final count = async.maybeWhen(
+      data: (groups) => groups.length,
+      orElse: () => 0,
+    );
+    return IconButton(
+      tooltip: l10n.translate('notifications'),
+      icon: count > 0
+          ? Badge(
+              label: Text('$count'),
+              child: const Icon(Icons.notifications_active_rounded),
+            )
+          : const Icon(Icons.notifications_none_rounded),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const NotificationsScreen()),
       ),
     );
   }

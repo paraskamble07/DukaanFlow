@@ -7,6 +7,7 @@ import '../../core/localization/app_localizations.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../auth/splash_screen.dart';
+import '../staff/staff_screen.dart';
 import 'app_update_screen.dart';
 import 'backup_restore_screen.dart';
 
@@ -127,7 +128,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Shop profile
+// Shop profile
           _sectionCard(
             title: l10n.translate('shop_profile'),
             children: _isEditingShop
@@ -181,7 +182,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           flex: 2,
                           child: ElevatedButton(
                             onPressed: _isSaving ? null : _saveShop,
-                          child: _isSaving ? const Text('Saving...') : Text(l10n.translate('save_changes')),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : Text(l10n.translate('save_changes')),
                           ),
                         ),
                       ],
@@ -195,17 +202,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _profileRow(l10n.translate('upi_id'), (business?.upiId ?? '').isEmpty ? l10n.translate('not_set') : business!.upiId!),
                     _profileRow(l10n.translate('invoice_prefix'), business?.invoicePrefix ?? '-'),
                     const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: _startEditing,
-                        icon: const Icon(Icons.edit, size: 18),
-                        label: Text(l10n.translate('edit_shop_profile')),
+                    // Only the owner may edit shop settings (the endpoint is
+                    // owner-only; staff would otherwise hit a 403).
+                    if (auth.user?.role == 'OWNER')
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: _startEditing,
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: Text(l10n.translate('edit_shop_profile')),
+                        ),
                       ),
-                    ),
                   ],
           ),
           const SizedBox(height: 16),
+
+          // Staff & logins (owner-only: create staff, grant modules, disable logins)
+          if (auth.user?.role == 'OWNER') ...[
+            _sectionCard(
+              title: l10n.translate('team'),
+              children: [
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.group_outlined, color: AppColors.primary),
+                  title: Text(l10n.translate('staff_logins'),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                  subtitle: Text(l10n.translate('staff_logins_sub'),
+                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  trailing: const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const StaffScreen()),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
 
           // Account
           _sectionCard(

@@ -285,7 +285,7 @@ class LedgerImmutabilityTest(Phase13TestBase):
         self.customer.refresh_from_db()
         self.assertEqual(self.customer.get_outstanding_due(), Decimal('6500.00'))
 
-    def test_payment_closes_due_without_mutating_bill_rows(self):
+    def test_payment_closes_due_and_settles_bill_rows(self):
         self._checkout(self._imei_line(), payment_method='UPI',
                        paid_amount=10000)
         sale = Sale.objects.get()
@@ -297,14 +297,20 @@ class LedgerImmutabilityTest(Phase13TestBase):
         self.assertEqual(res.status_code, 201, res.data)
         self.assertEqual(res.data['remaining_due'], 0.0)
 
-        # The ledger balance closed, but the original bill still records the
-        # money actually received at the counter (audit trail intact).
+        # The ledger balance closed AND the bill now reflects the settlement
+        # (this was the reported bug: bills kept showing "due" on customers
+        # who had paid in full). The audit trail stays in the Payment rows,
+        # each checkout payment still tagged with its invoice reference.
         sale.refresh_from_db()
-        self.assertEqual(sale.paid_amount, Decimal('10000.00'))
-        self.assertEqual(sale.due_amount, Decimal('6500.00'))
+        self.assertEqual(sale.paid_amount, Decimal('16500.00'))
+        self.assertEqual(sale.due_amount, Decimal('0.00'))
+        self.assertEqual(sale.payment_status, 'PAID')
         self.customer.refresh_from_db()
         self.assertEqual(self.customer.get_outstanding_due(), Decimal('0.00'))
         self.assertEqual(self.customer.get_total_paid(), Decimal('16500.00'))
+        checkout_payment = Sale.objects.get().payments.get()
+        self.assertEqual(
+            checkout_payment.reference_number, f"INV-PAY-{sale.invoice_number}")
 
     def test_credit_sale_records_no_payment_row(self):
         res = self._checkout(self._imei_line(), payment_method='CREDIT',

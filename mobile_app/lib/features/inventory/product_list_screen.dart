@@ -197,7 +197,7 @@ class ProductListScreen extends ConsumerWidget {
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        '${p.stockQuantity} in stock',
+                                        '${p.stockQuantity} ${l10n.translate('in_stock')}',
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,

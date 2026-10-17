@@ -1,7 +1,9 @@
 from django.db import models
 from decimal import Decimal
 from core.models import TenantModel
-from core.utils import build_whatsapp_url, format_inr
+from core.utils import (
+    PLACEHOLDER_PHONES, build_whatsapp_url, format_inr, normalize_phone_number,
+)
 
 class Customer(TenantModel):
     name = models.CharField(max_length=150, verbose_name="Customer Name")
@@ -13,9 +15,25 @@ class Customer(TenantModel):
 
     class Meta:
         ordering = ['-created_at']
+        # One customer per real mobile number per shop. Placeholder numbers
+        # are exempt (see core.utils.PLACEHOLDER_PHONES): a shop may keep
+        # several walk-in / unknown-number customers.
+        constraints = [
+            models.UniqueConstraint(
+                fields=('business', 'phone'),
+                name='unique_customer_phone_per_business',
+                condition=~models.Q(phone__in=PLACEHOLDER_PHONES),
+            ),
+        ]
 
     def __str__(self):
         return f"{self.name} ({self.phone})"
+
+    def save(self, *args, **kwargs):
+        # Normalize once at write time so duplicate detection, WhatsApp
+        # links and searches all see the same canonical spelling.
+        self.phone = normalize_phone_number(self.phone) or self.phone
+        super().save(*args, **kwargs)
 
     def get_total_sales(self):
         total = self.sales.aggregate(models.Sum('total_amount'))['total_amount__sum']

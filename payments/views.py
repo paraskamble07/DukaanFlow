@@ -5,6 +5,7 @@ from django.db.models import Sum, Q
 from core.utils import business_required, build_whatsapp_url, format_inr
 from .models import Payment
 from .forms import CustomerPaymentForm, SupplierPaymentForm
+from .services import settle_after_payment
 from customers.models import Customer
 from suppliers.models import Supplier
 
@@ -55,9 +56,12 @@ def customer_payment_create(request):
             payment.business = business
             payment.payment_type = 'CUSTOMER_PAYMENT'
             payment.save()
-            
-            # Recalculate customer due
+
+            # Recompute per-invoice settlement (paid / due / status) so the
+            # bills never disagree with the books, then the customer due.
+            settle_after_payment(payment.customer)
             cust = payment.customer
+            cust.refresh_from_db()
             rem_due = cust.get_outstanding_due()
             
             # Build WhatsApp receipt url

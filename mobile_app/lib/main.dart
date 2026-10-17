@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -20,18 +23,43 @@ import 'providers/settings_provider.dart';
 import 'providers/update_provider.dart';
 
 void main() {
+  // The whole bootstrap runs inside a guarded zone: any error thrown before
+  // the first frame, or from the fire-and-forget ads init, is captured here
+  // instead of being left as an uncaught root-zone error, which in a
+  // release (AOT) build tears the process down with no visible UI.
+  runZonedGuarded<Future<void>>(
+    _bootstrap,
+    (error, stack) {
+      FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack));
+    },
+  );
+}
+
+Future<void> _bootstrap() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Last-resort net for framework-build errors in release mode (default
+  // handler prints to the console, which release builds discard).
+  FlutterError.onError = (details) {
+    FlutterError.dumpErrorToConsole(details);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack));
+    return true; // Handled: never let the engine abort the isolate.
+  };
+
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
     ),
   );
-  // Phase 12: Google UMP consent + AdMob SDK. Runs concurrently with the
-  // splash screen and never blocks the app: if consent or the SDK is
-  // unavailable, banners simply stay hidden.
-  _initAds();
   runApp(const ProviderScope(child: ShopZenApp()));
+  // Phase 12: Google UMP consent + AdMob SDK. Runs concurrently after the
+  // first frame and never blocks the app: if consent or the SDK is
+  // unavailable, banners simply stay hidden. Never awaited and never allowed
+  // to surface an uncaught error.
+  _initAds().catchError((_) {});
 }
 
 /// Requests UMP consent (showing the form when required) and initializes the
@@ -108,21 +136,41 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
   /// Silent update check on startup. A non-mandatory newer build is
   /// surfaced later from Settings; a mandatory one blocks the session
   /// because builds below the server's minimum are unsupported.
+  ///
+  /// Guarded twice so the "Update required" dialog can never haunt the
+  /// user on every launch of an already-current build:
+  ///   1. the installed build number must actually be known and older
+  ///      than the server's minimum (a build that could not report its
+  ///      number gets advised, never blocked);
+  ///   2. the dialog shows at most once per app session.
+  static bool _mandatoryDialogShown = false;
+
   Future<void> _checkForMandatoryUpdate() async {
+    if (_mandatoryDialogShown) return;
     try {
       final info = await ref.read(appUpdateProvider.notifier).checkForUpdates();
-      if (info != null && info.mandatoryUpdate && mounted) {
+      // info.mandatoryUpdate is computed by the server against the build
+      // number this client just reported, so it is already authoritative.
+      // The remaining guard: a client that could not learn its own build
+      // number must never be told "your build is unsupported".
+      // NOTE: packageInfoKnown is set inside checkForUpdates, so read the
+      // state after the call, not before.
+      final update = ref.read(appUpdateProvider);
+      if (info != null && info.mandatoryUpdate && update.packageInfoKnown && mounted) {
+        _mandatoryDialogShown = true;
+        final l10n = AppLocalizations.of(context);
         showDialog(
           context: context,
           barrierDismissible: false,
           builder: (ctx) => PopScope(
             canPop: false,
             child: AlertDialog(
-              title: const Text('Update required'),
+              title: Text(l10n.translate('update_required')),
               content: Text(
-                'ShopZen v${info.latestVersion} is available and your current '
-                'build (v${info.minimumSupportedVersion} minimum) is no longer '
-                'supported. Please update to continue using your shop data safely.',
+                '${l10n.translate('update_intro')}\n'
+                '${l10n.translate('latest_version_p')}${info.latestVersion}\n'
+                '${l10n.translate('update_blocked_p1')}${info.minimumSupportedVersion}'
+                '${l10n.translate('update_blocked_p2')}',
               ),
               actions: [
                 FilledButton(
@@ -132,7 +180,7 @@ class _MainNavigationScaffoldState extends ConsumerState<MainNavigationScaffold>
                       MaterialPageRoute(builder: (_) => const AppUpdateScreen()),
                     );
                   },
-                  child: const Text('Update now'),
+                  child: Text(l10n.translate('update_now')),
                 ),
               ],
             ),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../../core/constants/api_constants.dart';
 import '../../models/customer_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/customer_provider.dart';
+import 'customer_detail_screen.dart';
 
 class CustomerFormScreen extends ConsumerStatefulWidget {
   final CustomerModel? customer;
@@ -68,12 +70,67 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
           SnackBar(content: Text(l10n.translate('customer_saved'))),
         );
       }
+    } on DioException catch (e) {
+      // The server already holds a customer with this mobile number
+      // (409 DUPLICATE_CUSTOMER): offer to open that record instead of
+      // silently failing or forking a second ledger.
+      final res = e.response;
+      final existing = (res?.statusCode == 409 &&
+              res?.data is Map &&
+              (res!.data as Map)['existing_customer'] is Map)
+          ? CustomerModel.fromJson(
+              (res.data as Map)['existing_customer'] as Map<String, dynamic>)
+          : null;
+      if (existing != null && mounted) {
+        await _showDuplicateDialog(l10n, existing);
+      } else if (mounted) {
+        final msg = (res?.data is Map && (res!.data as Map)['error'] is String)
+            ? (res.data as Map)['error'] as String
+            : l10n.translate('could_not_save_customer_retry');
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(msg)));
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("${l10n.translate('error_prefix')}$e")));
       }
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
+  /// "This number is already used by <name> — open that customer?"
+  Future<void> _showDuplicateDialog(
+      AppLocalizations l10n, CustomerModel existing) async {
+    final open = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.translate('customer_exists_title')),
+        content: Text(
+          '${l10n.translate('customer_exists_body_prefix')}${existing.name}'
+          '${l10n.translate('customer_exists_body_suffix')}',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(l10n.translate('cancel')),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            icon: const Icon(Icons.open_in_new, size: 18),
+            label: Text(l10n.translate('open_existing')),
+          ),
+        ],
+      ),
+    );
+    if (open == true && mounted) {
+      // Pop the form and open the existing customer's ledger.
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => CustomerDetailScreen(customer: existing),
+        ),
+      );
     }
   }
 
@@ -121,7 +178,7 @@ class _CustomerFormScreenState extends ConsumerState<CustomerFormScreen> {
               TextFormField(
                 controller: _creditLimitController,
                 keyboardType: TextInputType.number,
-                decoration: InputDecoration(hintText: '5000'),
+                decoration: const InputDecoration(hintText: '5000'),
               ),
               const SizedBox(height: 24),
 

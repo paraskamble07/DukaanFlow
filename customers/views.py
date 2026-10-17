@@ -65,7 +65,7 @@ def customer_create(request):
         return redirect('businesses:plans')
         
     if request.method == 'POST':
-        form = CustomerForm(request.POST)
+        form = CustomerForm(request.POST, business=business)
         if form.is_valid():
             customer = form.save(commit=False)
             customer.business = business
@@ -73,7 +73,7 @@ def customer_create(request):
             messages.success(request, f"Customer '{customer.name}' added successfully!")
             return redirect('customers:detail', pk=customer.pk)
     else:
-        form = CustomerForm()
+        form = CustomerForm(business=business)
         
     return render(request, 'customers/customer_form.html', {
         'form': form,
@@ -86,13 +86,13 @@ def customer_update(request, pk):
     customer = get_object_or_404(Customer, pk=pk, business=request.business)
     
     if request.method == 'POST':
-        form = CustomerForm(request.POST, instance=customer)
+        form = CustomerForm(request.POST, instance=customer, business=business)
         if form.is_valid():
             form.save()
             messages.success(request, f"Customer '{customer.name}' updated successfully!")
             return redirect('customers:detail', pk=customer.pk)
     else:
-        form = CustomerForm(instance=customer)
+        form = CustomerForm(instance=customer, business=business)
         
     return render(request, 'customers/customer_form.html', {
         'form': form,

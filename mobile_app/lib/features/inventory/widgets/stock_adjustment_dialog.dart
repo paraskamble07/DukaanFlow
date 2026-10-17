@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/localization/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../providers/auth_provider.dart';
@@ -41,7 +42,7 @@ class _StockAdjustmentDialogState extends ConsumerState<StockAdjustmentDialog> {
 
     try {
       final res = await client.dio.post(
-        '/api/inventory/adjust/',
+        ApiConstants.stockAdjust,
         data: {
           'product_id': widget.productId,
           'action': _action,
